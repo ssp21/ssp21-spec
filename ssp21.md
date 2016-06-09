@@ -13,13 +13,13 @@ Secure Systems Protocol (SSP) is cryptographic wrapper designed to secure point-
 2. The Link Layer
 =================
 
-SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in little endian.
+SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in big endian for consistency with Noise.
 
 [ start 0x07BB ][ length ][destination ][ source ][ ... payload bytes ... ][ CRC (4-bytes)]
 
 The minimum size of a link layer frame is 12 bytes, consisting of the start, length, destination, source, no payload bytes, and the CRC.
 
-**start** (2-bytes) - The start bytes provide a delimiter for the beginning of the frame and shall always begin with the two bytes sequence 0x07BB.
+**start** (2-bytes) - The start bytes provide a delimiter for the beginning of the frame and shall always begin with the two byte sequence 0x07BB.
 
 **length** (2-bytes) - This field encodes the length in bytes of the payload data. A frame containing no payload will have this field set to zero. An upper maximum size (less than 65535) should be configurable to allow implementations to use less memory when receiving a full frame.
 
