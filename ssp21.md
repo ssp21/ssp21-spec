@@ -10,7 +10,18 @@ date:       '2016-05-16'
 
 Secure Systems Protocol (SSP) is cryptographic wrapper designed to secure point-to-multipoint serial protocols. It can be used as a protocol agnostic bump in the wire (BitW) at remote endpoints or as a bump in the stack (BitS). The cryptographic layer is based on the [Noise Protocol](noiseprotocol.org/) with modifications to make encryption optional.
 
-2. The Link Layer
+2. Subsetting of Noise
+=======================
+
+Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
+
+* Defining a link-layer to frame noise messages on a serial network or TCP stream
+* Modifying Noise to support authentication only
+* Selecting a specific handshake mode that will be used in all applications
+* Defining handshake payload data including relative time bases and certificates
+
+
+3. The Link Layer
 =================
 
 SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in big endian for consistency with Noise.
@@ -23,7 +34,7 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 
 **length** (2-bytes) - This field encodes the length in bytes of the payload data. A frame containing no payload will have this field set to zero. An upper maximum size (less than 65535) should be configurable to allow implementations to use less memory when receiving a full frame.
 
-**destination** (2-bytes) - This field encodes the destination address for frame. Devices shall always set this field to the address of the intended recipient before transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
+**destination** (2-bytes) - This field encodes the destination address for frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
 
-**source** (2-bytes) - This field encodes the source address for frame. Devices shall always set this field to their local address before transmitting. The usage of this field depends on the application layer of
+**source** (2-bytes) - This field encodes the source address for frame. Devices shall always set this field to their local address when transmitting. The usage of this field depends on the application layer of
 wrapped protocol.
