@@ -18,7 +18,7 @@ The specification was designed and related protocols selected based on the follo
 2.1 Basis of trust - "Utility PKI"
 ----------------------------------
 
-All trust in the system will hinge on a Public Key Infrastructure (PKI) wholly controlled by the utility. A more efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized by to reduce bandwidth consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use primitives substantially more efficient than RSA encryption.
+All trust in the system will based on a Public Key Infrastructure (PKI) wholly controlled by the utility. A more efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized by to reduce bandwidth consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use primitives substantially more efficient than RSA encryption.
 
 2.2 Asymmetric Certificate Revocation
 --------------------------------------
@@ -102,12 +102,22 @@ Security is not a zero-cost protocol feature. Inevitably adding a security sub-l
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per NIST guidelines) to reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
 
 
-3. Derivative of Noise
-=======================
+3. Architecture
+=================
+
+SSP21 specifies a two layer architecture for delivering secure data to the user layer.
+
+![SSP21 stack](img/stack.png)
+
+3.1 Link Layer
+-----------------
+
+
+3.2 Cryptographic Layer (Noise Derivative)
+------------------------------------------
 
 The cryptographic layer is derived with only minor modification from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
 
-* Defining a link-layer to frame noise messages on a serial network or TCP stream
 * Modifying Noise to support authentication only
 * Selecting a specific handshake mode that will be used in all applications
 * Defining handshake payload data including relative time bases and certificates

@@ -1,0 +1,21 @@
+<svg width="270" height="337" xmlns="http://www.w3.org/2000/svg">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <g>
+  <title>background</title>
+  <rect fill="#fff" id="canvas_background" height="339" width="272" y="-1" x="-1"/>
+  <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" height="68" width="181.000006" y="99.950012" x="45.499997" stroke-width="1.5" stroke="#000" fill="#fff"/>
+  <rect id="svg_2" height="68" width="181.000003" y="167.950012" x="45.500003" stroke-width="1.5" stroke="#000" fill="#fff"/>
+  <rect stroke-dasharray="5,5" id="svg_3" height="68" width="181.000006" y="31.950012" x="45.499997" stroke-width="1.5" stroke="#000" fill="#fff"/>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_4" y="209.950012" x="76.5" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000">Link</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_5" y="141.950012" x="74.5" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000">Crypto</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_6" y="74.950012" x="73.5" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000">User</text>
+  <rect stroke-dasharray="5,5" id="svg_16" height="68" width="181.000006" y="235.950012" x="45.499997" stroke-width="1.5" stroke="#000" fill="#fff"/>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_17" y="273.950012" x="75.5" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000">Physical</text>
+ </g>
+</svg>
