@@ -102,21 +102,24 @@ Security is not a zero-cost protocol feature. Inevitably adding a security sub-l
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per NIST guidelines) to reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
 
 
-3. Architecture
-=================
+3. System Architecture
+=======================
+
+
+4. Protocol Architecture
+=========================
+
+![System components - components of the system relevant to SSP21](img/network_architecture.png)
 
 SSP21 specifies a two layer architecture for delivering secure data to the user layer.
 
 ![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png)
 
-![System components - components of the system relevant to SSP21](img/network_architecture.png)
+4.1 Link Layer
+---------------
 
-3.1 Link Layer
------------------
-
-
-3.2 Cryptographic Layer (Noise Derivative)
-------------------------------------------
+4.2 Cryptographic Layer (Noise Derivative)
+-------------------------------------------
 
 The cryptographic layer is derived with only minor modification from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
 
@@ -125,7 +128,7 @@ The cryptographic layer is derived with only minor modification from the [Noise 
 * Defining handshake payload data including relative time bases and certificates
 
 
-4. The Link Layer
+5. The Link Layer
 =================
 
 SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in big endian for consistency with Noise.
