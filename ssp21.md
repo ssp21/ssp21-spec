@@ -107,7 +107,9 @@ Security is not a zero-cost protocol feature. Inevitably adding a security sub-l
 
 SSP21 specifies a two layer architecture for delivering secure data to the user layer.
 
-![SSP21 stack](img/stack.png)
+![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png)
+
+![System components - components of the system relevant to SSP21](img/network_architecture.png)
 
 3.1 Link Layer
 -----------------
