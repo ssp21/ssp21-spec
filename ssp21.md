@@ -45,8 +45,8 @@ Extensible only to the extent necessary
 * The protocol shall use security-suite specifications to allow new algorithms to be used in future versions, or to provide more than one option for when algorithms, inevitably, are compromised.
 * The number of initial security suites will be limited to one or two, and will only support authentication initially.
 
-2.6 Authentication
-------------------
+Authentication
+--------------
 
 All messages shall be authenticated. Each endpoint in the session shall be able to unambiguously determine that a session message comes from the other endpoint. The authentication mechanism shall automatically provide message integrity and protection from spoofing and MitM attacks. The most likely cryptographic primitive for this authentication will be a MAC like an HMAC or a GMAC. In later iterations where encryption is accommodated, an AEAD cipher mode could be used.
 
