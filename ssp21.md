@@ -76,7 +76,7 @@ The secure operation of SCADA system does not require confidentiality of session
 
 Certain systems may exchange sensitive information and require session confidentiality. SSP21 shall use a security suite specification and encodings that allow for encrypted sessions in the future. The session key exchange mechanism shall support forward secrecy.
 
-2.10 Outstations can be retrofitted with a bump in the wire
+2.10 Supports bump in the wire retrofits
 ------------------------------------------------------------
 
 The outstation implementations of the protocol shall be capable of being deployed as a bump in the wire (BitW) or integrated onto endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW implementations are necessary to retrofit legacy components during transitions.
@@ -128,15 +128,16 @@ The cryptographic layer is derived with only minor modification from the [Noise 
 
 SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in big endian for consistency with Noise.
 
-[ start 0x07BB ][ length ][destination ][ source ][ ... payload bytes ... ][ CRC (4-bytes)]
+[ start ][ destination ][ source ][ length ][ ... payload bytes ... ][ CRC ]
 
 The minimum size of a link layer frame is 12 bytes, consisting of the start, length, destination, source, no payload bytes, and the CRC.
 
 **start** (2-bytes) - The start bytes provide a delimiter for the beginning of the frame and shall always begin with the two byte sequence 0x07BB.
 
-**length** (2-bytes) - This field encodes the length in bytes of the payload data. A frame containing no payload will have this field set to zero. An upper maximum size (less than 65535) should be configurable to allow implementations to use less memory when receiving a full frame.
+**length** (2-bytes) - This length field encodes the number of bytes in the payload data. A frame containing no payload will have this field set to zero. An upper maximum size (less than 65535) should be configurable to allow implementations to use less memory when receiving a full frame.
 
-**destination** (2-bytes) - This field encodes the destination address for frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
+**destination** (2-bytes) - This destination field encodes the address of the intended recipient of the frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
 
-**source** (2-bytes) - This field encodes the source address for frame. Devices shall always set this field to their local address when transmitting. The usage of this field depends on the application layer of
-wrapped protocol.
+**source** (2-bytes) - This source field encodes the address of the transmitting party. The usage of this field may depend on the application layer of wrapped protocol.
+
+**CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value.
