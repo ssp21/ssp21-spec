@@ -101,11 +101,38 @@ While the primary aim of this specification is describe the protocol in sufficie
 
 SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above. It accomplishes this using a PKI wholly owned and controlled by the utility. Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never share the private key with another entity (human or machine), and can freely disseminate the public key for the purposes of certificate generation.
 
-# Role of PKI and certificates
+# Utility PKI
 
 The primary role of any PKI is to reduce the complexity of key management by requiring parties to only place their trust in a central signing authority. To understand the attractiveness of this architecture, it useful to compare it a couple of alternatives.
 
-* **Alternative #1 - Symmetric keys only** - In this architecture, each communication link has a unique symmetric key that both parties possess prior to any communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key. In a typical SCADA point-to-multipoint scenario, best practice dictates that there would be a unique symmetric key for each outstation, and the master would possess a copy of all of the keys for the outstations with which it must communicate.  
+## Alternative: Symmetric keys only
+
+In this architecture, each communication link has a unique symmetric key that both parties possess prior to any communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key. In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each outstation (N), and the master would possess a copy of all N keys for the outstations with which it must communicates. The primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several of reasons.
+
+* If multiple masters are needed for redundancy purposes, the keys must be shared with the master increasing the attack surface and the risk of compromise, or the number of keys in the system must be doubled from N to 2N.
+
+* This type of an architecture does a poor job of limiting access to sensitive keys. To commission a new field asset, the key must be entrusted to field personnel, possibly contractors.
+
+* Compromise of a field asset always requires that the channel be rekeyed. Compromise of the master requires that the entire system be rekeyed.
+
+## Alternative: Asymmetric keys without an authority
+
+In this architecture, each communication node has a public / private key pair. It is free to disseminate the public key, and each node must possess the public key for every other node with which it needs to communicate. This architecture better addresses some of the concerns presented with the symmetric key only architecture, namely:
+
+* Multiple masters can be commissioned without doubling the number of keys in the system, however, each outstation must possess the public key of each master with which it must communicate.
+
+* Only the master's public key(s) need to be shared with commissioning personnel. Each outstation can also secure its private key, and only share the public key. This makes tampering from insiders slightly more difficult than in the symmetric only scheme.
+
+A number of potential problems still remain:
+
+* Compromise of a master still results in having to update the master's public key on each outstation.
+
+* Installing or authorizing additional masters requires either sharing the master private key with the backup master, or installing the new master key on all outstations.
+
+## The role of the authority
+
+Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what
+is commonly referred to as "self signed certificates".
 
 
 # Protocol Architecture
