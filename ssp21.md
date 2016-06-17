@@ -106,7 +106,11 @@ Security is not a zero-cost protocol feature. Inevitably adding a security sub-l
 System Architecture
 ===================
 
+While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully implemented, it is important to describe the broader system in which the protocol is designed to operate.
+
 ![System components - components of the system relevant to SSP21](img/network_architecture.png)
+
+SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above.
 
 Protocol Architecture
 =====================
