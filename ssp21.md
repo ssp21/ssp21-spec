@@ -99,21 +99,21 @@ While the primary aim of this specification is describe the protocol in sufficie
 
 ![Components of the system relevant to SSP21](img/network_architecture.png)
 
-SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above. It accomplishes this using a PKI wholly owned and controlled by the utility. Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never share the private key with another entity (human or machine), and can freely disseminate the public key for the purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by requiring parties to only place their trust in a central signing authority. To understand the attractiveness of this architecture, it useful to compare it a couple of alternatives.
+SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above. It accomplishes this using a PKI wholly owned and controlled by the utility. Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never share the private key with another entity (human or machine), and can freely disseminate the public key for the purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by requiring parties to only place their trust in a central signing authority. The identity of all other parties is then established via certification from this authority. To understand the attractiveness of such an architecture, it useful to compare it a couple of alternatives.
 
 ## Alternative: Symmetric keys only
 
-In this architecture, each communication link has a unique symmetric key that both parties possess prior to any communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key. In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each outstation (N), and the master would possess a copy of all N keys for the outstations with which it must communicates. The primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several of reasons.
+In this architecture, each communication link has a unique symmetric key that both parties possess prior to any communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key. In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each outstation (N), and the master would possess a copy of all N keys for the outstations with which it communicates. The primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several of reasons:
 
 * If multiple masters are needed for redundancy purposes, the keys must be shared with the master increasing the attack surface and the risk of compromise, or the number of keys in the system must be doubled from N to 2N.
 
-* This type of an architecture does a poor job of limiting access to sensitive keys. To commission a new field asset, the key must be entrusted to field personnel, possibly contractors.
+* This type of an architecture does a poor job of limiting access to sensitive key data. To commission a new field asset, the key must be entrusted to field personnel, possibly contractors.
 
 * Compromise of a field asset always requires that the channel be rekeyed. Compromise of the master requires that the entire system be rekeyed.
 
 ## Alternative: Asymmetric keys without an authority
 
-In this architecture, each communication node has a public / private key pair. It is free to disseminate the public key, and each node must possess the public key for every other node with which it needs to communicate. This architecture better addresses some of the concerns presented with the symmetric key only architecture, namely:
+In this architecture, each communication node has an asymmetric public / private key pair. It is free to disseminate the public key, and each node must possess the public key for every other node with which it communicates. This architecture better addresses some of the concerns presented with the symmetric key only architecture, namely:
 
 * Multiple masters can be commissioned without doubling the number of keys in the system, however, each outstation must possess the public key of each master with which it must communicate.
 
@@ -123,13 +123,32 @@ A number of potential problems still remain:
 
 * Compromise of a master still results in having to update the master's public key on each outstation.
 
-* Installing or authorizing additional masters requires either sharing the master private key with the backup master, or installing the new master key on all outstations.
+* Installing or authorizing additional masters requires either sharing the master private key with the backup master, or installing an additional master public key on all outstations.
+
+## Small vs big systems
+
+Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what
+is commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full PKI where the downsides above can be truly problematic.
 
 ## The role of the authority
 
-Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what
-is commonly referred to as "self signed certificates".
+The authority in the system possesses a private asymmetric key that it uses to sign certificates.  Certificates consist of the following elements:
 
+* A public asymmetric key
+* Metadata associated with the public key (e.g. id, validity windows, serial #s, etc)
+* A digital signature over the public key + metadata using the private key from some authority.
+
+Creating and signing certificates is one of the primary roles of the authority.  In its simplest form, this might consist of some cryptographic command line tools on a properly isolated server with a private key and a set of humans with access to this server.  Such a basic system might work for small systems.
+
+### Issuing outstation certificates
+
+There are far more outstations in any given SCADA systems than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. The web portal would liked be secured using a commodity TLS certificate and the users authenticated using passwords and a second factor like a rotating key FOB. The authority itself would likely reside in the DMZ or OT network, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
+
+* An editable set of field assets that will require enrollment, grouped in a way useful to the users of the system.
+* A set of users with varying levels of permissions.
+* A set of permissions for the users (user editing, key generation by asset, etc).
+* Properly hashed/salted passwords for the set of users that follow a strong password policy.
+* Optionally (recommended) a system for 2-factor authentication of the users.
 
 # Protocol Architecture
 
