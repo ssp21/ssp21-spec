@@ -136,7 +136,7 @@ The authority in the system possesses a private asymmetric key that it uses to s
 
 * A public asymmetric key
 * Metadata associated with the public key (e.g. id, validity windows, serial #s, etc)
-* A digital signature over the public key + metadata using the private key from some authority.
+* A digital signature over all other data calculated using the private key from some authority.
 
 Creating and signing certificates is one of the primary roles of the authority.  In its simplest form, this might consist of some cryptographic command line tools on a properly isolated server with a private key and a set of humans with access to this server.  Such a basic system might work for small systems.
 
