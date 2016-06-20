@@ -151,13 +151,25 @@ The web portal would liked be secured using a commodity TLS certificate and the 
 * Properly hashed/salted passwords for the set of users that follow a strong password policy.
 * A system for 2-factor authentication of the users like a FOB.
 
-The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key.
+The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key. Outstation certificates will be very long lived, likely for the lifetime of the equipment. A cryptographic break in the algorithm underlying the certificate signature will require that a new certificate be installed, so this algorithm should be chosen prudently.
 
 Allowing system administrators to pre-configure which users can generate certificates for which outstations and providing access to this part of the authority through proper safeguards will substantially streamline the process of enrollment and reduce the extent to which adding security impacts operations. The portal approach also limits direct access to signing keys and provides a central point for creating an audit trail regarding certificate generation.
 
+### Revoking outstation certificates
+
+The master(s) will be capable of reaching a CRL on the authority and will be responsible for checking it at a reasonable interval. The compromise of a single outstation private key is small breach compared to other attack scenarios.
+
+Nevertheless, a mechanism must be in place to allow for revocation.
+
 ### Issuing master certificates
 
+The recommended way to issue master certificates is machine-to-machine (M2M) communication directly from the master to the authority. The reason for this asymmetry is that on a serial network, there is no path for an outstation to reach a certificate revocation list (CRL), and thus a fast expiration scheme allows master certificates to be "revoked" by virtue of the fact that the authority can refuse to renew them. This expiration should happen on the timescale of hours and not days.
 
+The compromise of a master private key is a significant security event, since that master may be authorized to control a significant amount of field equipment. There is no fast mechanism for informing outstations on a serial network that a master has been compromised, thus some other mitigation will be needed until the affected certificate expires naturally.
+
+The communication link between the authority and the masters can be secured using a separate, more-traditional PKI. Since the number of masters in the system is low, it could even use pairs of self-signed certificates where the authority has the public key of every master it needs to authorize.
+
+Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be sufficient and would allow NSM tools to continuously inspect and monitor this traffic.
 
 # Protocol Architecture
 
