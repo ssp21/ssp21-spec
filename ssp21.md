@@ -127,8 +127,7 @@ A number of potential problems still remain:
 
 ## Small vs big systems
 
-Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what
-is commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full PKI where the downsides above can be truly problematic.
+Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what is commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full PKI where the downsides above can be truly problematic.
 
 ## The role of the authority
 
@@ -142,13 +141,23 @@ Creating and signing certificates is one of the primary roles of the authority. 
 
 ### Issuing outstation certificates
 
-There are far more outstations in any given SCADA systems than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. The web portal would liked be secured using a commodity TLS certificate and the users authenticated using passwords and a second factor like a rotating key FOB. The authority itself would likely reside in the DMZ or OT network, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
+There are far more outstations in any given SCADA systems than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. This level of access allows authorized personnel to reach the portal using cellular IP technologies and a VPN.
 
-* An editable set of field assets that will require enrollment, grouped in a way useful to the users of the system.
-* A set of users with varying levels of permissions.
+The web portal would liked be secured using a commodity TLS certificate and the users authenticated using strong passwords and a second factor like a rotating key FOB. The authority itself would likely reside in the DMZ, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
+
+* An editable set of field assets that will require enrollment.
+* A set of users
 * A set of permissions for the users (user editing, key generation by asset, etc).
 * Properly hashed/salted passwords for the set of users that follow a strong password policy.
-* Optionally (recommended) a system for 2-factor authentication of the users.
+* A system for 2-factor authentication of the users like a FOB.
+
+The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key.
+
+Allowing system administrators to pre-configure which users can generate certificates for which outstations and providing access to this part of the authority through proper safeguards will substantially streamline the process of enrollment and reduce the extent to which adding security impacts operations. The portal approach also limits direct access to signing keys and provides a central point for creating an audit trail regarding certificate generation.
+
+### Issuing master certificates
+
+
 
 # Protocol Architecture
 
