@@ -135,15 +135,15 @@ The authority in the system possesses a private asymmetric key that it uses to s
 
 * A public asymmetric key
 * Metadata associated with the public key (e.g. id, validity windows, serial #s, etc)
-* A digital signature over all other data calculated using the private key from some authority.
+* A digital signature over all other data calculated using the authority private key.
 
 Creating and signing certificates is one of the primary roles of the authority.  In its simplest form, this might consist of some cryptographic command line tools on a properly isolated server with a private key and a set of humans with access to this server.  Such a basic system might work for small systems.
 
 ### Issuing outstation certificates
 
-There are far more outstations in any given SCADA systems than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. This level of access allows authorized personnel to reach the portal using cellular IP technologies and a VPN.
+There are far more outstations in any given SCADA system than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. This level of access allows authorized personnel to reach the portal using cellular IP technologies and a VPN.
 
-The web portal would liked be secured using a commodity TLS certificate and the users authenticated using strong passwords and a second factor like a rotating key FOB. The authority itself would likely reside in the DMZ, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
+The web portal would likely be secured using a commodity TLS certificate and the users authenticated using strong passwords and a second factor like a rotating key FOB. The authority itself would likely reside in the DMZ, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
 
 * An editable set of field assets that will require enrollment.
 * A set of users
@@ -157,9 +157,7 @@ Allowing system administrators to pre-configure which users can generate certifi
 
 ### Revoking outstation certificates
 
-The master(s) will be capable of reaching a CRL on the authority and will be responsible for checking it at a reasonable interval. The compromise of a single outstation private key is small breach compared to other attack scenarios.
-
-Nevertheless, a mechanism must be in place to allow for revocation.
+The master(s) will be capable of reaching a CRL on the authority and will be responsible for checking it at a reasonable interval. The compromise of a single outstation private key is small breach compared to other attack scenarios. Nevertheless, a mechanism must be in place to allow for revocation.
 
 ### Issuing master certificates
 
