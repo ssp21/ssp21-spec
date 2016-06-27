@@ -7,18 +7,17 @@ date:       '2016-05-16'
 
 # Introduction
 
-Secure SCADA Protocol (SSP) is cryptographic wrapper designed to secure point-to-multipoint serial protocols, or to act as a security layer for new SCADA applications. It is intended to fill a gap where existing technologies like TLS are not applicable, require too much processing power or bandwidth. It can be used as a protocol agnostic bump in the wire (BitW) at outstation endpoints or as a bump in the stack (BitS) on the master or outstation.
+Secure SCADA Protocol (SSP) is cryptographic wrapper designed to secure point-to-multipoint serial protocols, or to act as a security layer for new SCADA applications. It is intended to fill a gap where existing technologies like TLS are not applicable, or require too much processing power or bandwidth. It can be used as a protocol agnostic bump in the wire (BitW) at outstation endpoints or as a bump in the stack (BitS) on the master or outstation. No provision is made for retrofitting masters with a BitW as masters can be much more easily upgraded than outstations.
 
 # Requirements
 
-The specification was designed and related protocols selected based on the following requirements.
+The following requirements guided the design of the specfication and the selection of appropriate companion standards.
 
 ## Basis of trust - "Utility PKI"
 
-All trust in the system will based on a Public Key Infrastructure (PKI) wholly controlled by the utility. A more efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized by to reduce bandwidth consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use primitives substantially more efficient than RSA encryption.
+All trust in the system are based on a Public Key Infrastructure (PKI) wholly controlled by the asset owner. A more efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized by to reduce bandwidth consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use primitives substantially more efficient than RSA encryption.
 
 ## Asymmetric Certificate Revocation
-
 
 Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme instead of explicit revocation. This works well in an operational environment where the utility has a reliable and isolated IP network between an online authority and multiple master stations. An intermediate authority private key can be used to periodically renew master certificates. Using CRLs with outstations is undesirable as outstation cannot reach them on a serial channel, and masters would have to push revocation notifications down to each endpoint and ensure that they arrive. Outstations would then have to persist these CRLs in non-volatile memory. This scheme requires that outstations have access to an out-of-band time synchronization mechanism such as GPS, local NTP via GPS in a substation, or WWVB. Alternatively, over TCP networks, outstations could check an online CRL.
 
@@ -26,16 +25,13 @@ Outstation certificates (certificates that identify outstations to masters) will
 
 ## Simplicity of implementation
 
-
 The encodings, state machines, and other technical details of the protocol shall, above all else without sacrificing security, endeavor to be as simple to implement as possible. Complexity, bells and whistles, and unneeded features inevitably lead to bugs both in specification and implementation. A reference implementation shall be developed to inform the evolving design, and shall not be an afterthought. Too often standardization efforts spend too much time on paper, only to lead to designs that are difficult to implement correctly.
 
 ## Use only strong vetted cryptography
 
-
 SSP21 shall only use algorithms that have received prolonged and intense scrutiny from the crypto community. This does not mean that all algorithms need to be NIST approved. Algorithms that are simpler to implement and/or have variations with provably constant-time implementations should be preferred.
 
 ## Extensible only to the extent necessary
-
 
 * Endpoints shall be able to identify the protocols version to each other during key exchange.
 * Must be secure against protocol downgrade attacks (e.g. see Noise handshake).
@@ -48,7 +44,7 @@ All messages shall be authenticated. Each endpoint in the session shall be able 
 
 This authentication will ensure that a particular SCADA master is talking to a particular outstation. In other words, it shall only secure the communication link and will not authenticate individual users or operators of the system. Role Based Access Control (RBAC) and auditing of users is best done at the platform level, and is outside the scope of SSP21. Individual SCADA vendors are free to use different technologies such as Active Directory, RSA, LDAP, Kerberos, etc to manage users at the platform level.
 
-Particular BitS implementations could potentially used some metadata in certificates to limit or constrain what is allowed during a particular communication session. How this metadata is used or configured to limit permissions for a particular protocol is outside the scope of SSP21.
+Particular BitS implementations could potentially use some metadata in certificates to limit or constrain what is allowed during a particular communication session. How this metadata is used or configured to limit permissions for a particular protocol is outside the scope of SSP21.
 
 ## Protection from replay
 
@@ -58,11 +54,11 @@ Although the protocol needs to be secure from replay, it does not need to ensure
 
 ## Session message “time of validity”
 
-Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. To eliminate this mode of attack, both parties will exchange a relative time-base in milliseconds during the key agreement handshake. Session message shall include a timestamp indicating the last possible relative time value in the more systems time base at which the message should be accepted.
+Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. To eliminate this mode of attack, both parties will exchange a relative time-base in milliseconds during the key agreement handshake. Session messages shall include a timestamp in the destination node's time base indicating the last possible time at which the message should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency and bandwidth of any particular network. As relative clock drift can occur, sessions may need to renegotiated more frequently or the configurable validity window of session messages made larger.
 
-This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication (aggressive mode) that lacks this protection. Attackers can hold back multiple messages in then replay them in rapid succession within a single session.
+This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication (aggressive mode) that lacks this protection. Attackers can hold back multiple messages in then replay them in rapid succession within a single session. <!--- TODO: consider making this a footnote -->
 
 ## Optional encryption
 
@@ -70,11 +66,11 @@ The secure operation of SCADA system does not require confidentiality of session
 
 Certain systems may exchange sensitive information and require session confidentiality. SSP21 shall use a security suite specification and encodings that allow for encrypted sessions in the future. The session key exchange mechanism shall support forward secrecy.
 
-## Supports bump in the wire retrofits
+## Support bump in the wire retrofits
 
 The outstation implementations of the protocol shall be capable of being deployed as a bump in the wire (BitW) or integrated onto endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW implementations are necessary to retrofit legacy components during transitions.
 
-Requiring a BitW implementation only for outstations and not masters, simplifies requirements as the BitW needn’t be protocol-aware. It can be configured with the static addresses of the outstation and master, and ignore protocol messages addressed for other nodes. In BitW implementations, all cryptographic operations including key negotiation and authentication will occur at the bump.
+Requiring a BitW implementation only for outstations and not masters, simplifies requirements as the BitW needn’t be protocol-aware. It can be configured with the static addresses of the outstation and master, and ignore protocol messages addressed for other nodes. In BitW and BitS implementations, all cryptographic operations including key negotiation and authentication will occur at the bump.
 
 ## Supports serial and IP
 
@@ -82,7 +78,7 @@ Supporting multi-drop serial means that frames must be addressed in some manner.
 
 For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations and replaced with alternate SSP21 crypto and framing layer. SSP21 could also, fully wrap the existing protocols, but removing redundancy in certain implementations could provide significant bandwidth savings.
 
-Out-of-band messages like session key establishment, heartbeats, etc can only be initiated from the SCADA master side when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot squelch a reply from a remote by inappropriately using the channel.
+Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot squelch a reply from a remote by inappropriately using the channel.
 
 ## Low overhead
 
@@ -92,14 +88,13 @@ Security is not a zero-cost protocol feature. Inevitably adding a security sub-l
 
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per NIST guidelines) to reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
 
-
 # Utility PKI
 
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully implemented, it is important to describe the broader system in which the protocol is designed to operate.
 
 ![Components of the system relevant to SSP21](img/network_architecture.png)
 
-SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above. It accomplishes this using a PKI wholly owned and controlled by the utility. Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never share the private key with another entity (human or machine), and can freely disseminate the public key for the purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by requiring parties to only place their trust in a central signing authority. The identity of all other parties is then established via certification from this authority. To understand the attractiveness of such an architecture, it useful to compare it to a couple of alternatives.
+SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as shown in the figure above. It accomplishes this using a PKI wholly owned and controlled by the utility. Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never share the private key with another entity (human or machine), and can freely disseminate the public key for the purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by requiring parties to only place their trust in a central signing authority. The identity of all other parties is then established via certification from this authority. To understand the attractiveness of such an architecture, it useful to compare it is to a few alternatives.
 
 ## Alternative: Symmetric keys only
 
@@ -127,7 +122,9 @@ A number of potential problems still remain:
 
 ## Small vs big systems
 
-Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above. While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what is commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full PKI where the downsides above can be truly problematic.
+Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric key scenarios described above.
+
+While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what is commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full PKI where the downsides above can be truly problematic.
 
 ## The role of the authority
 
@@ -169,13 +166,14 @@ The communication link between the authority and the masters can be secured usin
 
 Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be sufficient and would allow NSM tools to continuously inspect and monitor this traffic.
 
-# Protocol Architecture
+# Protocol architecture
 
 SSP21 specifies a two layer architecture for delivering secure data to the user layer.
 
 ![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png)
 
 ## Link Layer
+
 
 ## Cryptographic Layer (Noise Derivative)
 
@@ -196,10 +194,8 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 
 **start** (2-bytes) - The start bytes provide a delimiter for the beginning of the frame and shall always begin with the two byte sequence 0x07BB.
 
-**length** (2-bytes) - This length field encodes the number of bytes in the payload. A frame containing no payload will have this field set to zero. An upper maximum size (less than 65535) should be configurable to allow implementations to use less memory when receiving a full frame.
+**source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may depend on the application layer of wrapped protocol.
 
-**destination** (2-bytes) - This destination field encodes the address of the intended recipient of the frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
-
-**source** (2-bytes) - This source field encodes the address of the transmitting party. The usage of this field may depend on the application layer of wrapped protocol.
+**destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
 
 **CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value.
