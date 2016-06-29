@@ -9,5 +9,5 @@ The specification is based on [pandoc](http://pandoc.org/). The included Makefil
 # Setup
 
 ```
-> sudo apt-get install pandoc texlive texlive-latex-base texlive-fonts-recommended
+> sudo apt-get install pandoc texlive texlive-latex-base texlive-fonts-recommended lmodern
 ```
