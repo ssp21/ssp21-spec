@@ -192,8 +192,10 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 
 # Cryptographic Layer (Noise Derivative)
 
-The cryptographic layer is derived with only minor modification from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
+The cryptographic layer is derived with only minor modifications from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. Modifications to Noise include:
 
-* Modifying Noise to support authentication only
+* Modifying Noise to support authentication only (handshake and session)
+* Defining a certificate format for use with the protocol
 * Selecting a specific handshake mode that will be used in all applications
-* Defining handshake payload data including relative time bases and certificates
+* Static Diffie Hellman (DH) public keys are always transmitted as part of a certificate
+* Rigidly defining handshake payload data including relative time bases and certificates
