@@ -168,27 +168,15 @@ The communication link between the authority and the masters can be secured usin
 
 Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be sufficient and would allow NSM tools to continuously inspect and monitor this traffic.
 
-# Protocol architecture
+# The Link Layer
 
 SSP21 specifies a two layer architecture for delivering secure data to the user layer.
 
 ![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png)
 
-## Link Layer
+The link layer provides three features: framing, addressing, and error-detection. Since this functionality does not have any cryptographic protections, it is designed with simplicity in mind and is completely stateless.
 
-
-## Cryptographic Layer (Noise Derivative)
-
-The cryptographic layer is derived with only minor modification from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
-
-* Modifying Noise to support authentication only
-* Selecting a specific handshake mode that will be used in all applications
-* Defining handshake payload data including relative time bases and certificates
-
-
-# The Link Layer
-
-SSP21's link layer provides three features: framing, addressing, and error-detection. The frame consists of the following fields. All multi-byte integer fields are encoded in big endian for consistency with Noise.
+The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency with the Noise specification and the cryptographic layer.
 
 [ **start** ][ **destination** ][ **source** ][ **length** ][ **payload** ... ][ **CRC** ]
 
@@ -201,3 +189,11 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
 
 **CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value.
+
+# Cryptographic Layer (Noise Derivative)
+
+The cryptographic layer is derived with only minor modification from the [Noise Protocol](noiseprotocol.org/). Noise is a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial networks. Modifications or clarifications to Noise include:
+
+* Modifying Noise to support authentication only
+* Selecting a specific handshake mode that will be used in all applications
+* Defining handshake payload data including relative time bases and certificates
