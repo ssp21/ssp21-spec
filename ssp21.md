@@ -11,7 +11,7 @@ Secure SCADA Protocol (SSP) is cryptographic wrapper designed to secure point-to
 
 # Requirements
 
-The following requirements guided the design of the specfication and the selection of appropriate companion standards.
+The following requirements guided the design of the specification and the selection of appropriate companion standards.
 
 ## Basis of trust - "Utility PKI"
 
