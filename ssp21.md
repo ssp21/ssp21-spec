@@ -150,6 +150,8 @@ The web portal would likely be secured using a commodity TLS certificate and the
 
 The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key. Outstation certificates will be very long lived, likely for the lifetime of the equipment. A cryptographic break in the algorithm underlying the certificate signature will require that a new certificate be installed, so this algorithm should be chosen prudently.
 
+It's important to note that while the authority could be a standalone application with its own complete database of outstations, masters, and users, it might also leverage data available in other systems. For instance, an LDAP server or other enterprise identity system could be used to establish the identity and permissions of users. The authority might also be capable of keeping its database of outstations in the system synchronized with a utility EMS.
+
 Allowing system administrators to pre-configure which users can generate certificates for which outstations and providing access to this part of the authority through proper safeguards will substantially streamline the process of enrollment and reduce the extent to which adding security impacts operations. The portal approach also limits direct access to signing keys and provides a central point for creating an audit trail regarding certificate generation.
 
 ### Revoking outstation certificates
