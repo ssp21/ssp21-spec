@@ -218,7 +218,7 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public key.
-* DH(key_pair, public_key) -> Given a local key pair and remotely supplied public key, calculate a sequence of bytes of length DHKL.
+* DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of length DHKL.
 
 ### Hash Functions
 
