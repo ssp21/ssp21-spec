@@ -232,7 +232,7 @@ SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.
 | --------------------|--------------------|
 | SHA256              |  32                |
 
-### Hashed Message authentication Code (HMAC)
+### Hashed Message Authentication Code (HMAC)
 
 HMAC provides produces an authentication tag given a shared symmetric key and an input message. It is described in [RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
