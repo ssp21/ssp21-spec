@@ -211,5 +211,5 @@ Every message at the cryptographic layer begins with a one octet message type id
 | 1        | O_AUTH_HANDSHAKE       | Outstation authenticates to INIT_HANDSHAKE                                     |
 | 2        | M_AUTH_HANDSHAKE       | Master authenticates to O_AUTH_HANDSHAKE                                       |
 | 3        | O_CONF_HANDSHAKE       | Outstation confirms the completion of the handshake                            |
-| 4        | O_ERR_HANDSHAKE        | Outstation responds to either master handshake message with an error code      |
-| 5        | UNCONF_SESSION_DATA    | Either party sends authenticated session data                                  |
+| 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
+| 5        | UNCONF_SESSION_DATA    | Either party transmits unconfirmed session data                                |
