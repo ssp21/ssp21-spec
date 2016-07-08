@@ -192,14 +192,38 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 
 # Cryptographic Layer (Noise Derivative)
 
-The cryptographic layer is derived with only minor modifications from [Noise](noiseprotocol.org/), a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. Modifications to Noise include:
+The cryptographic layer is derived with only minor modifications from [Noise](noiseprotocol.org/), a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self contained; reading the Noise specification is not required to understand or implement SSP21.
+
+Modifications to Noise include:
 
 * Modifying Noise to support authentication only (handshake and session)
 * Message identifiers to make session renegotiation possible on serial networks
 * Initiator-specified cipher suites to allow masters to specify the primitives used in a
 * Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
-* Static Diffie Hellman (DH) public keys are always transmitted as part of a certificate
+* Static public keys are always transmitted as part of a certificate
+
+## cryptographic Algorithms
+
+SSP21 uses a number of cryptographic algorithms. They are described here within the context of the functionality they provide. SSP21 initially specifies a smaller subset of algorithms available in Noise.
+
+### Diffe Helman (DH) functions
+
+SSP21 will initially only use Curve25519 and Curve448 for session key agreement. Both are described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt).
+
+| DH Curve       | key length (KL)        |
+| ---------------|------------------------|
+| Curve22519     | 32                     |
+| Curve448       | 56                     |
+
+Both curves support the following two algorithms with the key lengths above.
+
+* GeneratePublicKey(Kv) - Calculate a public key (Kp) given a private key value (Kv).
+* DH(Kv, Kp) -> Calculate a sequence of bytes of length KL, given a local DH private key and a remotely supplied public key.
+
+### CSPRNG
+
+A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of DH private keys. Any secure RNG will do, put implementers should err on the side of caution and select one from a proven library.
 
 ## Message types
 
