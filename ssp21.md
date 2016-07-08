@@ -209,21 +209,38 @@ SSP21 uses a number of cryptographic algorithms. They are described here within 
 
 ### Diffe Helman (DH) functions
 
-SSP21 will initially only use Curve25519 and Curve448 for session key agreement. Both are described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt).
+SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
 
-| DH Curve       | key length (KL)        |
+| DH Curve       | key length (DHKL)      |
 | ---------------|------------------------|
 | Curve22519     | 32                     |
-| Curve448       | 56                     |
 
-Both curves support the following two algorithms with the key lengths above.
+All DH curves will support the following two algorithms with the key lengths specified above.
 
-* GeneratePublicKey(Kv) - Calculate a public key (Kp) given a private key value (Kv).
-* DH(Kv, Kp) -> Calculate a sequence of bytes of length KL, given a local DH private key and a remotely supplied public key.
+* GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public key.
+* DH(key_pair, public_key) -> Given a local key pair and remotely supplied public key, calculate a sequence of bytes of length DHKL.
+
+### Hash Functions
+
+SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf). SHA512 and/or hash function from the BLAKE family will likely be supported in the future. The hash function serves two roles:
+
+* Maintain a hash of all data sent and received during the key negotiation sequence. This running hash is then incorporated into the authentication signatures and makes any tampering of handshake data detectable.
+
+* Used as a sub-function of HMAC to produce authentication tags and derive session keys.
+
+| Hash Function       | Hash Length (HL)   |
+| --------------------|--------------------|
+| SHA256              |  32                |
+
+### Hashed Message authentication Code (HMAC)
+
+HMAC provides produces an authentication tag given a shared symmetric key and an input message. It is described in [RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
+
+HMAC(private key, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
 
 ### CSPRNG
 
-A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of DH private keys. Any secure RNG will do, put implementers should err on the side of caution and select one from a proven library.
+A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral private keys. Any secure RNG will do, put implementers should err on the side of caution and select one from a proven library.
 
 ## Message types
 
