@@ -182,6 +182,7 @@ The frames consist of the following fields. All multi-byte integer fields are en
 
 [ start ][ destination ][ source ][ length ][ payload ... ][ CRC ]
 
+
 ```
 
 The minimum size of a link layer frame is 12 bytes, consisting of the start, length, destination, source, no payload bytes, and the CRC.
