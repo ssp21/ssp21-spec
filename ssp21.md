@@ -178,7 +178,9 @@ The link layer provides three features: framing, addressing, and error-detection
 
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency with the Noise specification and the cryptographic layer.
 
+```
 [ **start** ][ **destination** ][ **source** ][ **length** ][ **payload** ... ][ **CRC** ]
+```
 
 The minimum size of a link layer frame is 12 bytes, consisting of the start, length, destination, source, no payload bytes, and the CRC.
 
@@ -203,7 +205,7 @@ Modifications to Noise include:
 * Definitions for handshake payload data including relative time bases and certificate formats
 * Static public keys are always transmitted as part of a certificate
 
-## cryptographic Algorithms
+## Algorithms
 
 SSP21 uses a number of cryptographic algorithms. They are described here within the context of the functionality they provide. SSP21 initially specifies a smaller subset of algorithms available in Noise.
 
@@ -254,3 +256,49 @@ Every message at the cryptographic layer begins with a one octet message type id
 | 3        | O_CONF_HANDSHAKE       | Outstation confirms the completion of the handshake                            |
 | 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
 | 5        | UNCONF_SESSION_DATA    | Either party transmits unconfirmed session data                                |
+
+## Key Negotiation Handshake
+
+Key negotiation in SSP21 authenticates each party to the other and derives a common pair of symmetric keys that can be used to negotiate a session. A success handshake involves the exchange of the following four messages:
+
+
+```
+Master                  Outstation
+
+-------- M_INIT_HANDSHAKE -------->
+
+<------- O_AUTH_HANDSHAKE ---------
+
+-------- M_AUTH_HANDSHAKE -------->
+
+<------- O_CONF_HANDSHAKE ---------
+
+```
+
+The outstation may signal an error after M_INIT_HANDSHAKE:
+
+```
+Master                  Outstation
+
+-------- M_INIT_HANDSHAKE -------->
+
+<------- O_ERR_HANDSHAKE ----------
+```
+
+The outstation could also indicate an error in M_AUTH_HANDSHAKE:
+
+```
+Master                  Outstation
+
+-------- M_INIT_HANDSHAKE -------->
+
+<------- O_AUTH_HANDSHAKE ---------
+
+-------- M_AUTH_HANDSHAKE -------->
+
+<------- O_ERR_HANDSHAKE ----------
+
+Outstation signals a problem with the master authentication message
+```
+
+The details of each message type are presented in the following subsections.
