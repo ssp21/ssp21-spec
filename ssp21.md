@@ -263,7 +263,6 @@ Key negotiation in SSP21 authenticates each party to the other and derives a com
 
 
 ```
-Master                  Outstation
 
 -------- M_INIT_HANDSHAKE -------->
 
@@ -278,8 +277,6 @@ Master                  Outstation
 The outstation may signal an error after M_INIT_HANDSHAKE:
 
 ```
-Master                  Outstation
-
 -------- M_INIT_HANDSHAKE -------->
 
 <------- O_ERR_HANDSHAKE ----------
@@ -288,8 +285,6 @@ Master                  Outstation
 The outstation could also indicate an error in M_AUTH_HANDSHAKE:
 
 ```
-Master                  Outstation
-
 -------- M_INIT_HANDSHAKE -------->
 
 <------- O_AUTH_HANDSHAKE ---------
@@ -298,7 +293,6 @@ Master                  Outstation
 
 <------- O_ERR_HANDSHAKE ----------
 
-Outstation signals a problem with the master authentication message
 ```
 
 The details of each message type are presented in the following subsections.
