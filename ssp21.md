@@ -179,7 +179,9 @@ The link layer provides three features: framing, addressing, and error-detection
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency with the Noise specification and the cryptographic layer.
 
 ```
+
 [ start ][ destination ][ source ][ length ][ payload ... ][ CRC ]
+
 ```
 
 The minimum size of a link layer frame is 12 bytes, consisting of the start, length, destination, source, no payload bytes, and the CRC.
