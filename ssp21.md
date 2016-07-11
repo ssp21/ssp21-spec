@@ -192,7 +192,7 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, len
 
 **CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value.
 
-# Cryptographic Layer (Noise Derivative)
+# Cryptographic Layer
 
 The cryptographic layer is derived with only minor modifications from [Noise](noiseprotocol.org/), a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self contained; reading the Noise specification is not required to understand or implement SSP21.
 
