@@ -212,7 +212,11 @@ Modifications to Noise include:
 
 SSP21 uses a number of cryptographic algorithms. They are described here within the context of the functionality they provide. SSP21 initially specifies a smaller subset of algorithms available in Noise.
 
-### Diffe Helman (DH) functions
+The following notation will be used in algorithm pseudo-code:
+* The _||_ operator denotes the concatenation of two byte sequences.
+
+
+### Diffie Helman (DH) functions
 
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
 
@@ -242,6 +246,23 @@ SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.
 HMAC provides produces an authentication tag given a shared symmetric key and an input message. It is described in [RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
 HMAC(private key, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
+
+### Cipher Functions
+
+SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic and the key negotiation data as supported by Noise. The initial version of the specification, however, shall only support HMAC based authentication. Throughout the rest of the document it is assumed that the functions _Encrypt_ and _Decrypt_ are synonymous with _Sign_ or _Verify_ respectively when an authentication-only cipher mode is specified. Noise defines the following abstract AEAD Cipher functions.
+
+* __ENCRYPT(k, n, ad, plaintext)__: Encrypts _plaintext_ using the 32-byte key (_k_) and an unsigned 8-byte nonce (_n_) which must be unique for the key (_k_). Returns the ciphertext.  Encryption is performed using an AEAD encryption mode with the associated data (_ad_). The returned ciphertext is the same size as the plaintext plus 16 bytes for an authentication tag.
+
+* __DECRYPT(k, n, ad, ciphertext)__: Decrypts _ciphertext_ using 32-byte key (_k_), and 8-byte nonce (_n_), and associated data (_ad_). Returns the plaintext if authentications succeeds, otherwise it signals an error in the event of authentication failure.
+
+To support authentication-only modes, SSP21 redefines _Encrypt_ and _Decrypt_ as _Sign_ and _Verify_ in terms of HMAC over the same set of fields. The _message_ input to the HMAC calculation is defined as a concatenation of the 8-byte nonce (_n_), the 1-byte length of the associated data (_len(ad)_) for domain separation, the associated data (_ad_), and the plaintext:
+
+_message_ = plaintext || len(ad) || ad || plaintext
+
+* __SIGN(k, n, ad, plaintext)__:  Calculates the HMAC tag based on the message definition above and appends it to the plaintext.
+
+* __VERIFY(k, n, ad, ciphertext)__: Interprets the ciphertext argument as a concatenation of the plaintext and the HMAC tag. Calculates the correct HMAC tag according to the message definition above. Uses a constant-time comparison algorithm to
+check the input and calculated tag values for equality. Returns the plaintext if authentication succeeds, otherwise signals an error in the event of authentication failure.
 
 ### CSPRNG
 
@@ -310,4 +331,18 @@ Master                    Outstation
 
 ```
 
-The details of each message type are presented in the following subsections.
+### Security Variables
+
+A number of security variables are maintained during the key negotiation handshake and during active sessions.
+These variables and the routines that operate on them are slightly modified from their definitions in Noise. The
+high-level objected-oriented definitions in Noise are reused here as they provide useful clues to
+implementers for organizing data structures and functions the operate on them.
+
+#### CipherState ####
+
+A _CipherState_ can sign/verify or encrypt/decrypt a message based on _k_ and _n_ variables.
+
+* __k__: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
+is used in HMAC calculations.
+
+* __n__: A 4-byte (32-bit) unsigned integer nonce.
