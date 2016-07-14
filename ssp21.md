@@ -266,7 +266,7 @@ check the input and calculated tag values for equality. Returns the plaintext if
 
 ### CSPRNG
 
-A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral private keys. Any secure RNG will do, put implementers should err on the side of caution and select one from a proven library.
+A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral private keys. Any secure RNG will do, put implementers should err on the side of caution and prefer one from a proven library.
 
 ## Message types
 
