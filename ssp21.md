@@ -205,7 +205,7 @@ Modifications to Noise include:
 
 * Modifying Noise to support authentication only (handshake and session)
 * Message identifiers to make session renegotiation possible on serial networks
-* Initiator-specified cipher suites to allow masters to specify the primitives used in a
+* Initiator-specified cipher suites to allow masters to specify the primitives used in a session
 * Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
 * Static public keys are always transmitted as part of a certificate
@@ -255,8 +255,8 @@ Every message at the cryptographic layer begins with a one octet message type id
 
 | ID       | Name                   | Function summary                                                               |
 | ---------|------------------------|--------------------------------------------------------------------------------|
-| 0        | M_INIT_HANDSHAKE       | Master initiates the process of (re) negotiating session keys                  |
-| 1        | O_AUTH_HANDSHAKE       | Outstation authenticates to INIT_HANDSHAKE                                     |
+| 0        | M_INIT_HANDSHAKE       | Master initiates the process of (re)negotiating session keys                   |
+| 1        | O_AUTH_HANDSHAKE       | Outstation authenticates to M_INIT_HANDSHAKE                                   |
 | 2        | M_AUTH_HANDSHAKE       | Master authenticates to O_AUTH_HANDSHAKE                                       |
 | 3        | O_CONF_HANDSHAKE       | Outstation confirms the completion of the handshake                            |
 | 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
