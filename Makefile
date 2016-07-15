@@ -14,6 +14,7 @@ ssp21.pdf: ssp21.md template_pandoc.latex Makefile
 	        -f markdown+yaml_metadata_block+startnum \
 		--filter pandoc-fignos \
 		--template template_pandoc.latex \
+		-V colorlinks \
 		-o ssp21.pdf
 
 clean:
