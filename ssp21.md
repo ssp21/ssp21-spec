@@ -216,7 +216,7 @@ SSP21 uses a number of cryptographic algorithms. They are described here within 
 
 The following notation will be used in algorithm pseudo-code:
 
-* The _||_ operator denotes the concatenation of two byte sequences.
+* The __||__ operator denotes the concatenation of two byte sequences.
 
 
 ### Diffie Helman (DH) functions
