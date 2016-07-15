@@ -215,6 +215,7 @@ Modifications to Noise include:
 SSP21 uses a number of cryptographic algorithms. They are described here within the context of the functionality they provide. SSP21 initially specifies a smaller subset of algorithms available in Noise.
 
 The following notation will be used in algorithm pseudo-code:
+
 * The _||_ operator denotes the concatenation of two byte sequences.
 
 
