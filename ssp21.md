@@ -199,7 +199,7 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, des
 
 # Cryptographic Layer
 
-The cryptographic layer is derived with only minor modifications from [Noise](noiseprotocol.org/), a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self contained; reading the Noise specification is not required to understand or implement SSP21.
+The cryptographic layer is derived with only minor modifications from [Noise](http://noiseprotocol.org), a self-described framework for building cryptographic protocols. This specification picks from all the available options and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self contained; reading the Noise specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
