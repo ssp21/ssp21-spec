@@ -205,7 +205,7 @@ Modifications to Noise include:
 
 * Modifying Noise to support authentication only (handshake and session)
 * Message identifiers to make session renegotiation possible on serial networks
-* Initiator-specified cipher suites to allow masters to specify the primitives used in a session
+* Initiator-specified cipher suites to allow masters to specify sets of cryptographic algorithms
 * Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
 * Static public keys are always transmitted as part of a certificate
