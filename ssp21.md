@@ -147,12 +147,12 @@ The web portal would likely be secured using a commodity TLS certificate and the
 * An editable set of field assets that will require enrollment.
 * A set of users
 * A set of permissions for the users (user editing, key generation by asset, etc).
-* Properly hashed/salted passwords for the set of users that follow a strong password policy <!--- I don't see why the authority database would have a password for the user: I would expect the user to be authenticated through an LDAP or similar mechanism and have the appropriate access to the database, which would only need to contain information necessary to audit enrollment and the data for the device. -->.
+* Properly hashed/salted passwords for the set of users that follow a strong password policy <!--- rlc: I don't see why the authority database would have a password for the user: I would expect the user to be authenticated through an LDAP or similar mechanism and have the appropriate access to the database, which would only need to contain information necessary to audit enrollment and the data for the device. -->.
 * A system for 2-factor authentication of the users like a key token.
 
 The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key. Outstation certificates will be very long lived, likely for the lifetime of the equipment. A cryptographic break in the algorithm underlying the certificate signature will require that a new certificate be installed, so this algorithm should be chosen prudently.
 
-It's important to note that while the authority could be a standalone application with its own complete database of outstations, masters, and users, it might also leverage data available in other systems. For instance, an LDAP server or other enterprise identity system could be used to establish the identity and permissions of users <!--- This should be the default way of doing things. The alternative above could be proposed as an alternative (i.e. invert places with here) but the default suggestion should be for the authority to only manage devices. -->. The authority might also be capable of keeping its database of outstations in the system synchronized with a utility EMS.
+It's important to note that while the authority could be a standalone application with its own complete database of outstations, masters, and users, it might also leverage data available in other systems. For instance, an LDAP server or other enterprise identity system could be used to establish the identity and permissions of users <!--- rlc: This should be the default way of doing things. The alternative above could be proposed as an alternative (i.e. invert places with here) but the default suggestion should be for the authority to only manage devices. -->. The authority might also be capable of keeping its database of outstations in the system synchronized with a utility EMS.
 
 Allowing system administrators to pre-configure which users can generate certificates for which outstations and providing access to this part of the authority through proper safeguards will substantially streamline the process of enrollment and reduce the extent to which adding security impacts operations. The portal approach also limits direct access to signing keys and provides a central point for creating an audit trail regarding certificate generation.
 
@@ -168,7 +168,7 @@ The compromise of a master private key is a significant security event, since th
 
 The communication link between the authority and the masters can be secured using a separate, more-traditional PKI. Since the number of masters in the system is low, it could even use pairs of self-signed certificates where the authority has the public key of every master it needs to authorize. This public key would be used to authenticate the certificate sign request for the certificate to be used to authenticate the master to the outstation.
 
-Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be sufficient and would allow NSM tools to continuously inspect and monitor this traffic. <!--- While this is true, I see no reason to mention it if we assume the master has a fast internet connection and sufficient processing power to do the necessary encryption (which should normally be the case). -->
+Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be sufficient and would allow NSM tools to continuously inspect and monitor this traffic. <!--- rlc: While this is true, I see no reason to mention it if we assume the master has a fast internet connection and sufficient processing power to do the necessary encryption (which should normally be the case). -->
 
 # The Link Layer
 
@@ -195,7 +195,7 @@ The minimum size of a link layer frame is 12 bytes, consisting of the start, des
 
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices shall not do any further processing of frames with an unknown destination address.
 
-**CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value. <!--- Ethernet assumes relatively noise-free lines - it only has a hamming distance of four for maximum-sized (1500 byte) frames. As this protocol is likely to be used on serial lines, and possibly very noisy ones, I would recommend using a link layer design that has stood the test of time on noisy serial lines - i.e. the one in DNP3. We need not support link-layer confirmation, but its error detection is very good. The only downside is the associated overhead... -->
+**CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet CRC32 algorithm is used to calculate this value. <!--- rlc: Ethernet assumes relatively noise-free lines - it only has a hamming distance of four for maximum-sized (1500 byte) frames. As this protocol is likely to be used on serial lines, and possibly very noisy ones, I would recommend using a link layer design that has stood the test of time on noisy serial lines - i.e. the one in DNP3. We need not support link-layer confirmation, but its error detection is very good. The only downside is the associated overhead... -->
 
 # Cryptographic Layer
 
@@ -259,7 +259,7 @@ SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic 
 
 To support authentication-only modes, SSP21 redefines _Encrypt_ and _Decrypt_ as _Sign_ and _Verify_ in terms of HMAC over the same set of fields. The _message_ input to the HMAC calculation is defined as a concatenation of the 8-byte nonce (_n_), the 1-byte length of the associated data (_len(ad)_) for domain separation, the associated data (_ad_), and the plaintext:
 
-_message_ = plaintext || len(ad) || ad || plaintext
+_message_ = n || len(ad) || ad || plaintext
 
 * __SIGN(k, n, ad, plaintext)__:  Calculates the HMAC tag based on the message definition above and appends it to the plaintext.
 
