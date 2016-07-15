@@ -142,13 +142,13 @@ Creating and signing certificates is one of the primary roles of the authority. 
 
 There are far more outstations in any given SCADA system than the number of masters. Such a statement might seem trivial, however, it is an important insight into how the process of enrollment needs to be streamlined for large systems. In such systems, the authority is envisioned to have a hardened web portal accessible from the corporate LAN. This level of access allows authorized personnel to reach the portal using cellular IP technologies and a VPN.
 
-The web portal would likely be secured using a commodity TLS certificate and the users authenticated using strong passwords and a second factor like a rotating key fob<!--- not an acrony, so lowercase letters - perhaps ``token'' would be a better word? -->. The authority itself would likely reside in the DMZ, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
+The web portal would likely be secured using a commodity TLS certificate and the users authenticated using strong passwords and a second factor like a security token. The authority itself would likely reside in the DMZ, thus proper procedures will need to be followed to provide this access. Prior to commissioning a new field asset, a privileged user would grant the user commissioning the field asset the permission to generate a certificate for the asset. Thus the authority would maintain a database of a few items:
 
 * An editable set of field assets that will require enrollment.
 * A set of users
 * A set of permissions for the users (user editing, key generation by asset, etc).
 * Properly hashed/salted passwords for the set of users that follow a strong password policy <!--- I don't see why the authority database would have a password for the user: I would expect the user to be authenticated through an LDAP or similar mechanism and have the appropriate access to the database, which would only need to contain information necessary to audit enrollment and the data for the device. -->.
-* A system for 2-factor authentication of the users like a key fob.
+* A system for 2-factor authentication of the users like a key token.
 
 The database will already be configured by the system administrator with all of the authorized metadata for each certificate in question. The only piece of information the person generating the outstation certificate needs to provide once properly logged in is the outstation public key. Outstation certificates will be very long lived, likely for the lifetime of the equipment. A cryptographic break in the algorithm underlying the certificate signature will require that a new certificate be installed, so this algorithm should be chosen prudently.
 
