@@ -9,7 +9,7 @@ The specification is based on [pandoc](http://pandoc.org/). The included Makefil
 # Setup
 
 ```
-> sudo apt-get install pandoc texlive texlive-latex-base texlive-fonts-recommended lmodern python-pip
+> sudo apt-get install pandoc texlive texlive-latex-base texlive-fonts-recommended lmodern python-dev python-pip 
 > pip install pandoc-fignos
 ```
 Depending on your setup of Python, you may need to add `~/.local/bin` to your path.
