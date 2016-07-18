@@ -343,9 +343,20 @@ implementers for organizing data structures and functions the operate on them.
 
 #### CipherState ####
 
-A _CipherState_ can sign/verify or encrypt/decrypt a message based on _k_ and _n_ variables.
+A _CipherState_ can sign/verify or encrypt/decrypt a message based on variables  __k__ and __n__.
 
 * __k__: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
 is used in HMAC calculations.
 
 * __n__: A 4-byte (32-bit) unsigned integer nonce.
+
+The following methods will be associated with _CipherState_.  The post-increment operator (_++_) applied to _n_ returns the
+current value of the nonce and then increments it. The maximum value of 2^64 - 1 is reserved for future use and shall not be used. If incrementing the nonce results in the maximum value, any further _EncryptWithAd()_ or _DecryptWithAd()_ calls will signal an error.
+
+* __InitializeKey(key)__: Sets _k_ = key, and sets _n_ = 0.
+
+* __HasKey()__: Returns true if _k_ is non-empty, false otherwise.
+
+* __EncryptWithAd(ad, plaintext)__: If _k_ is non-empty returns _ENCRYPT(k, n++, ad, plaintext)_, otherwise signals an error to the caller.
+
+* __DecryptWithAd(ad, ciphertext)__: If _k_ is empty, signals an error to the caller. Otherwise it attempts decryption by calling _DECRYPT(k, n++, ad, plaintext)_. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
