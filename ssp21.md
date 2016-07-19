@@ -217,20 +217,21 @@ SSP21 uses a number of cryptographic algorithms. They are described here within 
 The following notation will be used in algorithm pseudo-code:
 
 * The __||__ operator denotes the concatenation of two byte sequences.
+* The __byte()__ function constructs a byte sequence consisting of a single byte.
 
 
 ### Diffie Helman (DH) functions
 
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
 
-| DH Curve       | key length (DHKL)      |
+| DH Curve       | length (_DHLEN_)       |
 | ---------------|------------------------|
 | Curve22519     | 32                     |
 
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public key.
-* DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of length DHKL.
+* DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of length _DHLEN_.
 
 ### Hash Functions
 
@@ -240,7 +241,7 @@ SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.
 
 * Used as a sub-function of HMAC to produce authentication tags and derive session keys.
 
-| Hash Function       | Hash Length (HL)   |
+| Hash Function       | Hash Length (_HASHLEN_) |
 | --------------------|--------------------|
 | SHA256              |  32                |
 
@@ -249,6 +250,17 @@ SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.
 HMAC provides produces an authentication tag given a shared symmetric key and an input message. It is described in [RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
 HMAC(private key, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
+
+### HKDF
+
+SSP21 uses the same hashed key derivation function (_HKDF_) defined in Noise.
+
+* __`HKDF(chaining_key, input_key_material)`__: Takes a `chaining_key` byte sequence of length _HASHLEN_ and an _input_key_material_ byte sequence with length either zero bytes, 32 bytes, or _DHLEN_ bytes. Returns two byte sequences of length _HASHLEN_ as follows:
+
+  * Sets _temp_key = HMAC(chaining_key, input_key_material)_.
+  * Sets _output1 = HMAC(temp_key, byte(0x01))_.
+  * Sets _output2 = HMAC(temp_key, output1 || byte(0x02))_.
+  * Returns the pair _(output1, output2)_.
 
 ### Cipher Functions
 
@@ -266,6 +278,7 @@ _message_ = n || len(ad) || ad || plaintext
 
 * __VERIFY(k, n, ad, ciphertext)__: Interprets the ciphertext argument as a concatenation of the plaintext and the HMAC tag. Calculates the correct HMAC tag according to the message definition above. Uses a constant-time comparison algorithm to
 check the input and calculated tag values for equality. Returns the plaintext if authentication succeeds, otherwise signals an error in the event of authentication failure.
+
 
 ### CSPRNG
 
@@ -343,7 +356,7 @@ implementers for organizing data structures and functions the operate on them.
 
 #### CipherState ####
 
-A _CipherState_ can sign/verify or encrypt/decrypt a message based on variables  __k__ and __n__.
+A _CipherState_ can sign/verify or encrypt/decrypt a message based on the following variables:
 
 * __k__: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
 is used in HMAC calculations.
@@ -360,3 +373,23 @@ current value of the nonce and then increments it. The maximum value of 2^64 - 1
 * __EncryptWithAd(ad, plaintext)__: If _k_ is non-empty returns _ENCRYPT(k, n++, ad, plaintext)_, otherwise signals an error to the caller.
 
 * __DecryptWithAd(ad, ciphertext)__: If _k_ is empty, signals an error to the caller. Otherwise it attempts decryption by calling _DECRYPT(k, n++, ad, plaintext)_. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
+
+#### Symmetric State
+
+A _SymmetricState_ object contains a _CipherState_ plus the following variables:
+
+* __ck__: A chaining key of _HASHLEN_ bytes.
+
+* _h_: A hash output of _HASHLEN_ bytes.
+
+The following methods will be associated with _SymmetricState_:
+
+* __InitializeSymmetric()__:
+
+  * Sets h equal to all zeros. <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since all the fixed Noise patterns would produce a deterministic hash value anyway -->
+
+  * Sets _ck_ = _h_.
+
+  * Calls _InitializeKey(empty)_.
+
+* __MixKey()
