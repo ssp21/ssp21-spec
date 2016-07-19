@@ -203,6 +203,7 @@ The cryptographic layer is derived with only minor modifications from [Noise](ht
 
 Modifications to Noise include:
 
+* A single handshake pattern is used, therefore the concept of handshake patterns have been removed entirely.
 * Modifying Noise to support authentication only (handshake and session)
 * Message identifiers to make session renegotiation possible on serial networks
 * Initiator-specified cipher suites to allow masters to specify sets of cryptographic algorithms
@@ -255,7 +256,7 @@ HMAC(private key, message) - Calculate an authentication tag from an arbitrary l
 
 SSP21 uses the same hashed key derivation function (_HKDF_) defined in Noise.
 
-* `HKDF(chaining_key, input_key_material)`: Takes a `chaining_key` byte sequence of length _HASHLEN_ and an _input_key_material_ byte sequence with length either zero bytes, 32 bytes, or _DHLEN_ bytes. Returns two byte sequences of length _HASHLEN_ as follows:
+* _HKDF(chaining_key, input_key_material)_: Takes a *chaining_key* byte sequence of length _HASHLEN_ and an _input_key_material_ byte sequence with length either zero bytes, 32 bytes, or _DHLEN_ bytes. Returns two byte sequences of length _HASHLEN_ as follows:
 
   * Sets _temp_key = HMAC(chaining_key, input_key_material)_.
   * Sets _output1 = HMAC(temp_key, byte(0x01))_.
