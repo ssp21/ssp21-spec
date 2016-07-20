@@ -385,12 +385,12 @@ A _SymmetricState_ object contains a _CipherState_ plus the following variables:
 
 The following methods will be associated with _SymmetricState_:
 
-* __InitializeSymmetric()__:
+* __Initialize()__:
+    * Sets h equal to all zeros. <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since all the fixed Noise patterns would produce a deterministic hash value anyway -->
+    * Sets _ck_ = _h_.
+    * Calls _InitializeKey(empty)_.
 
-  * Sets h equal to all zeros. <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since all the fixed Noise patterns would produce a deterministic hash value anyway -->
-
-  * Sets _ck_ = _h_.
-
-  * Calls _InitializeKey(empty)_.
-
-* __MixKey()
+* __MixKey(input_key_material)__:
+    * Sets *ck*, *temp_k* = *HKDF(ck, input_key_material)*.
+    * If _HASHLEN_ is 64, then truncates _temp_k_ to 32 bytes.
+    * Calls *InitializeKey(temp_k)*.
