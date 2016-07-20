@@ -377,20 +377,22 @@ current value of the nonce and then increments it. The maximum value of 2^64 - 1
 
 #### Symmetric State
 
-A _SymmetricState_ object contains a _CipherState_ plus the following variables:
+A *SymmetricState* object contains a *CipherState* plus the following variables:
 
-* __ck__: A chaining key of _HASHLEN_ bytes.
+* **ck**: A chaining key of *HASHLEN* bytes.
 
-* _h_: A hash output of _HASHLEN_ bytes.
+* **h**: A hash output of *HASHLEN* bytes.
 
-The following methods will be associated with _SymmetricState_:
+The following methods will be associated with *SymmetricState*:
 
-* __Initialize()__:
+* **Initialize()**:
     * Sets h equal to all zeros. <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since all the fixed Noise patterns would produce a deterministic hash value anyway -->
-    * Sets _ck_ = _h_.
-    * Calls _InitializeKey(empty)_.
+    * Sets *ck* = *h*.
+    * Calls *InitializeKey(empty)*.
 
-* __MixKey(input_key_material)__:
+* **MixKey(input_key_material)**:
     * Sets *ck*, *temp_k* = *HKDF(ck, input_key_material)*.
-    * If _HASHLEN_ is 64, then truncates _temp_k_ to 32 bytes.
+    * If *HASHLEN* is 64, then truncates *temp_k* to 32 bytes.
     * Calls *InitializeKey(temp_k)*.
+
+*
