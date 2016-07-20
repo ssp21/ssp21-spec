@@ -221,7 +221,7 @@ The following notation will be used in algorithm pseudo-code:
 * The __byte()__ function constructs a byte sequence consisting of a single byte.
 
 
-### Diffie Helman (DH) functions
+### Diffie Hellman (DH) functions
 
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
 
