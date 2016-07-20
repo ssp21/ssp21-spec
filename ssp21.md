@@ -78,7 +78,7 @@ Requiring a BitW implementation only for outstations and not masters, simplifies
 
 Supporting multi-drop serial means that frames must be addressed in some manner. SSP21 will use 16-bit addressing as this accommodates the addressing scheme used for common existing SCADA protocols. SSP21 will have its own delimiters or length fields, and will use some type of non-cryptographic error detection so that environmental noise is probabilistically filtered out at a level below cryptographic checks for deliberate tampering.
 
-For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations and replaced with alternate SSP21 crypto and framing layer. SSP21 could also fully wrap the existing protocols, but removing redundancy in certain implementations could provide significant bandwidth savings.
+For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing redundancy in certain implementations could provide significant bandwidth savings.
 
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot squelch a reply from a remote by inappropriately using the channel.
 
@@ -86,7 +86,7 @@ Out-of-band messages like session key establishment, heartbeats, etc. can only b
 
 Security is not a zero-cost protocol feature. Inevitably adding a security sub-layer will require more bandwidth, increase latency, and put a computational burden on endpoints. SSP21 will endeavor to minimize these overheads.
 
-* **reduced latency** – BitS implementations have a significant advantage in this regard over BitW. HMAC holdback can double latencies in BitW integrations as the entire packet must be received and verified before the first payload byte can be emitted. Some tricks could be played with asymmetric baud rates to minimize this effect. MAC algorithms should be used for which hardware acceleration exists.
+* **reduced latency** – BitS implementations have a significant advantage in this regard over BitW. HMAC hold back can double latencies in BitW integrations as the entire packet must be received and verified before the first payload byte can be emitted. Some tricks could be played with asymmetric baud rates to minimize this effect. MAC algorithms should be used for which hardware acceleration exists.
 
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per NIST guidelines) to reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
 
@@ -217,8 +217,8 @@ SSP21 uses a number of cryptographic algorithms. They are described here within 
 
 The following notation will be used in algorithm pseudo-code:
 
-* The __||__ operator denotes the concatenation of two byte sequences.
-* The __byte()__ function constructs a byte sequence consisting of a single byte.
+* The **||** operator denotes the concatenation of two byte sequences.
+* The **byte()** function constructs a byte sequence consisting of a single byte.
 
 
 ### Diffie Hellman (DH) functions
@@ -242,9 +242,9 @@ SSP21 currently only supports SHA256 described in [FIPS 190-4](http://csrc.nist.
 
 * Used as a sub-function of HMAC to produce authentication tags and derive session keys.
 
-| Hash Function       | Hash Length (_HASHLEN_) |
-| --------------------|--------------------|
-| SHA256              |  32                |
+| Hash Function       | Hash Length (*HASHLEN*) |
+| --------------------|-------------------------|
+| SHA256              |  32                     |
 
 ### Hashed Message Authentication Code (HMAC)
 
@@ -254,30 +254,30 @@ HMAC(private key, message) - Calculate an authentication tag from an arbitrary l
 
 ### HKDF
 
-SSP21 uses the same hashed key derivation function (_HKDF_) defined in Noise.
+SSP21 uses the same hashed key derivation function (*HKDF*) defined in Noise.
 
-* _HKDF(chaining_key, input_key_material)_: Takes a *chaining_key* byte sequence of length _HASHLEN_ and an _input_key_material_ byte sequence with length either zero bytes, 32 bytes, or _DHLEN_ bytes. Returns two byte sequences of length _HASHLEN_ as follows:
+* *HKDF(chaining_key, input_key_material)*: Takes a *chaining_key* byte sequence of length *HASHLEN* and an *input_key_material* byte sequence with length either zero bytes, 32 bytes, or *DHLEN* bytes. Returns two byte sequences of length *HASHLEN* as follows:
 
-  * Sets _temp_key = HMAC(chaining_key, input_key_material)_.
-  * Sets _output1 = HMAC(temp_key, byte(0x01))_.
-  * Sets _output2 = HMAC(temp_key, output1 || byte(0x02))_.
-  * Returns the pair _(output1, output2)_.
+  * Sets *temp_key* = *HMAC(chaining_key, input_key_material)*.
+  * Sets *key1* = *HMAC(temp_key, byte(0x01))*.
+  * Sets *key2* = *HMAC(temp_key, output1 || byte(0x02))*.
+  * Returns the pair of keys *(key1, key2)*.
 
 ### Cipher Functions
 
-SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic and the key negotiation data as supported by Noise. The initial version of the specification, however, shall only support HMAC based authentication. Throughout the rest of the document it is assumed that the functions _Encrypt_ and _Decrypt_ are synonymous with _Sign_ or _Verify_ respectively when an authentication-only cipher mode is specified. Noise defines the following abstract AEAD Cipher functions.
+SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic and the key negotiation data as supported by Noise. The initial version of the specification, however, shall only support HMAC based authentication. Throughout the rest of the document it is assumed that the functions *Encrypt* and *Decrypt* are synonymous with *Sign* or *Verify* respectively when an authentication-only cipher mode is specified. Noise defines the following abstract AEAD Cipher functions.
 
-* __ENCRYPT(k, n, ad, plaintext)__: Encrypts _plaintext_ using the 32-byte key (_k_) and an unsigned 8-byte nonce (_n_) which must be unique for the key (_k_). Returns the ciphertext.  Encryption is performed using an AEAD encryption mode with the associated data (_ad_). The returned ciphertext is the same size as the plaintext plus 16 bytes for an authentication tag.
+* **ENCRYPT(k, n, ad, plaintext)**: Encrypts *plaintext* using the 32-byte key (*k*) and an unsigned 8-byte nonce (*n*) which must be unique for the key (*k*). Returns the ciphertext.  Encryption is performed using an AEAD encryption mode with the associated data (*ad*). The returned ciphertext is the same size as the plaintext plus 16 bytes for an authentication tag.
 
-* __DECRYPT(k, n, ad, ciphertext)__: Decrypts _ciphertext_ using 32-byte key (_k_), and 8-byte nonce (_n_), and associated data (_ad_). Returns the plaintext if authentications succeeds, otherwise it signals an error in the event of authentication failure.
+* **DECRYPT(k, n, ad, ciphertext)**: Decrypts *ciphertext* using 32-byte key (*k*), and 8-byte nonce (*n*), and associated data (*ad*). Returns the plaintext if authentications succeeds, otherwise it signals an error in the event of authentication failure.
 
-To support authentication-only modes, SSP21 redefines _Encrypt_ and _Decrypt_ as _Sign_ and _Verify_ in terms of HMAC over the same set of fields. The _message_ input to the HMAC calculation is defined as a concatenation of the 8-byte nonce (_n_), the 1-byte length of the associated data (_len(ad)_) for domain separation, the associated data (_ad_), and the plaintext:
+To support authentication-only modes, SSP21 redefines *Encrypt* and *Decrypt* as *Sign* and *Verify* in terms of HMAC over the same set of fields. The *message* input to the HMAC calculation is defined as a concatenation of the 8-byte nonce (*n*), the 1-byte length of the associated data (*len(ad)*) for domain separation, the associated data (*ad*), and the plaintext:
 
-_message_ = n || len(ad) || ad || plaintext
+*message* = *n* || *len(ad)* || *ad* || *plaintext*
 
-* __SIGN(k, n, ad, plaintext)__:  Calculates the HMAC tag based on the message definition above and appends it to the plaintext.
+* **SIGN(k, n, ad, plaintext)**:  Calculates the HMAC tag based on the message definition above and appends it to the plaintext.
 
-* __VERIFY(k, n, ad, ciphertext)__: Interprets the ciphertext argument as a concatenation of the plaintext and the HMAC tag. Calculates the correct HMAC tag according to the message definition above. Uses a constant-time comparison algorithm to
+* **VERIFY(k, n, ad, ciphertext)**: Interprets the ciphertext argument as a concatenation of the plaintext and the HMAC tag. Calculates the correct HMAC tag according to the message definition above. Uses a constant-time comparison algorithm to
 check the input and calculated tag values for equality. Returns the plaintext if authentication succeeds, otherwise signals an error in the event of authentication failure.
 
 
@@ -357,23 +357,23 @@ implementers for organizing data structures and functions the operate on them.
 
 #### CipherState ####
 
-A _CipherState_ can sign/verify or encrypt/decrypt a message based on the following variables:
+A *CipherState* can sign/verify or encrypt/decrypt a message based on the following variables:
 
-* __k__: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
+* **k**: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
 is used in HMAC calculations.
 
-* __n__: A 4-byte (32-bit) unsigned integer nonce.
+* **n**: A 4-byte (32-bit) unsigned integer nonce.
 
-The following methods will be associated with _CipherState_.  The post-increment operator (_++_) applied to _n_ returns the
-current value of the nonce and then increments it. The maximum value of 2^64 - 1 is reserved for future use and shall not be used. If incrementing the nonce results in the maximum value, any further _EncryptWithAd()_ or _DecryptWithAd()_ calls will signal an error.
+The following methods will be associated with *CipherState*.  The post-increment operator (*++*) applied to *n* returns the
+current value of the nonce and then increments it. The maximum value of 2^64 - 1 is reserved for future use and shall not be used. If incrementing the nonce results in the maximum value, any further *EncryptWithAd()* or *DecryptWithAd()* calls will signal an error.
 
-* __InitializeKey(key)__: Sets _k_ = key, and sets _n_ = 0.
+* **InitializeKey(key)**: Sets *k* = key, and sets *n* = 0.
 
-* __HasKey()__: Returns true if _k_ is non-empty, false otherwise.
+* **HasKey()**: Returns true if *k* is non-empty, false otherwise.
 
-* __EncryptWithAd(ad, plaintext)__: If _k_ is non-empty returns _ENCRYPT(k, n++, ad, plaintext)_, otherwise signals an error to the caller.
+* **EncryptWithAd(ad, plaintext)**: If *k* is non-empty returns *ENCRYPT(k, n++, ad, plaintext)*, otherwise signals an error to the caller.
 
-* __DecryptWithAd(ad, ciphertext)__: If _k_ is empty, signals an error to the caller. Otherwise it attempts decryption by calling _DECRYPT(k, n++, ad, plaintext)_. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
+* **DecryptWithAd(ad, ciphertext)**: If *k* is empty, signals an error to the caller. Otherwise it attempts decryption by calling *DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
 
 #### Symmetric State
 
