@@ -218,7 +218,8 @@ SSP21 uses a number of cryptographic algorithms. They are described here within 
 The following notation will be used in algorithm pseudo-code:
 
 * The **||** operator denotes the concatenation of two byte sequences.
-* The **byte()** function constructs a byte sequence consisting of a single byte.
+* The **[b1, b2, .. bn]** syntax denotes a, possibly empty, byte sequence.
+* The **len()** function returns the length of a byte sequence as a 4-byte unsigned big endian byte sequence.
 
 
 ### Diffie Hellman (DH) functions
@@ -259,8 +260,8 @@ SSP21 uses the same hashed key derivation function (*HKDF*) defined in Noise.
 * *HKDF(chaining_key, input_key_material)*: Takes a *chaining_key* byte sequence of length *HASHLEN* and an *input_key_material* byte sequence with length either zero bytes, 32 bytes, or *DHLEN* bytes. Returns two byte sequences of length *HASHLEN* as follows:
 
   * Sets *temp_key* = *HMAC(chaining_key, input_key_material)*.
-  * Sets *key1* = *HMAC(temp_key, byte(0x01))*.
-  * Sets *key2* = *HMAC(temp_key, output1 || byte(0x02))*.
+  * Sets *key1* = *HMAC(temp_key, [0x01])*.
+  * Sets *key2* = *HMAC(temp_key, output1 || [0x02])*.
   * Returns the pair of keys *(key1, key2)*.
 
 ### Cipher Functions
@@ -395,4 +396,24 @@ The following methods will be associated with *SymmetricState*:
     * If *HASHLEN* is 64, then truncates *temp_k* to 32 bytes.
     * Calls *InitializeKey(temp_k)*.
 
-*
+* **MixHash(data)**:
+    * Sets *h* = *HASH(h* || *data)*
+
+* **EncryptAndHash(plaintext)**:
+   * Sets *ciphertext = EncryptWithAd(h, plaintext)*.
+   * Calls *MixHash(ciphertext).
+   * returns *ciphertext*.
+   * Note: if *k* is *empty*, the *EncryptWithAd()* call will set *ciphertext* equal to  *plaintext*.
+
+* **DecryptAndHash(ciphertext)**:
+    * Sets *plaintext = DecryptWithAd(h, ciphertext)*
+    * calls *MixHash(ciphertext)*
+    * returns *plaintext*.
+    * Note that if *k* is *empty*, the *DecryptWithAd()* call will set *plaintext* equal to *ciphertext*.
+
+* **`Split()`**: Returns a pair of *CipherState* objects for encrypting transport messages.
+    * Sets *temp_k1, temp_k2* = *HKDF(ck, [])*.
+    * If *HASHLEN* is 64, then truncates *temp_k1* and *temp_k2* to 32 bytes.
+    * Creates two new *CipherState* objects *cs1* and *cs2*.
+    * Calls *cs1.InitializeKey(temp_k1)* and *cs2.InitializeKey(temp_k2)*.
+    * Returns the pair *(cs1, cs2)*.
