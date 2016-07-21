@@ -567,16 +567,16 @@ Despite the generality of the sequence definition over any type, in practice it 
 
 SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration:
       
- ```
- enum FUNCTION {
-   M_INIT_HANDSHAKE    : 0
-   O_AUTH_HANDSHAKE    : 1
-   M_AUTH_HANDSHAKE    : 2
-   O_CONF_HANDSHAKE    : 3
-   O_ERR_HANDSHAKE     : 4
-   UNCONF_SESSION_DATA : 5      
- }
- ```
+```
+enum FUNCTION {
+    M_INIT_HANDSHAKE    : 0
+    O_AUTH_HANDSHAKE    : 1
+    M_AUTH_HANDSHAKE    : 2
+    O_CONF_HANDSHAKE    : 3
+    O_ERR_HANDSHAKE     : 4
+    UNCONF_SESSION_DATA : 5      
+}
+```
 
 ##### M_INIT_HANDSHAKE
 
