@@ -420,3 +420,125 @@ The following methods will be associated with *SymmetricState*:
     * Creates two new *CipherState* objects *cs1* and *cs2*.
     * Calls *cs1.InitializeKey(temp_k1)* and *cs2.InitializeKey(temp_k2)*.
     * Returns the pair *(cs1, cs2)*.
+
+### Message Syntax
+
+SSP21 uses a lightweight structural syntax to define the contents of messages
+and to specify how the message shall be serialized. These definitions
+are meant to precisely define the contents of a message, however, they are not
+meant to be used by a compiler to automatically generate source code.
+
+Messages consist of the following structure:
+
+```
+message <message-name> {
+  <field1-name> : <field1-type>
+  <field2-name> : <field2-type>
+  ...
+  <field3-name> : <field3-type>
+}
+```
+
+The following basic types are defined. All multi-byte integers are serialized in big-endian format.
+
+* **U8** - 8-bit (1-byte) unsigned integer.
+* **U16** - 16-bit (2 byte) unsigned integer.
+* **U32** - 32-bit (4 byte) unsigned integer.
+
+The following example defines a message that provides counts of various types of flowers:
+
+```
+message FLOWERS {
+  num_roses : U8
+  num_violets : U16
+  num_petunias : U32
+}
+```
+
+The serialized size of a *flowers* message would always be 7 bytes 
+(sizeof(U8) + sizeof(U16) + sizeof(U32)).
+
+#### Enumerations
+
+Single byte enumerations are defined with the following syntax:
+
+```
+enum <enum-name> {
+  <name1> : <value1>
+  <name2> : <value2>
+  ...
+  <nameN> : <valueN>
+}
+```
+
+The following example defines an enumeration of 3 possible color values:
+
+```
+enum COLOR {
+  RED : 0
+  GREEN : 1
+  BLUE : 2
+}
+```
+
+Enumeration types can be referenced from within a message definition using the following notation:
+
+```
+message <message-name> {
+  <enum-field-name> : enum::<enum-name>
+}
+```
+
+Using the COLOR example above we could define a message that represents the intensity of a single color:
+
+```
+message INTENSITY {
+  color : enum::COLOR
+  value : U8
+}
+```
+
+Message definitions can reference a constant enumeration value by specifying a specific value after the type:
+
+```
+message RED_INTENSITY {
+  color : enum::COLOR::RED
+  value : U8
+}
+```
+
+In practice, this only occurs for the *FUNCTION* enumeration so that SSP21 implementations can determine
+how to interpret a particular message.
+
+##### FUNCTION
+
+SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration:
+ 
+```
+enum FUNCTION {
+  M_INIT_HANDSHAKE    : 0
+  O_AUTH_HANDSHAKE    : 1
+  M_AUTH_HANDSHAKE    : 2
+  O_CONF_HANDSHAKE    : 3
+  O_ERR_HANDSHAKE     : 4
+  UNCONF_SESSION_DATA : 5      
+}
+```
+
+### Message definitions
+
+#### M_INIT_HANDSHAKE
+
+The master initiates the process of establishing a new session by sending the *M_INIT_HANDSHAKE* message.
+
+```
+message M_INIT_HANDSHAKE {
+   function : enum::FUNCTION::M_INIT_HANDSHAKE
+   version_major : U8                        
+   version_minor : U8
+   handshake_hash_type : enum::HASH_TYPE
+   handshake_dh_type: enum::DH_TYPE
+   ephemeral_public_key: Seq[Byte]
+   certificates: Seq[Seq[Byte]]
+}
+```
