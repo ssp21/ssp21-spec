@@ -220,6 +220,7 @@ The following notation will be used in algorithm pseudo-code:
 * The **||** operator denotes the concatenation of two byte sequences.
 * The **[b1, b2, .. bn]** syntax denotes a, possibly empty, byte sequence.
 * The **len()** function returns the length of a byte sequence as a 4-byte unsigned big endian byte sequence.
+* The **++** operator applied after an integer variable implements post-increment, namely it returns the current value and then increments it by 1.
 
 
 ### Diffie Hellman (DH) functions
@@ -365,8 +366,9 @@ is used in HMAC calculations.
 
 * **n**: A 4-byte (32-bit) unsigned integer nonce.
 
-The following methods will be associated with *CipherState*.  The post-increment operator (*++*) applied to *n* returns the
-current value of the nonce and then increments it. The maximum value of 2^64 - 1 is reserved for future use and shall not be used. If incrementing the nonce results in the maximum value, any further *EncryptWithAd()* or *DecryptWithAd()* calls will signal an error.
+The following methods will be associated with *CipherState*.  The maximum value of nonce (*n*) of 2^64 - 1 is reserved for future
+use and shall not be used. If incrementing *n* results in the maximum value, any further *EncryptWithAd()* or *DecryptWithAd()*
+calls will signal an error.
 
 * **InitializeKey(key)**: Sets *k* = key, and sets *n* = 0.
 
@@ -374,7 +376,8 @@ current value of the nonce and then increments it. The maximum value of 2^64 - 1
 
 * **EncryptWithAd(ad, plaintext)**: If *k* is non-empty returns *ENCRYPT(k, n++, ad, plaintext)*, otherwise signals an error to the caller.
 
-* **DecryptWithAd(ad, ciphertext)**: If *k* is empty, signals an error to the caller. Otherwise it attempts decryption by calling *DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
+* **DecryptWithAd(ad, ciphertext)**: If *k* is empty, signals an error to the caller. Otherwise it attempts decryption by calling
+*DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise it returns the plaintext.
 
 #### Symmetric State
 
