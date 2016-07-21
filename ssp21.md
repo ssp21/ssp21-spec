@@ -507,27 +507,78 @@ message RED_INTENSITY {
 }
 ```
 
-In practice, this only occurs for the *FUNCTION* enumeration so that SSP21 implementations can determine
-how to interpret a particular message.
+In practice, this only occurs for the *FUNCTION* enumeration.
 
-##### FUNCTION
+#### Sequences
 
-SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration:
- 
+*Sequences* are variable length lists of particular type that, when serialized, are prefixed 
+with a *U8* count of elements, They are denoted with the **Seq[x]** notation where *x* is some type id. 
+
+When sequences are typed on primitive values, the length of the sequence in bytes is easily 
+calculated as the count of elements multiplied by the size of primitive. 
+
 ```
-enum FUNCTION {
-  M_INIT_HANDSHAKE    : 0
-  O_AUTH_HANDSHAKE    : 1
-  M_AUTH_HANDSHAKE    : 2
-  O_CONF_HANDSHAKE    : 3
-  O_ERR_HANDSHAKE     : 4
-  UNCONF_SESSION_DATA : 5      
+message ByteSequence {
+  value : Seq[U8]
 }
 ```
 
+Given the message definition above, the ByteSequence with value equal to {0xCA, 0xFE} would be encoded as:
+
+[0x01, 0xCA, 0xFE]
+
+Sequences of sequences are also allowed, but only to this maximum depth of 2. For instance, we could define
+a message containing a sequence of byte sequences as follows:
+
+```
+message ByteSequences {
+  values : Seq[Seq[U8]]
+}
+```
+
+Suppose that we wish to encode the following 3 element sequence of byte sequences in the values field:
+
+```
+{ 
+    {0x07}
+    {0x08, 0x09},
+    {0x0A, 0x0B, 0x0C}    
+}
+```
+
+The serialized ByteSequences message would be encoded as:
+
+
+[`0x03`, `0x01`, 0x07, `0x02`, 0x08, 0x09, `0x03`, 0x0A, 0x0B, 0x0C]
+
+The first highlighted value of 0x03 refers to the fact that there are 3 byte sequences in the outer
+sequence. The subsequent highlighted values (0x01, 0x02, 0x03) refer to the number of bytes that follow 
+in each sub-sequence.
+
+Despite the generality of the sequence definition over any type, in practice it is only used to define 
+*Seq[U8]* and *Seq[Seq[U8]]*.  
+
+
 ### Message definitions
 
-#### M_INIT_HANDSHAKE
+#### Enumerations
+
+##### FUNCTION 
+
+SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration:
+      
+ ```
+ enum FUNCTION {
+   M_INIT_HANDSHAKE    : 0
+   O_AUTH_HANDSHAKE    : 1
+   M_AUTH_HANDSHAKE    : 2
+   O_CONF_HANDSHAKE    : 3
+   O_ERR_HANDSHAKE     : 4
+   UNCONF_SESSION_DATA : 5      
+ }
+ ```
+
+##### M_INIT_HANDSHAKE
 
 The master initiates the process of establishing a new session by sending the *M_INIT_HANDSHAKE* message.
 
@@ -538,7 +589,7 @@ message M_INIT_HANDSHAKE {
    version_minor : U8
    handshake_hash_type : enum::HASH_TYPE
    handshake_dh_type: enum::DH_TYPE
-   ephemeral_public_key: Seq[Byte]
-   certificates: Seq[Seq[Byte]]
+   ephemeral_public_key: Seq[U8]
+   certificates: Seq[Seq[U8]]
 }
 ```
