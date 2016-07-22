@@ -808,7 +808,7 @@ enum HANDSHAKE_HASH_TYPE {
  
 **Encrypted and authenticated session modes** 
  
-Note: SSP21 does not support encrypted sessions at this time. Future versions of the protocol may support AEAD cipher
+SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
 modes like AES-GCM.
 
 ##### M_INIT_HANDSHAKE
