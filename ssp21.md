@@ -505,9 +505,9 @@ Master                    Outstation
 <------- O_CONF_HANDSHAKE ---------
 
 
-```  
+```
 
-The outstation may signal an error after M_INIT_HANDSHAKE:  
+The outstation may signal an error after M_INIT_HANDSHAKE:
 
 ```
 
