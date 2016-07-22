@@ -804,7 +804,7 @@ enum HANDSHAKE_HASH_TYPE {
 
 **Authentication-only session modes**
 
-* **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated the leftmost 16 bytes.
+* **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated to the leftmost 16 bytes.
  
 **Encrypted and authenticated session modes** 
  
