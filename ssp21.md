@@ -605,7 +605,7 @@ all the fixed Noise patterns would produce a deterministic hash value anyway -->
     * returns *plaintext*.
     * Note that if *k* is *empty*, the *DecryptWithAd()* call will set *plaintext* equal to *ciphertext*.
 
-* **`Split()`**: Returns a pair of *CipherState* objects for encrypting transport messages.
+* **Split()**: Returns a pair of *CipherState* objects for encrypting transport messages.
     * Sets *temp_k1, temp_k2* = *HKDF(ck, [])*.
     * If *HASHLEN* is 64, then truncates *temp_k1* and *temp_k2* to 32 bytes.
     * Creates two new *CipherState* objects *cs1* and *cs2*.
@@ -727,14 +727,10 @@ message ByteSequences {
 }
 ```
 
-Suppose that we wish to encode the following 3 element sequence of byte sequences in the values field:
+Suppose that we wish to encode the following sequence of byte sequences in the values field above:
 
 ```
-{ 
-    {0x07}
-    {0x08, 0x09},
-    {0x0A, 0x0B, 0x0C}    
-}
+{ {0x07}, {0x08, 0x09}, {0x0A, 0x0B, 0x0C} }
 ```
 
 The serialized ByteSequences message would be encoded as:
@@ -750,13 +746,17 @@ Despite the generality of the sequence definition over any type, in practice it 
 *Seq[U8]* and *Seq[Seq[U8]]*.  
 
 
-### Message definitions
+### Message Definitions
 
 #### Enumerations
 
+Common enumeration types that are used in one or more messages are defined here.
+
 ##### FUNCTION 
 
-SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration:
+SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration. This fixed value allows a 
+parser to determine the type of the message by inspecting the first byte of an opaque message delivered by the link 
+layer. The correct message-specific parser can then be invoked.
       
 ```
 enum FUNCTION {
@@ -769,6 +769,48 @@ enum FUNCTION {
 }
 ```
 
+##### DH_TYPE
+
+The *DH_TYPE* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
+material.
+
+```
+enum DH_TYPE {
+    X25519 : 0      
+}
+```
+
+##### HANDSHAKE_HASH_TYPE
+
+The *HANDSHAKE_HASH_TYPE* enumeration specifies which hash algorithm will be used during the handshake process
+to prevent tampering.
+
+```
+enum HANDSHAKE_HASH_TYPE {
+    SHA256 : 0      
+}
+```
+
+##### SESSION_SECURITY_TYPE
+
+The *SESSION_TYPE* enumeration specifies the complete set of algorithms that determine the security properties of
+the session. 
+
+```
+enum HANDSHAKE_HASH_TYPE {
+    HMAC-SHA256-16 : 0       
+}
+```
+
+**Authentication-only session modes**
+
+* **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated the leftmost 16 bytes.
+ 
+**Encrypted and authenticated session modes** 
+ 
+Note: SSP21 does not support encrypted sessions at this time. Future versions of the protocol may support AEAD cipher
+modes like AES-GCM.
+
 ##### M_INIT_HANDSHAKE
 
 The master initiates the process of establishing a new session by sending the *M_INIT_HANDSHAKE* message.
@@ -776,10 +818,10 @@ The master initiates the process of establishing a new session by sending the *M
 ```
 message M_INIT_HANDSHAKE {
    function : enum::FUNCTION::M_INIT_HANDSHAKE
-   version_major : U8                        
-   version_minor : U8
-   handshake_hash_type : enum::HASH_TYPE
+   version : U16                           
    handshake_dh_type: enum::DH_TYPE
+   handshake_hash_type : enum::HANDSHAKE_HASH_TYPE
+   session_security_type : enum::SESSION_SECURITY_TYPE
    ephemeral_public_key: Seq[U8]
    certificates: Seq[Seq[U8]]
 }
