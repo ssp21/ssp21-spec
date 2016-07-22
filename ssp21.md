@@ -470,7 +470,7 @@ A cryptographically secure pseudorandom number generator (CSPRNG) is required fo
 private keys. Any secure RNG will do, put implementers should err on the side of caution and prefer one from a proven 
 library.
 
-## Message types
+## Messages
 
 Every message at the cryptographic layer begins with a one octet message type identifier. The remaining octets are 
 interpreted according the defined structure of that type. The following message types are defined. Each message name is 
@@ -486,7 +486,7 @@ by either party once a session negotiation has been completed.
 | 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
 | 5        | UNCONF_SESSION_DATA    | Either party transmits unconfirmed session data                                |
 
-### Message Syntax
+### Syntax
 
 SSP21 uses a lightweight structural syntax to define the contents of messages
 and to specify how the message shall be serialized. These definitions
@@ -620,7 +620,7 @@ Despite the generality of the sequence definition over any type, in practice it 
 *Seq[U8]* and *Seq[Seq[U8]]*.  
 
 
-### Message Definitions
+### Definitions
 
 #### Enumerations
 
@@ -684,6 +684,8 @@ enum HANDSHAKE_HASH_TYPE {
  
 SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
 modes like AES-GCM.
+
+#### Handshake Messages
 
 ##### M_INIT_HANDSHAKE
 
