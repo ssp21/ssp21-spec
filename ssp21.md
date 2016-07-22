@@ -253,7 +253,8 @@ authority would maintain a database of a few items:
 * An editable set of field assets that will require enrollment.
 * A set of users
 * A set of permissions for the users (user editing, key generation by asset, etc).
-* Properly hashed/salted passwords for the set of users that follow a strong password policy <!--- rlc: I don't see why 
+* Properly hashed/salted passwords for the set of users that follow a strong password policy 
+<!--- rlc: I don't see why 
 the authority database would have a password for the user: I would expect the user to be authenticated through an LDAP 
 or similar mechanism and have the appropriate access to the database, which would only need to contain information 
 necessary to audit enrollment and the data for the device. -->.
@@ -553,10 +554,8 @@ is used in HMAC calculations.
 * **n**: A 4-byte (32-bit) unsigned integer nonce.
 
 The following methods will be associated with *CipherState*.  The maximum value of nonce (*n*) of 2^64 - 1 is reserved 
-for future
-use and shall not be used. If incrementing *n* results in the maximum value, any further *EncryptWithAd()* or 
-*DecryptWithAd()*
-calls will signal an error.
+for future use and shall not be used. If incrementing *n* results in the maximum value, any further *EncryptWithAd()* 
+or  *DecryptWithAd()* calls will signal an error.
 
 * **InitializeKey(key)**: Sets *k* = key, and sets *n* = 0.
 
@@ -566,9 +565,8 @@ calls will signal an error.
 error to the caller.
 
 * **DecryptWithAd(ad, ciphertext)**: If *k* is empty, signals an error to the caller. Otherwise it attempts decryption 
-by calling
-*DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise it returns 
-the plaintext.
+by calling *DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise
+it returns the plaintext.
 
 #### Symmetric State
 
@@ -581,7 +579,8 @@ A *SymmetricState* object contains a *CipherState* plus the following variables:
 The following methods will be associated with *SymmetricState*:
 
 * **Initialize()**:
-    * Sets h equal to all zeros. <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since 
+    * Sets h equal to all zeros. 
+    <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since 
 all the fixed Noise patterns would produce a deterministic hash value anyway -->
     * Sets *ck* = *h*.
     * Calls *InitializeKey(empty)*.
