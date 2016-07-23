@@ -743,8 +743,52 @@ placed in the sequence from the highest level of the chain down to the endpoint 
 
 ## Key Negotiation Handshake
 
-Key negotiation in SSP21 authenticates each party to the other and derives a common pair of symmetric keys that can be 
-used to negotiate a session. A success handshake involves the exchange of the following four messages:
+Key negotiation in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
+the handshake and both parities. The SSP21 handshake most closely resembles the following message pattern from Noise:
+
+```
+-> e, s
+<- e, s, dhee, dhes, dhse
+```
+
+It's not important to understand the specifics of Noise's notation, but the following steps are 
+performed. This high-level description is not normative. A more rigorous definition is given in a later section.
+   
+1. The master sends an ephemeral public key DH, some additional metadata, and a certificate chain to the outstation.
+
+2. The master mixes the entire transmitted message in 1) into the *handshake hash*.
+
+3. The outstation receives the message in 1), and then validates that it trusts the public key via the certificate data.
+
+4. The outstation then mixes the entire received message into its copy of the *handshake hash*.
+
+5. The outstation then transmits its own ephemeral public DH key and certificate data.
+ 
+6. The outstation mixes its entire transmitted message into the *handshake hash*.
+ 
+7. The outstation then uses a key derivation algorithm involving the handshake hash and 3 DH calculations to create a
+ pair of session keys.
+ 
+8. The master receives the message from 6), and validates that it trusts the public key via the certificate data.
+ 
+9. The master mixes the entire received message into the *handshake hash*.
+
+10. The master then uses the same key derivation algorithm in 7) substituting its public and private DH keys where 
+appropriate.
+
+If any of the following properties do not hold, then master and outstation shall not agree on the same keys:
+
+* If a MitM tampers with the content of either messages, the two parties will have differing handshake hashes which will produce
+different keys during the key derivation state.
+
+* If either party does not possess the private DH keys corresponding to the ephemeral or static public keys transmitted, 
+they will be unable to perform the correct DH calculations in 7) and will not arrive.
+ 
+It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
+each other yet. There is merely a guarantee that only the identified parties will possess the same set of keys. Two
+additional messages are required to confirm the key agreement and authenticate.
+
+A success handshake involves the exchange of the following four messages:
 
 
 ```
@@ -791,6 +835,8 @@ Master                    Outstation
 
 
 ```
+
+<!--
 
 ### Security Variables
 
@@ -866,3 +912,4 @@ all the fixed Noise patterns would produce a deterministic hash value anyway -->
     * Creates two new *CipherState* objects *cs1* and *cs2*.
     * Calls *cs1.InitializeKey(temp_k1)* and *cs2.InitializeKey(temp_k2)*.
     * Returns the pair *(cs1, cs2)*.
+-->
