@@ -372,7 +372,7 @@ The following notation will be used in algorithm pseudo-code:
 
 * The **||** operator denotes the concatenation of two byte sequences.
 * The **[b1, b2, .. bn]** syntax denotes a, possibly empty, byte sequence.
-* The **len()** function returns the length of a byte sequence as a 4-byte unsigned big endian byte sequence.
+* The **len()** function returns the length of a byte sequence as a 2-byte unsigned big endian byte sequence.
 * The **++** operator applied after an integer variable implements post-increment, namely it returns the current value 
 and then increments it by 1.
 
@@ -429,6 +429,7 @@ sequences of length *HASHLEN* as follows:
   * Sets *key2* = *HMAC(temp_key, output1 || [0x02])*.
   * Returns the pair of keys *(key1, key2)*.
 
+<!--
 ### Cipher Functions
 
 SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic and the key negotiation data as 
@@ -461,6 +462,7 @@ tag. Calculates the correct HMAC tag according to the message definition above. 
 algorithm to
 check the input and calculated tag values for equality. Returns the plaintext if authentication succeeds, otherwise 
 signals an error in the event of authentication failure.
+-->
 
 
 ### CSPRNG
