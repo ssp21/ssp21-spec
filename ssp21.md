@@ -733,7 +733,7 @@ message REQUEST_HANDSHAKE_BEGIN {
 * **handshake_dh_type** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
 
-* **handshake_hash_type** - Specifies what hash algorithm
+* **handshake_hash_type** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
 * **session_security_type** - Specifies the full set of algorithms used to secure the session.
    
