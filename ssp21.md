@@ -314,24 +314,29 @@ SSP21 specifies a two layer architecture for delivering secure data to the user 
 
 ![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png){#fig:stack}
 
-The link layer provides three features: framing, addressing, and error-detection. Since this functionality does not 
-have any cryptographic protections, it is designed with simplicity in mind and is completely stateless.
+The link layer provides three features: 
+
+* **Framing** - A procedure is defined to identify a frame from a stream of bytes.
+* **Addressing** - The frame contains source and destination addresses for the transmitter and receiver.
+* **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC). 
+
+Since this functionality does not  have any cryptographic protections, it is designed with simplicity in mind and is
+completely stateless.  The non-cryptographic hash function (like a CRC) is important at this layer to detect data
+corruption from random sources (EMF, cosmic rays, etc).  This check is intended to prevent randomly corrupted payloads 
+from  reaching the cryptographic layer. This prevents "tampering" false positives from occurring at the cryptographic 
+layer which would require a completely different organizational response than from a sudden increase line noise.
+
+**Note: We are currently consulting with an expert on error detection algorithms and CRCs. A recommendation for the
+ frame format and CRC algorithm will come from this engagement.**
+
+<!--
+```
+[ start ][ destination ][ source ][ length ][ payload ... ][ CRC ]
+```
+-->
 
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency 
-with the Noise specification and the cryptographic layer.
-
-```
-
-[ start ][ destination ][ source ][ length ][ payload ... ][ CRC ]
-
-
-```
-
-The minimum size of a link layer frame is 12 bytes, consisting of the start, destination, source, length, no payload 
-bytes, and the CRC.
-
-**start** (2-bytes) - The start bytes provide a delimiter for the beginning of the frame and shall always begin with 
-the two byte sequence 0x07BB.
+with the Noise specification and the cryptographic layer. 
 
 **source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may 
 depend on the application layer of wrapped protocol.
@@ -340,12 +345,6 @@ depend on the application layer of wrapped protocol.
 shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices 
 shall not do any further processing of frames with an unknown destination address.
 
-**CRC** (4-bytes) - The frame is appended with a four byte CRC value calculated over all preceding bytes. The ethernet 
-CRC32 algorithm is used to calculate this value. <!--- rlc: Ethernet assumes relatively noise-free lines - it only has 
-a hamming distance of four for maximum-sized (1500 byte) frames. As this protocol is likely to be used on serial lines, 
-and possibly very noisy ones, I would recommend using a link layer design that has stood the test of time on noisy 
-serial lines - i.e. the one in DNP3. We need not support link-layer confirmation, but its error detection is very good. 
-The only downside is the associated overhead... -->
 
 # Cryptographic Layer
 
