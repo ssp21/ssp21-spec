@@ -382,7 +382,7 @@ and then increments it by 1.
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 
 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
 
-| DH Curve       | length (_DHLEN_)       |
+| DH Curve       | length (*DHLEN*)       |
 | ---------------|------------------------|
 | Curve22519     | 32                     |
 
@@ -390,6 +390,7 @@ All DH curves will support the following two algorithms with the key lengths spe
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
 key.
+
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
 length _DHLEN_.
 
@@ -643,9 +644,12 @@ layer. The correct message-specific parser can then be invoked.
       
 ```
 enum FUNCTION {
-    REQUEST_HANDSHAKE    : 0
-    RESPOND_HANDSHAKE    : 1    
-    UNCONF_SESSION_DATA : 2   
+    REQUEST_HANDSHAKE_BEGIN  : 0
+    REPLY_HANDSHAKE_BEGIN    : 1
+    REQUEST_HANDSHAKE_AUTH   : 2
+    REPLY_HANDSHAKE_AUTH     : 3
+    REPLY_HANDSHAKE_ERROR    : 4
+    UNCONF_SESSION_DATA      : 5   
 }
 ```
 
@@ -706,13 +710,13 @@ modes like AES-GCM.
 
 #### Handshake Messages
 
-##### REQUEST_BEGIN_HANDSHAKE
+##### REQUEST_HANDSHAKE_BEGIN
 
-The master initiates the process of establishing a new session by sending the *REQUEST_BEGIN_HANDSHAKE* message.
+The master initiates the process of establishing a new session by sending the *REQUEST_HANDSHAKE_BEGIN* message.
 
 ```
-message REQUEST_BEGIN_HANDSHAKE {
-   function : enum::FUNCTION::M_INIT_HANDSHAKE
+message REQUEST_HANDSHAKE_BEGIN {
+   function : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
    version : U16   
    handshake_dh_type: enum::DH_TYPE
    handshake_hash_type : enum::HASH_TYPE
@@ -741,6 +745,24 @@ message REQUEST_BEGIN_HANDSHAKE {
 * **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
 placed in the sequence from the highest level of the chain down to the endpoint certificate.
 
+##### REPLY_HANDSHAKE_BEGIN
+
+The outstation replies to *REQUEST_HANDSHAKE_BEGIN* by sending *REPLY_HANDSHAKE_BEGIN*, unless an error occurs in which case it responds
+with *REPLY_HANDSHAKE_ERROR*.
+
+```
+message REPLY_HANDSHAKE_BEGIN {
+   function : enum::FUNCTION::REPLY_HANDSHAKE_BEGIN
+   ephemeral_public_key: Seq[U8]
+   certificates: Seq[Seq[U8]]
+}
+```
+
+* **empheral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
+
+* **certificates** - A certificate chain corresponding to the certificate type requested by the master.
+
+
 ## Key Negotiation Handshake
 
 Key negotiation in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
@@ -754,7 +776,7 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 It's not important to understand the specifics of Noise's notation, but the following steps are 
 performed. This high-level description is not normative. A more rigorous definition is given in a later section.
    
-1. The master sends a message to the outstation containing an ephemeral public key, some additional metadata, and a 
+1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some additional metadata, and a 
 certificate chain.
 
 2. The master mixes the entire transmitted message in 1) into the *handshake hash*.
@@ -763,7 +785,7 @@ certificate chain.
 
 4. The outstation mixes the entire received message into its copy of the *handshake hash*.
 
-5. The outstation then transmits a message containing its own ephemeral public DH key and certificate data.
+5. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and certificate data.
  
 6. The outstation mixes its entire transmitted message into the *handshake hash*.
  
@@ -796,43 +818,43 @@ A success handshake involves the exchange of the following four messages:
 
 Master                           Outstation
 
--------- REQUEST_BEGIN_HANDSHAKE -------->
+-------- REQUEST_HANDSHAKE_BEGIN -------->
 
-<------- RESPONSE_BEGIN_HANDSHAKE --------
+<------- REPLY_HANDSHAKE_BEGIN --------
 
--------- REQUEST_AUTH_HANDSHAKE --------->
+-------- REQUEST_HANDSHAKE_AUTH --------->
 
-<------- RESPONSE_AUTH_HANDSHAKE ---------
-
-
-```
-
-The outstation may signal an error after REQUEST_BEGIN_HANDSHAKE:
-
-```
-
-Master                    Outstation
-
--------- REQUEST_BEGIN_HANDSHAKE -------->
-
-<------- RESPONSE_ERR_HANDSHAKE ----------
+<------- REPLY_HANDSHAKE_AUTH ---------
 
 
 ```
 
-The outstation could also indicate an error in REQUEST_AUTH_HANDSHAKE:
+The outstation may signal an error after REQUEST_HANDSHAKE_BEGIN:
 
 ```
 
 Master                    Outstation
 
--------- REQUEST_BEGIN_HANDSHAKE -------->
+-------- REQUEST_HANDSHAKE_BEGIN -------->
 
-<------- RESPONSE_BEGIN_HANDSHAKE --------
+<------- REPLY_HANDSHAKE_ERROR ----------
 
--------- REQUEST_AUTH_HANDSHAKE --------->
 
-<------- RESPONSE_ERR_HANDSHAKE ----------
+```
+
+The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
+
+```
+
+Master                    Outstation
+
+-------- REQUEST_HANDSHAKE_BEGIN -------->
+
+<------- REPLY_HANDSHAKE_BEGIN --------
+
+-------- REQUEST_HANDSHAKE_AUTH --------->
+
+<------- REPLY_HANDSHAKE_ERROR ----------
 
 
 ```
@@ -882,8 +904,9 @@ The following methods will be associated with *SymmetricState*:
 
 * **Initialize()**:
     * Sets h equal to all zeros. 
-    <!-- TODO: research consequences of setting h to a fixed value. Shouldn't matter since 
-all the fixed Noise patterns would produce a deterministic hash value anyway -->
+ 
+**TODO: research consequences of setting h to a fixed value. Shouldn't matter since 
+all the fixed Noise patterns would produce a deterministic hash value anyway**
     * Sets *ck* = *h*.
     * Calls *InitializeKey(empty)*.
 
