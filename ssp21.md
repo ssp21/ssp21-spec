@@ -660,13 +660,13 @@ enum DH_TYPE {
 }
 ```
 
-##### HANDSHAKE_HASH_TYPE
+##### HASH_TYPE
 
-The *HANDSHAKE_HASH_TYPE* enumeration specifies which hash algorithm will be used during the handshake process
-to prevent tampering.
+The *HASH_TYPE* enumeration specifies which hash algorithm will be used during the handshake process to prevent
+tampering.
 
 ```
-enum HANDSHAKE_HASH_TYPE {
+enum HASH_TYPE {
     SHA256 : 0      
 }
 ```
@@ -715,7 +715,7 @@ message REQUEST_BEGIN_HANDSHAKE {
    function : enum::FUNCTION::M_INIT_HANDSHAKE
    version : U16   
    handshake_dh_type: enum::DH_TYPE
-   handshake_hash_type : enum::HANDSHAKE_HASH_TYPE
+   handshake_hash_type : enum::HASH_TYPE
    session_security_type : enum::SESSION_SECURITY_TYPE
    certificate_type : enum::CERTIFICATE_TYPE
    ephemeral_public_key: Seq[U8]
@@ -725,12 +725,21 @@ message REQUEST_BEGIN_HANDSHAKE {
 
 * **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible changes
  to the specification which cannot be mitigated via configuration will increment this number.
-
-The next three fields together define what some protocols call a *cipher-suite specification*, i.e. the set of 
-cryptographic algorithms used in the handshake and the session. Note that this does not include any digital signature 
-algorithms (DSA) used to very certificates.  
  
-* **handshake_dh_type** - Indicates
+* **handshake_dh_type** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
+*ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
+
+* **handshake_hash_type** - Specifies what hash algorithm
+  
+* **session_security_type** - Specifies the full set of algorithms used to secure the session.
+   
+* **certificate_type** - Specifies what type of certificates are being exchanged.
+
+* **empheral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
+*handshake_dh_type*.
+
+* **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
+placed in the sequence from the highest level of the chain down to the endpoint certificate.
 
 ## Key Negotiation Handshake
 
@@ -740,45 +749,45 @@ used to negotiate a session. A success handshake involves the exchange of the fo
 
 ```
 
-Master                    Outstation
+Master                           Outstation
 
--------- M_INIT_HANDSHAKE -------->
+-------- REQUEST_BEGIN_HANDSHAKE -------->
 
-<------- O_AUTH_HANDSHAKE ---------
+<------- RESPONSE_BEGIN_HANDSHAKE --------
 
--------- M_AUTH_HANDSHAKE -------->
+-------- REQUEST_AUTH_HANDSHAKE --------->
 
-<------- O_CONF_HANDSHAKE ---------
-
-
-```
-
-The outstation may signal an error after M_INIT_HANDSHAKE:
-
-```
-
-Master                    Outstation
-
--------- M_INIT_HANDSHAKE -------->
-
-<------- O_ERR_HANDSHAKE ----------
+<------- RESPONSE_AUTH_HANDSHAKE ---------
 
 
 ```
 
-The outstation could also indicate an error in M_AUTH_HANDSHAKE:
+The outstation may signal an error after REQUEST_BEGIN_HANDSHAKE:
 
 ```
 
 Master                    Outstation
 
--------- M_INIT_HANDSHAKE -------->
+-------- REQUEST_BEGIN_HANDSHAKE -------->
 
-<------- O_AUTH_HANDSHAKE ---------
+<------- RESPONSE_ERR_HANDSHAKE ----------
 
--------- M_AUTH_HANDSHAKE -------->
 
-<------- O_ERR_HANDSHAKE ----------
+```
+
+The outstation could also indicate an error in REQUEST_AUTH_HANDSHAKE:
+
+```
+
+Master                    Outstation
+
+-------- REQUEST_BEGIN_HANDSHAKE -------->
+
+<------- RESPONSE_BEGIN_HANDSHAKE --------
+
+-------- REQUEST_AUTH_HANDSHAKE --------->
+
+<------- RESPONSE_ERR_HANDSHAKE ----------
 
 
 ```
