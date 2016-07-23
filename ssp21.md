@@ -428,6 +428,14 @@ sequences of length *HASHLEN* as follows:
   * Sets *key1* = *HMAC(temp_key, [0x01])*.
   * Sets *key2* = *HMAC(temp_key, output1 || [0x02])*.
   * Returns the pair of keys *(key1, key2)*.
+  
+### Digital Signature Algorithms (DSA)
+  
+While SSP21 does not use any DSA in the core key negotiation or session, implementations will need to support some set
+of DSAs to verify certificates. SSP21 will initially support only usage of the Machine-to-Machine certificate format
+defined in an  [RFC draft](https://tools.ietf.org/html/draft-ford-m2mcertificate-00).
+     
+**TODO: research all the DSAs used in M2M**
 
 <!--
 ### Cipher Functions
@@ -674,6 +682,19 @@ enum HANDSHAKE_HASH_TYPE {
 }
 ```
 
+##### CERTIFICATE_TYPE
+
+The *CERTIFICATE_TYPE* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
+each other.
+
+```
+enum CERTIFICATE_TYPE {
+    M2M : 0       
+}
+```
+
+* **M2M** - Machine-to-machine certificate format
+
 **Authentication-only session modes**
 
 * **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated to the leftmost 16 bytes.
@@ -685,21 +706,31 @@ modes like AES-GCM.
 
 #### Handshake Messages
 
-##### M_INIT_HANDSHAKE
+##### REQUEST_BEGIN_HANDSHAKE
 
-The master initiates the process of establishing a new session by sending the *M_INIT_HANDSHAKE* message.
+The master initiates the process of establishing a new session by sending the *REQUEST_BEGIN_HANDSHAKE* message.
 
 ```
-message M_INIT_HANDSHAKE {
+message REQUEST_BEGIN_HANDSHAKE {
    function : enum::FUNCTION::M_INIT_HANDSHAKE
-   version : U16                           
+   version : U16   
    handshake_dh_type: enum::DH_TYPE
    handshake_hash_type : enum::HANDSHAKE_HASH_TYPE
    session_security_type : enum::SESSION_SECURITY_TYPE
+   certificate_type : enum::CERTIFICATE_TYPE
    ephemeral_public_key: Seq[U8]
    certificates: Seq[Seq[U8]]
 }
 ```
+
+* **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible changes
+ to the specification which cannot be mitigated via configuration will increment this number.
+
+The next three fields together define what some protocols call a *cipher-suite specification*, i.e. the set of 
+cryptographic algorithms used in the handshake and the session. Note that this does not include any digital signature 
+algorithms (DSA) used to very certificates.  
+ 
+* **handshake_dh_type** - Indicates
 
 ## Key Negotiation Handshake
 
