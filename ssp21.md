@@ -754,35 +754,36 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 It's not important to understand the specifics of Noise's notation, but the following steps are 
 performed. This high-level description is not normative. A more rigorous definition is given in a later section.
    
-1. The master sends an ephemeral public key DH, some additional metadata, and a certificate chain to the outstation.
+1. The master sends a message to the outstation containing an ephemeral public key, some additional metadata, and a 
+certificate chain.
 
 2. The master mixes the entire transmitted message in 1) into the *handshake hash*.
 
 3. The outstation receives the message in 1), and then validates that it trusts the public key via the certificate data.
 
-4. The outstation then mixes the entire received message into its copy of the *handshake hash*.
+4. The outstation mixes the entire received message into its copy of the *handshake hash*.
 
-5. The outstation then transmits its own ephemeral public DH key and certificate data.
+5. The outstation then transmits a message containing its own ephemeral public DH key and certificate data.
  
 6. The outstation mixes its entire transmitted message into the *handshake hash*.
  
-7. The outstation then uses a key derivation algorithm involving the handshake hash and 3 DH calculations to create a
- pair of session keys.
+7. The outstation then uses a key derivation algorithm involving the handshake hash and the output of 3 DH calculations
+to create a pair of session keys.
  
-8. The master receives the message from 6), and validates that it trusts the public key via the certificate data.
+8. The master receives the message from 6) and validates that it trusts the public key via the certificate data.
  
 9. The master mixes the entire received message into the *handshake hash*.
 
 10. The master then uses the same key derivation algorithm in 7) substituting its public and private DH keys where 
 appropriate.
 
-If any of the following properties do not hold, then master and outstation shall not agree on the same keys:
+If any of the following properties do not hold, then master and outstation will not agree on the same keys:
 
-* If a MitM tampers with the content of either messages, the two parties will have differing handshake hashes which will produce
-different keys during the key derivation state.
+* If a MitM tampers with the contents of either message, the two parties will have differing handshake hashes which 
+will produce different keys when feed into the key derivation function.
 
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys transmitted, 
-they will be unable to perform the correct DH calculations in 7) and will not arrive.
+they will be unable to perform the correct DH calculations in 7) and will not calculate the same keys in the KDF.
  
 It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
 each other yet. There is merely a guarantee that only the identified parties will possess the same set of keys. Two
