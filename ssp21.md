@@ -474,10 +474,9 @@ library.
 ## Messages
 
 Every message at the cryptographic layer begins with a one octet message type identifier. The remaining octets are 
-interpreted according the defined structure of that type. The following message types are defined. Each message name is 
-prefixed with an M or O to indicate if a master or outstation transmits the message. UNCONF_APP_DATA can be transmitted 
-by either party once a session negotiation has been completed.
+interpreted according the defined structure of that type.
 
+<!--
 | ID       | Name                   | Function summary                                                               |
 | ---------|------------------------|--------------------------------------------------------------------------------|
 | 0        | M_INIT_HANDSHAKE       | Master initiates the process of (re)negotiating session keys                   |
@@ -486,6 +485,7 @@ by either party once a session negotiation has been completed.
 | 3        | O_CONF_HANDSHAKE       | Outstation confirms the completion of the handshake                            |
 | 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
 | 5        | UNCONF_SESSION_DATA    | Either party transmits unconfirmed session data                                |
+-->
 
 ### Syntax
 
@@ -635,12 +635,9 @@ layer. The correct message-specific parser can then be invoked.
       
 ```
 enum FUNCTION {
-    M_INIT_HANDSHAKE    : 0
-    O_AUTH_HANDSHAKE    : 1
-    M_AUTH_HANDSHAKE    : 2
-    O_CONF_HANDSHAKE    : 3
-    O_ERR_HANDSHAKE     : 4
-    UNCONF_SESSION_DATA : 5      
+    REQUEST_HANDSHAKE    : 0
+    RESPOND_HANDSHAKE    : 1    
+    UNCONF_SESSION_DATA : 2   
 }
 ```
 
