@@ -1,16 +1,21 @@
 
+MSC_GEN_FILES = msc/handshake_success.png
+
 default: ssp21.html ssp21.pdf
 
-ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile
-	pandoc ssp21.md -s --toc --toc-depth=4 --number-sections \
+msc/%.png: msc/%.msc
+	mscgen -T png -i $< -o $@
+	
+ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile $(MSC_GEN_FILES)
+	pandoc ssp21.md -s --toc --toc-depth=5 --number-sections \
 	        -f markdown+yaml_metadata_block+startnum \
 		--filter pandoc-fignos \
 		--template template_pandoc.html \
 		--css=spec_markdown.css \
 		-o ssp21.html
 
-ssp21.pdf: ssp21.md template_pandoc.latex Makefile
-	pandoc ssp21.md -s --toc --toc-depth=4 --number-sections \
+ssp21.pdf: ssp21.md template_pandoc.latex Makefile $(MSC_GEN_FILES)
+	pandoc ssp21.md -s --toc --toc-depth=5 --number-sections \
 	        -f markdown+yaml_metadata_block+startnum \
 		--filter pandoc-fignos \
 		--template template_pandoc.latex \
@@ -18,4 +23,5 @@ ssp21.pdf: ssp21.md template_pandoc.latex Makefile
 		-o ssp21.pdf
 
 clean:
+	rm msc/*.png
 	rm ssp21.html ssp21.pdf

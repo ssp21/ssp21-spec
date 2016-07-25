@@ -627,7 +627,7 @@ sequence. The subsequent highlighted values (0x01, 0x02, 0x03) refer to the numb
 in each sub-sequence.
 
 Despite the generality of the sequence definition over any type, in practice it is only used to define 
-*Seq[U8]* and *Seq[Seq[U8]]*.  
+*Seq[U8]* and *Seq[Seq[U8]]*.
 
 
 ### Definitions
@@ -649,7 +649,7 @@ enum FUNCTION {
     REQUEST_HANDSHAKE_AUTH   : 2
     REPLY_HANDSHAKE_AUTH     : 3
     REPLY_HANDSHAKE_ERROR    : 4
-    UNCONF_SESSION_DATA      : 5   
+    UNCONF_SESSION_DATA      : 5
 }
 ```
 
@@ -660,7 +660,7 @@ material.
 
 ```
 enum DH_TYPE {
-    X25519 : 0      
+    X25519 : 0
 }
 ```
 
@@ -813,21 +813,17 @@ additional messages are required to confirm the key agreement and authenticate.
 
 A success handshake involves the exchange of the following four messages:
 
+![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
 
-```
+<!--Master                           Outstation
 
-Master                           Outstation
-
--------- REQUEST_HANDSHAKE_BEGIN -------->
+-------- REQUEST_HANDSHAKE_BEGIN --------
 
 <------- REPLY_HANDSHAKE_BEGIN --------
 
--------- REQUEST_HANDSHAKE_AUTH --------->
+-------- REQUEST_HANDSHAKE_AUTH ---------
 
-<------- REPLY_HANDSHAKE_AUTH ---------
-
-
-```
+<------- REPLY_HANDSHAKE_AUTH --------- -->
 
 The outstation may signal an error after REQUEST_HANDSHAKE_BEGIN:
 
