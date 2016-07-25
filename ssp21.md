@@ -778,6 +778,18 @@ handshake pattern where all Diffie Hellman operations are deferred until after f
 
 The following steps are performed during a successful handshake. Error handling is described in a following section.
 
+DH keys in this section use the following abbrevations:
+
+* OEVK - Outstation ephemeral private key
+* OEPK - Outstation ephemeral public key
+* OSVK - Outstation static private key
+* OSPK - Outstation static public key
+* MEVK - Master ephemeral private key
+* MEPK - Master ephemeral public key
+* MSVK - Master static private key
+* MSPK - Master static public key
+
+
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
@@ -794,9 +806,9 @@ certificate chain.
     * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
  
     * The outstation then derives session keys:
-        * *set dh1* = *DH(outstation_ephemeral_private_key, master_ephemeral_public_key)*
-        * *set dh2* = *DH(outstation_ephemeral_private_key, master_static_public_key)*
-        * *set dh3* = *DH(outstation_static_private_key, master_ephemeral_public_key)*
+        * *set dh1* = *DH(OEVK, MEPK)*
+        * *set dh2* = *DH(OEVK, MSPK)*
+        * *set dh3* = *DH(OSVK, MEPK)*
         * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
@@ -805,10 +817,10 @@ certificate chain.
     * The master mixes the entire received message into its copy of the *handshake hash*.
     
     * The master then derives session keys:
-            * *set dh1* = *DH(master_ephemeral_private_key, outstation_ephemeral_public_key)*
-            * *set dh2* = *DH(master_ephemeral_private_key, outstation_static_public_key)*
-            * *set dh3* = *DH(master_static_private_key, outstation_ephemeral_public_key)*
-            * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
+        * *set dh1* = *DH(MEVK, OEPK)*
+        * *set dh2* = *DH(MEVK, OSPK)*
+        * *set dh3* = *DH(MSVK, OEPK)*
+        * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
 
 ### Security Properties
 
