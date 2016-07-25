@@ -787,12 +787,12 @@ additional metadata, and a certificate chain.
     * The master mixes the entire transmitted message in into its copy of the *handshake hash*.           
 
 2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
-the certificate data.
+the certificate chain.
 
     * The outstation mixes the entire received message into its copy of the *handshake hash*.
 
-3. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
-certificate data.
+3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
+certificate chain.
  
     * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
  
@@ -800,11 +800,11 @@ certificate data.
 to create a pair of session keys.
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
-certificate data.
+certificate chain.
 
     * The master mixes the entire received message into its copy of the *handshake hash*.
     
-    * The master then uses the same KDF to derive the same set of keys.
+    * The master then uses the same KDF to derive the same pair of keys.
 
 ### Security Properties
 
