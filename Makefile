@@ -3,7 +3,7 @@ MSC_GEN_FILES = msc/handshake_success.png
 
 default: ssp21.html ssp21.pdf
 
-msc/%.png: msc/%.msc
+msc/%.png: msc/%.msc Makefile
 	mscgen -T png -i $< -o $@
 	
 ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile $(MSC_GEN_FILES)
