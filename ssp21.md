@@ -586,28 +586,28 @@ In practice, this only occurs for the *FUNCTION* enumeration.
 
 #### Sequences
 
-*Sequences* are variable length lists of particular type that, when serialized, are prefixed 
-with a *U8* count of elements, They are denoted with the **Seq[x]** notation where *x* is some type id. 
+*Sequences* are variable length lists of particular type that, when serialized, are prefixed  with a *U8* or *U16* count
+of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is some type id. 
 
 When sequences are typed on primitive values, the length of the sequence in bytes is easily 
-calculated as the count of elements multiplied by the size of primitive. 
+calculated as the count of elements multiplied by the size of primitive plus the 
 
 ```
 message ByteSequence {
-  value : Seq[U8]
+  value : Seq16[U8]
 }
 ```
 
 Given the message definition above, the ByteSequence with value equal to {0xCA, 0xFE} would be encoded as:
 
-[0x01, 0xCA, 0xFE]
+[**0x00, 0x01**, 0xCA, 0xFE]
 
 Sequences of sequences are also allowed, but only to this maximum depth of 2. For instance, we could define
 a message containing a sequence of byte sequences as follows:
 
 ```
 message ByteSequences {
-  values : Seq[Seq[U8]]
+  values : Seq8[Seq16[U8]]
 }
 ```
 
@@ -620,11 +620,11 @@ Suppose that we wish to encode the following sequence of byte sequences in the v
 The serialized ByteSequences message would be encoded as:
 
 
-[**0x03**, **0x01**, 0x07, **0x02**, 0x08, 0x09, **0x03**, 0x0A, 0x0B, 0x0C]
+[**0x03**, **0x00**, **0x01**, 0x07, **0x00**, **0x02**, 0x08, 0x09, **0x00**, **0x03**, 0x0A, 0x0B, 0x0C]
 
 The first highlighted value of 0x03 refers to the fact that there are 3 byte sequences in the outer
-sequence. The subsequent highlighted values (0x01, 0x02, 0x03) refer to the number of bytes that follow 
-in each sub-sequence.
+sequence. The subsequent highlighted values ([0x00, 0x01], [0x00, 0x02], [0x00, 0x01]) refer to the number of bytes that 
+follow in each sub-sequence.
 
 Despite the generality of the sequence definition over any type, in practice it is only used to define 
 *Seq[U8]* and *Seq[Seq[U8]]*.
@@ -722,8 +722,8 @@ message REQUEST_HANDSHAKE_BEGIN {
    handshake_hash_type : enum::HASH_TYPE
    session_security_type : enum::SESSION_SECURITY_TYPE
    certificate_type : enum::CERTIFICATE_TYPE
-   ephemeral_public_key: Seq[U8]
-   certificates: Seq[Seq[U8]]
+   ephemeral_public_key: Seq8[U8]
+   certificates: Seq8[Seq16[U8]]
 }
 ```
 
@@ -753,8 +753,8 @@ with *REPLY_HANDSHAKE_ERROR*.
 ```
 message REPLY_HANDSHAKE_BEGIN {
    function : enum::FUNCTION::REPLY_HANDSHAKE_BEGIN
-   ephemeral_public_key: Seq[U8]
-   certificates: Seq[Seq[U8]]
+   ephemeral_public_key: Seq8[U8]
+   certificates: Seq8[Seq16[U8]]
 }
 ```
 
