@@ -419,14 +419,14 @@ HMAC(private key, message) - Calculate an authentication tag from an arbitrary l
 
 ### HKDF
 
-SSP21 uses the same key derivation function defined in Noise. It is invoked, however, with slightly different
-parameters as described in [the section on key negotiation][Key Negotiation Handshake].
+SSP21 uses the same key derivation function defined in Noise, however, it is invoked with slightly different
+parameters as described in the [section][Key Negotiation Handshake] on key negotiation.
 
 * *HKDF(handshake_hash, input_key_material)*: Calculates a pair of session keys based on input key material. 
-  * Sets *temp_key* = *HMAC(handshake_hash, input_key_material)*.
-  * Sets *key1* = *HMAC(temp_key, [0x01])*.
-  * Sets *key2* = *HMAC(temp_key, key1 || [0x02])*.
-  * Returns the pair of keys *(key1, key2)*.
+    * Sets *temp_key* = *HMAC(handshake_hash, input_key_material)*.
+    * Sets *key1* = *HMAC(temp_key, [0x01])*.
+    * Sets *key2* = *HMAC(temp_key, key1 || [0x02])*.
+    * Returns the pair of keys *(key1, key2)*.
   
 ### Digital Signature Algorithms (DSA)
   
