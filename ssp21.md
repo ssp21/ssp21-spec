@@ -776,9 +776,8 @@ handshake pattern where all Diffie Hellman operations are deferred until after f
  
 ### Overview
 
-The following steps are performed. This high-level description is not normative. A more rigorous definition is given in
-a later section.
-   
+The following steps are performed during a successful handshake. Error handling is described in a following section.
+
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
@@ -794,15 +793,22 @@ certificate chain.
  
     * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
  
-    * The outstation then uses a KDF accepting the handshake hash and the output of 3 DH calculations
-to create a pair of session keys.
+    * The outstation then derives session keys:
+        * *set dh1* = *DH(outstation_ephemeral_private_key, master_ephemeral_public_key)*
+        * *set dh2* = *DH(outstation_ephemeral_private_key, master_static_public_key)*
+        * *set dh3* = *DH(outstation_static_private_key, master_ephemeral_public_key)*
+        * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
 certificate chain.
 
     * The master mixes the entire received message into its copy of the *handshake hash*.
     
-    * The master then uses the same KDF to derive the same pair of keys.
+    * The master then derives session keys:
+            * *set dh1* = *DH(master_ephemeral_private_key, outstation_ephemeral_public_key)*
+            * *set dh2* = *DH(master_ephemeral_private_key, outstation_static_public_key)*
+            * *set dh3* = *DH(master_static_private_key, outstation_ephemeral_public_key)*
+            * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
 
 ### Security Properties
 
