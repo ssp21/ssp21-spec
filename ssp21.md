@@ -782,29 +782,31 @@ The following steps are performed. This high-level description is not normative.
 a later section.
    
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
-additional metadata, and a 
-certificate chain.
+additional metadata, and a certificate chain.
 
-2. The master mixes the entire transmitted message in 1) into the *handshake hash*.
+    * The master mixes the entire transmitted message in into its copy of the *handshake hash*.           
 
-3. The outstation receives the message in 1), and then validates that it trusts the public key via the certificate data.
+2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
+the certificate data.
 
-4. The outstation mixes the entire received message into its copy of the *handshake hash*.
+    * The outstation mixes the entire received message into its copy of the *handshake hash*.
 
-5. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
+3. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
 certificate data.
  
-6. The outstation mixes its entire transmitted message into the *handshake hash*.
+    * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
  
-7. The outstation then uses a key derivation algorithm involving the handshake hash and the output of 3 DH calculations
+    * The outstation then uses a KDF accepting the handshake hash and the output of 3 DH calculations
 to create a pair of session keys.
  
-8. The master receives the message from 6) and validates that it trusts the public key via the certificate data.
- 
-9. The master mixes the entire received message into the *handshake hash*.
+4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
+certificate data.
 
-10. The master then uses the same key derivation algorithm in 7) substituting its public and private DH keys where 
-appropriate.
+    * The master mixes the entire received message into its copy of the *handshake hash*.
+    
+    * The master then uses the same KDF to derive the same set of keys.
+
+### Security Properties
 
 If any of the following properties do not hold, then master and outstation will not agree on the same keys:
 
