@@ -671,7 +671,7 @@ tampering.
 
 ```
 enum HASH_TYPE {
-    SHA256 : 0      
+    SHA256 : 0
 }
 ```
 
@@ -682,7 +682,7 @@ the session.
 
 ```
 enum HANDSHAKE_HASH_TYPE {
-    HMAC-SHA256-16 : 0       
+    HMAC-SHA256-16 : 0
 }
 ```
 
@@ -693,7 +693,7 @@ each other.
 
 ```
 enum CERTIFICATE_TYPE {
-    M2M : 0       
+    M2M : 0
 }
 ```
 
@@ -717,7 +717,7 @@ The master initiates the process of establishing a new session by sending the *R
 ```
 message REQUEST_HANDSHAKE_BEGIN {
    function : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
-   version : U16   
+   version : U16
    handshake_dh_type: enum::DH_TYPE
    handshake_hash_type : enum::HASH_TYPE
    session_security_type : enum::SESSION_SECURITY_TYPE
