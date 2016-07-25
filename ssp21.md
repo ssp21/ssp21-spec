@@ -773,10 +773,16 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 <- e, s, dhee, dhes, dhse
 ```
 
-It's not important to understand the specifics of Noise's notation, but the following steps are 
-performed. This high-level description is not normative. A more rigorous definition is given in a later section.
+It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
+handshake pattern where all Diffie Hellman operations are deferred until after first two messages are exchanged.
+ 
+### Overview
+
+The following steps are performed. This high-level description is not normative. A more rigorous definition is given in
+a later section.
    
-1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some additional metadata, and a 
+1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
+additional metadata, and a 
 certificate chain.
 
 2. The master mixes the entire transmitted message in 1) into the *handshake hash*.
@@ -785,7 +791,8 @@ certificate chain.
 
 4. The outstation mixes the entire received message into its copy of the *handshake hash*.
 
-5. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and certificate data.
+5. The outstation then transmits a *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
+certificate data.
  
 6. The outstation mixes its entire transmitted message into the *handshake hash*.
  
@@ -810,6 +817,8 @@ they will be unable to perform the correct DH calculations in 7) and will not ca
 It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
 each other yet. There is merely a guarantee that only the identified parties will possess the same set of keys. Two
 additional messages are required to confirm the key agreement and authenticate.
+
+### Message Exchanges
 
 A success handshake involves the exchange of the following four messages:
 
