@@ -1,5 +1,5 @@
 
-MSC_GEN_FILES = msc/handshake_success.png
+MSC_GEN_FILES = msc/handshake_success.png msc/handshake_error1.png msc/handshake_error2.png
 
 default: ssp21.html ssp21.pdf
 

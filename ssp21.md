@@ -815,45 +815,13 @@ A success handshake involves the exchange of the following four messages:
 
 ![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
 
-<!--Master                           Outstation
-
--------- REQUEST_HANDSHAKE_BEGIN --------
-
-<------- REPLY_HANDSHAKE_BEGIN --------
-
--------- REQUEST_HANDSHAKE_AUTH ---------
-
-<------- REPLY_HANDSHAKE_AUTH --------- -->
-
 The outstation may signal an error after REQUEST_HANDSHAKE_BEGIN:
 
-```
-
-Master                    Outstation
-
--------- REQUEST_HANDSHAKE_BEGIN -------->
-
-<------- REPLY_HANDSHAKE_ERROR ----------
-
-
-```
+![Error in REQUEST_HANDSHAKE_BEGIN](msc/handshake_error1.png){#fig:handshake_error1}
 
 The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 
-```
-
-Master                    Outstation
-
--------- REQUEST_HANDSHAKE_BEGIN -------->
-
-<------- REPLY_HANDSHAKE_BEGIN --------
-
--------- REQUEST_HANDSHAKE_AUTH --------->
-
-<------- REPLY_HANDSHAKE_ERROR ----------
-
-
-```
+![Error in  REQUEST_HANDSHAKE_AUTH](msc/handshake_error2.png){#fig:handshake_error2}
 
 <!--
 

@@ -6,5 +6,5 @@ msc {
   a=>b [ label = "REQUEST_HANDSHAKE_BEGIN" ];
   b=>a [ label = "REPLY_HANDSHAKE_BEGIN" ];
   a=>b [ label = "REQUEST_HANDSHAKE_AUTH" ];
-  b=>a [ label = "REPLY_HANDSHAKE_AUTH" ];
+  b=>a [ label = "REPLY_HANDSHAKE_ERROR" ];
 }
