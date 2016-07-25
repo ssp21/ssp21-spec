@@ -814,7 +814,7 @@ If any of the following properties do not hold, then master and outstation will 
 will produce different keys when feed into the key derivation function.
 
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys transmitted, 
-they will be unable to perform the correct DH calculations in 7) and will not calculate the same keys in the KDF.
+they will be unable to perform the correct DH calculations and will not be able to calculate the same keys in the KDF.
  
 It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
 each other yet. There is merely a guarantee that only the identified parties will possess the same set of keys. Two
