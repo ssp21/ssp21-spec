@@ -483,17 +483,6 @@ library.
 Every message at the cryptographic layer begins with a one octet message type identifier. The remaining octets are 
 interpreted according the defined structure of that type.
 
-<!--
-| ID       | Name                   | Function summary                                                               |
-| ---------|------------------------|--------------------------------------------------------------------------------|
-| 0        | M_INIT_HANDSHAKE       | Master initiates the process of (re)negotiating session keys                   |
-| 1        | O_AUTH_HANDSHAKE       | Outstation authenticates to M_INIT_HANDSHAKE                                   |
-| 2        | M_AUTH_HANDSHAKE       | Master authenticates to O_AUTH_HANDSHAKE                                       |
-| 3        | O_CONF_HANDSHAKE       | Outstation confirms the completion of the handshake                            |
-| 4        | O_ERR_HANDSHAKE        | Outstation responds to a handshake message with an error code                  |
-| 5        | UNCONF_SESSION_DATA    | Either party transmits unconfirmed session data                                |
--->
-
 ### Syntax
 
 SSP21 uses a lightweight structural syntax to define the contents of messages
