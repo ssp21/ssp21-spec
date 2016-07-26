@@ -673,6 +673,15 @@ enum HANDSHAKE_HASH_MODE {
 }
 ```
 
+**Authentication-only session modes**
+
+* **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated to the leftmost 16 bytes.
+ 
+**Encrypted and authenticated session modes** 
+ 
+SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
+modes like AES-GCM.
+
 ##### CERTIFICATE_TYPE
 
 The *CERTIFICATE_TYPE* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
@@ -724,15 +733,6 @@ had missing bytes, or fields with the incorrect lengths.
 * **AUTHENICATION_ERROR** - The outstation was unable to authenticate the master.
  
 * **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
-
-**Authentication-only session modes**
-
-* **HMAC-SHA256-16** - Plaintext is authenticated using a HMAC-SHA256 truncated to the leftmost 16 bytes.
- 
-**Encrypted and authenticated session modes** 
- 
-SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
-modes like AES-GCM.
 
 #### Handshake Messages
 
