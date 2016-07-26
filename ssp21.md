@@ -337,13 +337,14 @@ layer which would require a completely different organizational response than fr
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency 
 with the Noise specification and the cryptographic layer. 
 
-**source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may 
-depend on the application layer of wrapped protocol.
-
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices 
 shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices 
 shall not do any further processing of frames with an unknown destination address.
 
+**source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may 
+depend on the application layer of wrapped protocol.
+
+**length** (2-bytes) - Length of the message, including the header and CRC, in bytes.
 
 # Cryptographic Layer
 
