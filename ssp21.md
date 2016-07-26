@@ -350,8 +350,8 @@ depend on the application layer of wrapped protocol.
 
 The cryptographic layer is derived with only minor modifications from [Noise](http://noiseprotocol.org), a 
 self-described framework for building cryptographic protocols. This specification picks from all the available options 
-and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self 
-contained; reading the Noise specification is not required to understand or implement SSP21.
+and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is
+self-contained: reading the Noise specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
@@ -389,10 +389,10 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
-key.
+key. <!--- Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) -->
 
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
-length _DHLEN_.
+length _DHLEN_.<!--- Should perhaps mention, as in the RFC, to check for all zeroes. -->
 
 ### Hash Functions
 
@@ -415,7 +415,7 @@ HMAC provides produces an authentication tag given a shared symmetric key and an
 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
-HMAC(private key, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
+HMAC(~~private~~ key <!--- This would normally not be the private key (i.e. as used in public/private) - could be confusing to call it such -->, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
 
 ### HKDF
 
@@ -804,7 +804,7 @@ message REQUEST_HANDSHAKE_AUTH {
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
+* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
 
 ##### REPLY_HANDSHAKE_AUTH
 
@@ -817,7 +817,7 @@ message REPLY_HANDSHAKE_AUTH {
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
+* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
 
 ##### REPLY_HANDSHAKE_ERROR
 
@@ -849,7 +849,7 @@ message UNCONFIRMED_SESSION_DATA {
 ```
 
 * **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
-* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment.
+* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment <!--- Should be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number indicating its time -->.
 * **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
 AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
