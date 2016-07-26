@@ -664,11 +664,11 @@ enum HASH_MODE {
 
 ##### SESSION_SECURITY_MODE
 
-The *SESSION_TYPE* enumeration specifies the complete set of algorithms that determine the security properties of
+The *SESSION_SECURITY_MODE* enumeration specifies the complete set of algorithms that determine the security properties of
 the session. 
 
 ```
-enum HANDSHAKE_HASH_MODE {
+enum SESSION_SECURITY_MODE {
     HMAC-SHA256-16 : 0
 }
 ```
