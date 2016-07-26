@@ -699,9 +699,12 @@ enum HANDSHAKE_ERROR {
     UNSUPPORTED_CERTIFICATE_TYPE : 4
     BAD_CERTIFICATE_FORMAT : 5
     UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
+    BAD_HMAC : 7
     INTERNAL : 255
 }
 ```
+
+**Note: Implementations shall NEVER define custom error codes as this can allow implementation fingerprinting**
 
 * **BAD_MESSAGE_FORMAT** - A received handshake message was malformed in some manner, e.g. it was improperly encoded,
 had missing bytes, or fields with the incorrect lengths.
@@ -717,6 +720,8 @@ had missing bytes, or fields with the incorrect lengths.
 * **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
  
 * **UNSUPPORTED_CERTIFICATE_ALGORITHM** - The specified algorithm in one of the certificates is not supported.
+
+* **AUTHENICATION_ERROR** - The outstation was unable to authenticate the master.
  
 * **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
 
@@ -782,6 +787,22 @@ message REPLY_HANDSHAKE_BEGIN {
 * **empheral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
 
 * **certificates** - A certificate chain corresponding to the certificate type requested by the master.
+
+##### REPLY_HANDSHAKE_ERROR
+
+The outstation can reply to a *REQUEST_HANDSHAKE_BEGIN* or a *REQUEST_HANDSHAKE_AUTH* message with a 
+*REPLY_HANDSHAKE_ERROR* message. This message is for debugging purposes only during commissioning and cannot be
+authenticated.
+
+```
+message REPLY_HANDSHAKE_ERROR {
+   function : enum::FUNCTION::REPLY_HANDSHAKE_ERROR
+   error_code : enum::HANDSHAKE_ERROR
+}
+```
+
+* **error_code** - An error code that enumerates possible error conditions that can occur during the handshake.
+
 
 
 ## Key Negotiation Handshake
