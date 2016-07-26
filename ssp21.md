@@ -640,35 +640,35 @@ enum FUNCTION {
 }
 ```
 
-##### DH_TYPE
+##### DH_MODE
 
-The *DH_TYPE* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
+The *DH_MODE* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
 material.
 
 ```
-enum DH_TYPE {
+enum DH_MODE {
     X25519 : 0
 }
 ```
 
-##### HASH_TYPE
+##### HASH_MODE
 
-The *HASH_TYPE* enumeration specifies which hash algorithm will be used during the handshake process to prevent
+The *HASH_MODE* enumeration specifies which hash algorithm will be used during the handshake process to prevent
 tampering.
 
 ```
-enum HASH_TYPE {
+enum HASH_MODE {
     SHA256 : 0
 }
 ```
 
-##### SESSION_SECURITY_TYPE
+##### SESSION_SECURITY_MODE
 
 The *SESSION_TYPE* enumeration specifies the complete set of algorithms that determine the security properties of
 the session. 
 
 ```
-enum HANDSHAKE_HASH_TYPE {
+enum HANDSHAKE_HASH_MODE {
     HMAC-SHA256-16 : 0
 }
 ```
@@ -685,6 +685,40 @@ enum CERTIFICATE_TYPE {
 ```
 
 * **M2M** - Machine-to-machine certificate format
+
+##### HANDSHAKE_ERROR
+
+The *HANDSHAKE_ERROR* enumeration denotes an error condition that occurred during the handshake process.
+
+```
+enum HANDSHAKE_ERROR {
+    BAD_MESSAGE_FORMAT : 0
+    UNSUPPORTED_DH_MODE : 1
+    UNSUPPORTED_HASH_MODE : 2
+    UNSUPPORTED_SESSION_SECURITY_MODE : 3
+    UNSUPPORTED_CERTIFICATE_TYPE : 4
+    BAD_CERTIFICATE_FORMAT : 5
+    UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
+    INTERNAL : 255
+}
+```
+
+* **BAD_MESSAGE_FORMAT** - A received handshake message was malformed in some manner, e.g. it was improperly encoded,
+had missing bytes, or fields with the incorrect lengths.
+
+* **UNSUPPORTED_DH_MODE** - The requested Diffie Hellman mode is not supported.
+ 
+* **UNSUPPORTED_HASH_MODE** - The requested hash algorithm is not supported.
+ 
+* **UNSUPPORTED_SESSION_SECURITY_MODE** - The requested session security mode is not supported.
+ 
+* **UNSUPPORTED_CERTIFICATE_TYPE** - The requested certificate type is not supported.
+ 
+* **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
+ 
+* **UNSUPPORTED_CERTIFICATE_ALGORITHM** - The specified algorithm in one of the certificates is not supported.
+ 
+* **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
 
 **Authentication-only session modes**
 
@@ -705,10 +739,10 @@ The master initiates the process of establishing a new session by sending the *R
 message REQUEST_HANDSHAKE_BEGIN {
    function : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
    version : U16
-   handshake_dh_type: enum::DH_TYPE
-   handshake_hash_type : enum::HASH_TYPE
-   session_security_type : enum::SESSION_SECURITY_TYPE
-   certificate_type : enum::CERTIFICATE_TYPE
+   handshake_DH_MODE: enum::DH_MODE
+   handshake_HASH_MODE : enum::HASH_MODE
+   SESSION_SECURITY_MODE : enum::SESSION_SECURITY_MODE
+   CERTIFICATE_TYPE : enum::CERTIFICATE_TYPE
    ephemeral_public_key: Seq8[U8]
    certificates: Seq8[Seq16[U8]]
 }
@@ -717,19 +751,19 @@ message REQUEST_HANDSHAKE_BEGIN {
 * **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible changes
  to the specification which cannot be mitigated via configuration will increment this number.
  
-* **handshake_dh_type** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
+* **handshake_DH_MODE** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
 
-* **handshake_hash_type** - Specifies what hash algorithm is used to prevent tampering of handshake data.
+* **handshake_HASH_MODE** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
-* **session_security_type** - Specifies the full set of algorithms used to secure the session.
+* **SESSION_SECURITY_MODE** - Specifies the full set of algorithms used to secure the session.
    
-* **certificate_type** - Specifies what type of certificates are being exchanged.
+* **CERTIFICATE_TYPE** - Specifies what type of certificates are being exchanged.
 
 * **empheral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
-*handshake_dh_type*.
+*handshake_DH_MODE*.
 
-* **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
+* **certificates** - A certificate chain that is interpreted according to the *CERTIFICATE_TYPE* field. Chains are 
 placed in the sequence from the highest level of the chain down to the endpoint certificate.
 
 ##### REPLY_HANDSHAKE_BEGIN
