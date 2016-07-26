@@ -837,11 +837,16 @@ to the other.
 ```
 message UNCONFIRMED_SESSION_DATA {
    function : enum::FUNCTION::UNCONFIRMED_SESSION_DATA
-   valid_until : U32
    nonce : U16
+   valid_until_ms : U32   
    payload_and_auth_tag : SEQ16[U8]
 }
 ```
+
+* **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
+* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment.
+* **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
+AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
 ## Key Negotiation Handshake
 
