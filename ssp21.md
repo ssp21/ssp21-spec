@@ -739,10 +739,10 @@ The master initiates the process of establishing a new session by sending the *R
 message REQUEST_HANDSHAKE_BEGIN {
    function : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
    version : U16
-   handshake_DH_MODE: enum::DH_MODE
-   handshake_HASH_MODE : enum::HASH_MODE
-   SESSION_SECURITY_MODE : enum::SESSION_SECURITY_MODE
-   CERTIFICATE_TYPE : enum::CERTIFICATE_TYPE
+   handshake_dh_mode: enum::DH_MODE
+   handshake_hash_mode : enum::HASH_MODE
+   session_security_mode : enum::SESSION_SECURITY_MODE
+   certificate_type : enum::CERTIFICATE_TYPE
    ephemeral_public_key: Seq8[U8]
    certificates: Seq8[Seq16[U8]]
 }
@@ -751,19 +751,19 @@ message REQUEST_HANDSHAKE_BEGIN {
 * **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible changes
  to the specification which cannot be mitigated via configuration will increment this number.
  
-* **handshake_DH_MODE** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
+* **handshake_dh_mode** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
 
-* **handshake_HASH_MODE** - Specifies what hash algorithm is used to prevent tampering of handshake data.
+* **handshake_hash_mode** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
-* **SESSION_SECURITY_MODE** - Specifies the full set of algorithms used to secure the session.
+* **SESSION_security_mode** - Specifies the full set of algorithms used to secure the session.
    
-* **CERTIFICATE_TYPE** - Specifies what type of certificates are being exchanged.
+* **certificate_type** - Specifies what type of certificates are being exchanged.
 
 * **empheral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
-*handshake_DH_MODE*.
+*handshake_dh_mode*.
 
-* **certificates** - A certificate chain that is interpreted according to the *CERTIFICATE_TYPE* field. Chains are 
+* **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
 placed in the sequence from the highest level of the chain down to the endpoint certificate.
 
 ##### REPLY_HANDSHAKE_BEGIN
