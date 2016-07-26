@@ -765,7 +765,7 @@ message REQUEST_HANDSHAKE_BEGIN {
    
 * **certificate_type** - Specifies what type of certificates are being exchanged.
 
-* **empheral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
+* **ephemeral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
 *handshake_dh_mode*.
 
 * **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
