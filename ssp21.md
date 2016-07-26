@@ -788,6 +788,22 @@ message REPLY_HANDSHAKE_BEGIN {
 
 * **certificates** - A certificate chain corresponding to the certificate type requested by the master.
 
+##### REQUEST_HANDSHAKE_AUTH
+
+After receiving a valid *REPLY_HANDSHAKE_BEGIN* from the outstation, the master transmit a REQUEST_HANDSHAKE_AUTH
+message.
+
+```
+message REQUEST_HANDSHAKE_AUTH {
+   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH
+   nonce : U16 = 0
+   auth_tag : SEQ8[U8]
+}
+```
+
+
+
+
 ##### REPLY_HANDSHAKE_ERROR
 
 The outstation can reply to a *REQUEST_HANDSHAKE_BEGIN* or a *REQUEST_HANDSHAKE_AUTH* message with a 
@@ -833,6 +849,10 @@ DH keys in this section use the following abbrevations:
 * MSVK - Master static private key
 * MSPK - Master static public key
 
+Symmetric session keys in this this section use the following abbrevations:
+
+* MOSK - Master to outstation session key 
+* OMSK - Outstation to master session key
 
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
@@ -853,7 +873,7 @@ certificate chain.
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
-        * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
+        * *set (MOSK, OMSK) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
 certificate chain.
@@ -864,7 +884,7 @@ certificate chain.
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
-        * *set (key1, key2) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
+        * *set (MOSK, OMSK) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
 
 ### Security Properties
 
