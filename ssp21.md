@@ -848,6 +848,10 @@ message UNCONFIRMED_SESSION_DATA {
 * **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
 AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
+When *session_security_mode* is a truncated HMAC mode, *payload_and_auth* is defined as follows:
+ 
+*payload_and_auth* := plaintext_payload | HMAC(key, entire_message_except_for_hmac)
+
 ## Key Negotiation Handshake
 
 Key negotiation in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
