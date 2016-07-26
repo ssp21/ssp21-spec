@@ -588,7 +588,7 @@ message ByteSequence {
 Given the message definition above, the ByteSequence with value equal to {0xCA, 0xFE} would be encoded as:
 
 ```
-[**0x00**, **0x02**, 0xCA, 0xFE]
+[0x00, 0x02, 0xCA, 0xFE]
 ```
 
 Sequences of sequences are also allowed, but only to this maximum depth of 2. For instance, we could define
@@ -609,7 +609,7 @@ Suppose that we wish to encode the following sequence of byte sequences in the v
 The serialized ByteSequences message would be encoded as:
 
 ```
-[**0x03**, **0x00**, **0x01**, 0x07, **0x00**, **0x02**, 0x08, 0x09, **0x00**, **0x03**, 0x0A, 0x0B, 0x0C]
+[0x03, 0x00, 0x01, 0x07, 0x00, 0x02, 0x08, 0x09, 0x00, 0x03, 0x0A, 0x0B, 0x0C]
 ```
 
 The first highlighted value of `0x03` refers to the fact that there are 3 byte sequences in the outer
