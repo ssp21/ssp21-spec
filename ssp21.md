@@ -636,7 +636,7 @@ enum FUNCTION {
     REQUEST_HANDSHAKE_AUTH   : 2
     REPLY_HANDSHAKE_AUTH     : 3
     REPLY_HANDSHAKE_ERROR    : 4
-    UNCONF_SESSION_DATA      : 5
+    UNCONFIRMED_SESSION_DATA : 5
 }
 ```
 
@@ -790,19 +790,29 @@ message REPLY_HANDSHAKE_BEGIN {
 
 ##### REQUEST_HANDSHAKE_AUTH
 
-After receiving a valid *REPLY_HANDSHAKE_BEGIN* from the outstation, the master transmit a REQUEST_HANDSHAKE_AUTH
-message.
+After receiving a valid *REPLY_HANDSHAKE_BEGIN*, the master transmits a *REQUEST_HANDSHAKE_AUTH*.
 
 ```
 message REQUEST_HANDSHAKE_AUTH {
-   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH
-   nonce : U16 = 0
-   auth_tag : SEQ8[U8]
+   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH   
+   auth_tag: Seq8[U8]
 }
 ```
 
+* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
 
+##### REPLY_HANDSHAKE_AUTH
 
+After receiving a valid and authenticated *REQUEST_HANDSHAKE_AUTH*, the outstation transmits a *REPLY_HANDSHAKE_AUTH*.
+
+```
+message REPLY_HANDSHAKE_AUTH {
+   function : enum::FUNCTION::REPLY_HANDSHAKE_AUTH   
+   auth_tag: Seq8[U8]
+}
+```
+
+* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
 
 ##### REPLY_HANDSHAKE_ERROR
 
@@ -819,7 +829,19 @@ message REPLY_HANDSHAKE_ERROR {
 
 * **error_code** - An error code that enumerates possible error conditions that can occur during the handshake.
 
+##### UNCONFIRMED_SESSION_DATA
 
+After the successful completion of a key negotiation handshake, either party may transmit *UNCONFIRMED_SESSION_DATA*
+to the other.
+
+```
+message UNCONFIRMED_SESSION_DATA {
+   function : enum::FUNCTION::UNCONFIRMED_SESSION_DATA
+   valid_until : U32
+   nonce : U16
+   payload_and_auth_tag : SEQ16[U8]
+}
+```
 
 ## Key Negotiation Handshake
 
