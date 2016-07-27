@@ -165,7 +165,7 @@ reduce certificate sizes.
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully 
 implemented, it is important to describe the broader system in which the protocol is designed to operate.
 
-![Components of the system relevant to SSP21](img/network_architecture.png){#fig:networkarchitecture}
+![Components of the system relevant to SSP21](svg/network_architecture.png){#fig:networkarchitecture}
 
 SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as 
 shown in figure @fig:networkarchitecture. It accomplishes this using a PKI wholly owned and controlled by the utility. 
@@ -312,7 +312,7 @@ do the necessary encryption (which should normally be the case). -->
 
 SSP21 specifies a two layer architecture for delivering secure data to the user layer.
 
-![SSP21 stack - The link and crypto layers are defined in this specification](img/stack.png){#fig:stack}
+![SSP21 stack - The link and crypto layers are defined in this specification](svg/stack.png){#fig:stack}
 
 The link layer provides three features: 
 
