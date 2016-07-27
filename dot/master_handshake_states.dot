@@ -1,0 +1,9 @@
+digraph G {	
+	rankdir=LR;
+	size="8,5"
+	IDLE -> WAIT_BHR [ label = " e1" ];
+	WAIT_BHR -> IDLE [ label = " timeout"];		
+	WAIT_BHR -> WAIT_RHA [ label = " e2" ];
+	WAIT_RHA -> READY [label = " e3"];
+}
+

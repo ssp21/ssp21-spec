@@ -945,7 +945,14 @@ The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 
 ![Error in  REQUEST_HANDSHAKE_AUTH](msc/handshake_error2.png){#fig:handshake_error2}
 
-<!--
+### State Transition Diagrams
+
+The master implements the following state transition diagram for the key negotiation handshake.
+
+
+**Note: This diagram is notional while we explore the full capabilities of graph generation**
+
+![Master handshake states](dot/master_handshake_states.png){#fig:master_handshake_states}
 
 ### Security Variables
 
