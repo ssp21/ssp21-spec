@@ -951,7 +951,7 @@ DH keys in this section use the following abbrevations:
 * MSVK - Master static private key
 * MSPK - Master static public key
 
-Symmetric session keys in this this section use the following abbrevations:
+Symmetric keys in this this section use the following abbrevations:
 
 * CK - a *chaining key* used as an intermediate key and later stretched into two session keys
 * AK - an *authentication key* used to authenticate both parties prior to final session key derivation
