@@ -26,15 +26,12 @@ primitives substantially more efficient than RSA encryption.
 
 ## Asymmetric Certificate Revocation
 
-Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme <del>instead 
-of</del><u>in addition to</u> <!--- rlc: we should not preclude the possibility of explicit revocation: if an 
-outstation has access to a CRL it should be allowed to use it. -->
-explicit revocation. This works well in an operational environment where the utility has a reliable and isolated IP 
-network between an online authority and multiple master stations. An intermediate authority private key can be used to 
-periodically renew master certificates. Using CRLs with outstations <del>is</del><u>may be</u> undesirable as 
-outstation <del>cannot</del><u>may not be able to</u> reach them on a 
-serial channel, and masters would have to push revocation notifications down to each endpoint and ensure that they 
-arrive. Outstations would then have to persist these CRLs in non-volatile memory.
+Master certificates (certificates that identify masters to outstations), will support a fast expiration scheme in
+addition to  explicit revocation. This works well in an operational environment where the utility has a reliable and 
+isolated IP network between an online authority and multiple master stations. An intermediate authority private key can
+be used to periodically renew master certificates. Using CRLs with outstations may be undesirable as outstations 
+may not be able to reach them on a serial channel, and masters would have to push revocation notifications down to each
+endpoint and ensure that they arrive. Outstations would then have to persist these CRLs in non-volatile memory.
 
 This scheme requires that outstations have access to an out-of-band time synchronization mechanism such as GPS, local 
 NTP via GPS in a substation, or WWVB. Alternatively, over TCP networks, outstations could check an online CRL.
@@ -61,8 +58,7 @@ with provably constant-time implementations should be preferred.
 ## Extensible only to the extent necessary
 
 * Endpoints shall be able to identify the protocols version to each other during key exchange.
-* Must be secure against protocol downgrade attacks<del> (e.g. see Noise handshake)</del><!--- Noise is an 
-implementaion detail, not a requirement. -->.
+* Must be secure against protocol downgrade attacks via a mechanism that fully authenticates the handshake.
 * The protocol shall use security-suite specifications to allow new algorithms to be used in future versions, or to 
 provide more than one option for when algorithms, inevitably, are compromised.
 * The number of initial security suites will be limited to one or two, and will only support authentication.
@@ -71,9 +67,7 @@ provide more than one option for when algorithms, inevitably, are compromised.
 
 All messages shall be authenticated. Each endpoint in the session shall be able to unambiguously determine that a 
 session message comes from the other endpoint. The authentication mechanism shall automatically provide message 
-integrity and protection from spoofing and MitM attacks.<del> The most likely cryptographic primitive for this 
-authentication will be a MAC like an HMAC or a GMAC. In later iterations where encryption is accommodated, an AEAD 
-cipher mode could be used</del><!--- Not a requirement -->.
+integrity and protection from spoofing and MitM attacks.
 
 This authentication will ensure that a particular SCADA master is talking to a particular outstation. In other words, 
 it shall only secure the communication link and will not authenticate individual users or operators of the system. Role 
@@ -83,26 +77,24 @@ etc.) to manage users at the platform level.
 
 Particular BitS implementations could potentially use some metadata in certificates to limit or constrain what is 
 allowed during a particular communication session. How this metadata is used or configured to limit permissions for a 
-particular protocol is outside the scope of SSP21<!--- This implies that the "lite" certificate format allows for 
+particular protocol is outside the scope of SSP21<!-- RLC: This implies that the "lite" certificate format allows for 
 extensions -->.
 
 ## Protection from replay
 
-Both endpoints of the session shall be able to detect replayed session messages.<del> The most common mechanism used to 
-protect against replay is including an increasing nonce (i.e. counter) with each message over which the MAC is 
-calculated. Alternative schemes like challenge-response use a unique random nonce for each session message at the 
-expense of more communication messages.</del><!--- Not a requirement -->
-
-Although the protocol needs to be secure from replay, it does not need to ensure that all messages are delivered in 
-order, as SCADA protocols like DNP3 automatically handle retries at a higher level.
+Both endpoints of the session shall be able to detect replayed session messages. Although the protocol needs to be 
+secure from replay, it does not necessarily need to ensure that all messages are delivered in order, as SCADA protocols
+like DNP3 automatically handle retries at a higher level. The protocol will support two modes: one that strictly
+enforces packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial
+or UDP. 
 
 ## Session message “time of validity”
 
 Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could 
 occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. 
-To eliminate this mode of attack, both parties will exchange a relative time-base in milliseconds during the key 
-agreement handshake. Session messages shall include a timestamp in the destination node's time base indicating the last 
-possible time at which the message should be accepted.
+To eliminate this mode of attack, both parties record their own relative time-base in milliseconds during session 
+establishment. Session messages shall include a timestamp in milliseconds since this common time point that indicates
+the last possible moment when the packet should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency and 
 bandwidth of any particular network. As relative clock drift can occur, sessions may need to renegotiated more 
