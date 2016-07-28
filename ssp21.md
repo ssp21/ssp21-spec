@@ -26,14 +26,15 @@ primitives substantially more efficient than RSA encryption.
 
 ## Asymmetric Certificate Revocation
 
-Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme instead of 
+Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme <del>instead of</del><u>in addition to</u> <!--- rlc: we should not preclude the possibility of explicit revocation: if an outstation has access to a CRL it should be allowed to use it. -->
 explicit revocation. This works well in an operational environment where the utility has a reliable and isolated IP 
 network between an online authority and multiple master stations. An intermediate authority private key can be used to 
-periodically renew master certificates. Using CRLs with outstations is undesirable as outstation cannot reach them on a 
+periodically renew master certificates. Using CRLs with outstations <del>is</del><u>may be</u> undesirable as outstation <del>cannot</del><u>may not be able to</u> reach them on a 
 serial channel, and masters would have to push revocation notifications down to each endpoint and ensure that they 
-arrive. Outstations would then have to persist these CRLs in non-volatile memory. This scheme requires that outstations 
-have access to an out-of-band time synchronization mechanism such as GPS, local NTP via GPS in a substation, or WWVB. 
-Alternatively, over TCP networks, outstations could check an online CRL.
+arrive. Outstations would then have to persist these CRLs in non-volatile memory.
+
+This scheme requires that outstations have access to an out-of-band time synchronization mechanism such as GPS, local 
+NTP via GPS in a substation, or WWVB. Alternatively, over TCP networks, outstations could check an online CRL.
 
 Outstation certificates (certificates that identify outstations to masters) will be longer lived, and will be revoked 
 using an online CRL accessible to the masters in the system over a traditional TCP network.
@@ -57,35 +58,35 @@ with provably constant-time implementations should be preferred.
 ## Extensible only to the extent necessary
 
 * Endpoints shall be able to identify the protocols version to each other during key exchange.
-* Must be secure against protocol downgrade attacks (e.g. see Noise handshake).
+* Must be secure against protocol downgrade attacks<del> (e.g. see Noise handshake)</del><!--- Noise is an implementaion detail, not a requirement. -->.
 * The protocol shall use security-suite specifications to allow new algorithms to be used in future versions, or to 
 provide more than one option for when algorithms, inevitably, are compromised.
-* The number of initial security suites will be limited to one or two, and will only support authentication initially.
+* The number of initial security suites will be limited to one or two, and will only support authentication.
 
 ## Authentication
 
 All messages shall be authenticated. Each endpoint in the session shall be able to unambiguously determine that a 
 session message comes from the other endpoint. The authentication mechanism shall automatically provide message 
-integrity and protection from spoofing and MitM attacks. The most likely cryptographic primitive for this 
+integrity and protection from spoofing and MitM attacks.<del> The most likely cryptographic primitive for this 
 authentication will be a MAC like an HMAC or a GMAC. In later iterations where encryption is accommodated, an AEAD 
-cipher mode could be used.
+cipher mode could be used</del><!--- Not a requirement -->.
 
 This authentication will ensure that a particular SCADA master is talking to a particular outstation. In other words, 
 it shall only secure the communication link and will not authenticate individual users or operators of the system. Role 
 Based Access Control (RBAC) and auditing of users is best done at the platform level, and is outside the scope of 
-SSP21. Individual SCADA vendors are free to use different technologies such as Active Directory, RSA, LDAP, Kerberos, 
-etc to manage users at the platform level.
+SSP21. Individual SCADA vendors are free to use different technologies (such as Active Directory, RSA, LDAP, Kerberos, 
+etc.) to manage users at the platform level.
 
 Particular BitS implementations could potentially use some metadata in certificates to limit or constrain what is 
 allowed during a particular communication session. How this metadata is used or configured to limit permissions for a 
-particular protocol is outside the scope of SSP21.
+particular protocol is outside the scope of SSP21<!--- This implies that the "lite" certificate format allows for extensions -->.
 
 ## Protection from replay
 
-Both endpoints of the session shall be able to detect replayed session messages. The most common mechanism used to 
+Both endpoints of the session shall be able to detect replayed session messages.<del> The most common mechanism used to 
 protect against replay is including an increasing nonce (i.e. counter) with each message over which the MAC is 
 calculated. Alternative schemes like challenge-response use a unique random nonce for each session message at the 
-expense of more communication messages.
+expense of more communication messages.</del><!--- Not a requirement -->
 
 Although the protocol needs to be secure from replay, it does not need to ensure that all messages are delivered in 
 order, as SCADA protocols like DNP3 automatically handle retries at a higher level.
@@ -100,12 +101,9 @@ possible time at which the message should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency and 
 bandwidth of any particular network. As relative clock drift can occur, sessions may need to renegotiated more 
-frequently or the configurable validity window of session messages made larger.
+frequently or the configurable validity window of session messages made larger[^ieee1711].
 
-This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time. DNP3 
-(IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication (aggressive mode) 
-that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid succession within a 
-single session. <!--- TODO: consider making this a footnote -->
+[^ieee1711:] This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication (aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid succession within a single session.
 
 ## Optional encryption
 
@@ -120,10 +118,10 @@ shall support forward secrecy.
 ## Support bump in the wire retrofits
 
 The outstation implementations of the protocol shall be capable of being deployed as a bump in the wire (BitW) or 
-integrated onto endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW 
+integrated into endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW 
 implementations are necessary to retrofit legacy components during transitions.
 
-Requiring a BitW implementation only for outstations and not masters, simplifies requirements as the BitW needn’t be 
+Requiring a BitW implementation only for outstations and not masters simplifies requirements as the BitW needn’t be 
 protocol-aware. It can be configured with the static addresses of the outstation and master, and ignore protocol 
 messages addressed for other nodes. In BitW and BitS implementations, all cryptographic operations including key 
 negotiation and authentication will occur at the bump.
@@ -138,7 +136,8 @@ probabilistically filtered out at a level below cryptographic checks for deliber
 For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing 
 protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations 
 and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing 
-redundancy in certain implementations could provide significant bandwidth savings.
+redundancy in certain implementations could provide significant bandwidth savings.<!--- While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced protocol is no longer interoperable with the original protocol, but devices will still need to implement the original protocol. That means more code (two link layers for the same protocol), more testing, more complex procurement, more complex deployment, ...
+At least in the beginning, I think we should not expect anything other than BitW on the outstation end... -->
 
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side 
 when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot 
@@ -155,7 +154,7 @@ byte can be emitted. Some tricks could be played with asymmetric baud rates to m
 should be used for which hardware acceleration exists.
 
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. 
-Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per NIST guidelines) to 
+Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per [NIST guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to 
 reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped 
 protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to 
 reduce certificate sizes.
@@ -169,8 +168,8 @@ implemented, it is important to describe the broader system in which the protoco
 
 SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as 
 shown in figure @fig:networkarchitecture. It accomplishes this using a PKI wholly owned and controlled by the utility. 
-Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc) generate a public / private key pair locally, never 
-share the private key with another entity (human or machine), and can freely disseminate the public key for the 
+Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a public / private key pair locally, 
+never share the private key with another entity (human or machine), and can freely disseminate the public key for the 
 purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by 
 requiring parties to only place their trust in a central signing authority. The identity of all other parties is then 
 established via certification from this authority. To understand the attractiveness of such an architecture, it useful 
@@ -338,20 +337,21 @@ layer which would require a completely different organizational response than fr
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency 
 with the Noise specification and the cryptographic layer. 
 
-**source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may 
-depend on the application layer of wrapped protocol.
-
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices 
 shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices 
 shall not do any further processing of frames with an unknown destination address.
 
+**source** (2-bytes) - The source field encodes the address of the transmitting party. The usage of this field may 
+depend on the application layer of wrapped protocol.
+
+**length** (2-bytes) - Length of the message, including the header and CRC, in bytes.
 
 # Cryptographic Layer
 
 The cryptographic layer is derived with only minor modifications from [Noise](http://noiseprotocol.org), a 
 self-described framework for building cryptographic protocols. This specification picks from all the available options 
-and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is self 
-contained; reading the Noise specification is not required to understand or implement SSP21.
+and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is
+self-contained: reading the Noise specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
@@ -389,10 +389,10 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
-key.
+key. <!--- Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) -->
 
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
-length _DHLEN_.
+length _DHLEN_.<!--- Should perhaps mention, as in the RFC, to check for all zeroes. -->
 
 ### Hash Functions
 
@@ -415,7 +415,7 @@ HMAC provides produces an authentication tag given a shared symmetric key and an
 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
-HMAC(private key, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
+HMAC(~~private~~ key <!--- This would normally not be the private key (i.e. as used in public/private) - could be confusing to call it such -->, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
 
 ### HKDF
 
@@ -573,11 +573,11 @@ In practice, this only occurs for the *FUNCTION* enumeration.
 
 #### Sequences
 
-*Sequences* are variable length lists of particular type that, when serialized, are prefixed  with a *U8* or *U16* count
-of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is some type id. 
+*Sequences* are variable length lists of particular type that, when serialized, are prefixed  with a *U8* or *U16* 
+count of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is some type id. 
 
 When sequences are typed on primitive values, the length of the sequence in bytes is easily 
-calculated as the count of elements multiplied by the size of primitive plus the 
+calculated as the count of elements multiplied by the size of primitive plus the size of the count.
 
 ```
 message ByteSequence {
@@ -587,7 +587,9 @@ message ByteSequence {
 
 Given the message definition above, the ByteSequence with value equal to {0xCA, 0xFE} would be encoded as:
 
-[**0x00, 0x01**, 0xCA, 0xFE]
+```
+[0x00, 0x02, 0xCA, 0xFE]
+```
 
 Sequences of sequences are also allowed, but only to this maximum depth of 2. For instance, we could define
 a message containing a sequence of byte sequences as follows:
@@ -606,15 +608,16 @@ Suppose that we wish to encode the following sequence of byte sequences in the v
 
 The serialized ByteSequences message would be encoded as:
 
+```
+[0x03, 0x00, 0x01, 0x07, 0x00, 0x02, 0x08, 0x09, 0x00, 0x03, 0x0A, 0x0B, 0x0C]
+```
 
-[**0x03**, **0x00**, **0x01**, 0x07, **0x00**, **0x02**, 0x08, 0x09, **0x00**, **0x03**, 0x0A, 0x0B, 0x0C]
-
-The first highlighted value of 0x03 refers to the fact that there are 3 byte sequences in the outer
-sequence. The subsequent highlighted values ([0x00, 0x01], [0x00, 0x02], [0x00, 0x01]) refer to the number of bytes that 
-follow in each sub-sequence.
+The first highlighted value of `0x03` refers to the fact that there are 3 byte sequences in the outer
+sequence. The subsequent highlighted values (`[0x00, 0x01], [0x00, 0x02], [0x00, 0x01]`) refer to the number of bytes 
+that follow in each sub-sequence.
 
 Despite the generality of the sequence definition over any type, in practice it is only used to define 
-*Seq[U8]* and *Seq[Seq[U8]]*.
+**Seq*N*[U8]** and **Seq*N*[Seq*N*[U8]]**.
 
 
 ### Definitions
@@ -701,15 +704,15 @@ The *HANDSHAKE_ERROR* enumeration denotes an error condition that occurred durin
 
 ```
 enum HANDSHAKE_ERROR {
-    BAD_MESSAGE_FORMAT : 0
-    UNSUPPORTED_DH_MODE : 1
-    UNSUPPORTED_HASH_MODE : 2
+    BAD_MESSAGE_FORMAT                : 0
+    UNSUPPORTED_DH_MODE               : 1
+    UNSUPPORTED_HASH_MODE             : 2
     UNSUPPORTED_SESSION_SECURITY_MODE : 3
-    UNSUPPORTED_CERTIFICATE_TYPE : 4
-    BAD_CERTIFICATE_FORMAT : 5
+    UNSUPPORTED_CERTIFICATE_TYPE      : 4
+    BAD_CERTIFICATE_FORMAT            : 5
     UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
-    BAD_HMAC : 7
-    INTERNAL : 255
+    BAD_HMAC                          : 7
+    INTERNAL                          : 255
 }
 ```
 
@@ -753,8 +756,10 @@ message REQUEST_HANDSHAKE_BEGIN {
 }
 ```
 
-* **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible changes
- to the specification which cannot be mitigated via configuration will increment this number.
+<!--- Consider using IETF TLS ciphersuite specifications so we won't have to update the spex to add cipher suites -->
+
+* **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible 
+changes to the specification which cannot be mitigated via configuration will increment this number. <!--- Consider using a scheme that would allow new features to be added without losing backward compatibility, and indicating it - e.g. a libtool-like versioning scheme -->
  
 * **handshake_dh_mode** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
@@ -799,7 +804,7 @@ message REQUEST_HANDSHAKE_AUTH {
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
+* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
 
 ##### REPLY_HANDSHAKE_AUTH
 
@@ -812,7 +817,7 @@ message REPLY_HANDSHAKE_AUTH {
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC or AEAD tag.
+* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
 
 ##### REPLY_HANDSHAKE_ERROR
 
@@ -844,7 +849,7 @@ message UNCONFIRMED_SESSION_DATA {
 ```
 
 * **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
-* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment.
+* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment <!--- Should be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number indicating its time -->.
 * **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
 AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
