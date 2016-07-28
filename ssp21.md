@@ -974,7 +974,7 @@ certificate chain.
     * The outstation mixes the entire transmitted message into the *handshake hash*.
         * set handshake_hash = HASH(handshake_hash || message)
  
-    * The outstation then two derives the *chaining key* and the *authentication key*:
+    * The outstation then derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
@@ -986,7 +986,7 @@ certificate chain.
     * The master mixes the entire received message into the *handshake hash*.
             * set handshake_hash = HASH(handshake_hash || message)
     
-    * The master then two derives the *chaining key* and the *authentication key*:
+    * The master then derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
