@@ -947,6 +947,8 @@ DH keys in this section use the following abbrevations:
 
 Symmetric session keys in this this section use the following abbrevations:
 
+* CK - a chaining key used as an intermediate key and later stretched into two session keys
+* AK - an authentication key used to authenticate both parties prior to final session key derivation
 * MOSK - Master to outstation session key 
 * OMSK - Outstation to master session key
 
@@ -965,23 +967,36 @@ certificate chain.
  
     * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
  
-    * The outstation then derives session keys:
+    * The outstation then derives two symmetric keys:
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
-        * *set (MOSK, OMSK) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
+        * *set (CK, AK) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
 certificate chain.
 
     * The master mixes the entire received message into its copy of the *handshake hash*.
     
-    * The master then derives session keys:
+    * The master then two derives symmetric keys:
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
-        * *set (MOSK, OMSK) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
-
+        * *set (CK, AK) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
+        
+5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message, using *HMAC(AK, [0x00])*.
+    
+6. The outstation receives the *REQUEST_HANDSHAKE_AUTH* message, verifies the HMAC, and then transmits a 
+*REPLY_HANDSHAKE_AUTH* message using *HMAC(AK, [0xFF])*.
+    
+    * The outstation then performs the final session key derivation by splitting the chaining key:
+        * set (MOSK, OMSK) = HKDF(CK, [])
+        
+    * The outstation then initializes a new session with (MOSK, OMSK, nonce = 0)         
+    
+7.  The master receives the *REPLY_HANDSHAKE_AUTH*, verifies the HMAC, and performs the same key derivation
+and session initialization as the outstation.
+        
 ### Security Properties
 
 If any of the following properties do not hold, then master and outstation will not agree on the same keys:
