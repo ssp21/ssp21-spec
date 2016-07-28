@@ -959,13 +959,13 @@ Note: The HASH() and HMAC() functions below always refer to the hash function sp
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
-    * The master sets the *handshake_hash* value equal to the hash of the entire transmitted message:
+    * The master initializes the *handshake_hash* value to the hash of the entire transmitted message:
         *set handshake_hash = HASH(message)*
 
 2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
 the certificate chain.
 
-    * The outstations sets the *handshake_hash* value equal to the hash of the entire received message:
+    * The outstations initializes the *handshake_hash* value equal to the hash of the entire received message:
             *set handshake_hash = HASH(message)*
 
 3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
