@@ -751,7 +751,7 @@ enum HANDSHAKE_ERROR {
     UNSUPPORTED_CERTIFICATE_MODE      : 4
     BAD_CERTIFICATE_FORMAT            : 5
     UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
-    BAD_HMAC                          : 7
+    AUTHENTICATION_ERROR              : 7
     INTERNAL                          : 255
 }
 ```
@@ -773,7 +773,7 @@ had missing bytes, or fields with the incorrect lengths.
  
 * **UNSUPPORTED_CERTIFICATE_ALGORITHM** - The specified algorithm in one of the certificates is not supported.
 
-* **AUTHENICATION_ERROR** - The outstation was unable to authenticate the master.
+* **AUTHENTICATION_ERROR** - The outstation was unable to authenticate the master.
  
 * **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
 
