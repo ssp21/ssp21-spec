@@ -930,9 +930,10 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
 handshake pattern where all Diffie Hellman operations are deferred until after first two messages are exchanged.
  
-### Overview
+### Procedure 
 
-The following steps are performed during a successful handshake. Error handling is described in a following section.
+The following steps are performed during a successful handshake. The various errors that can occur and early handshake
+terminations are described in the [state transition diagrams](State Transition Diagrams).
 
 DH keys in this section use the following abbrevations:
 
@@ -947,27 +948,33 @@ DH keys in this section use the following abbrevations:
 
 Symmetric session keys in this this section use the following abbrevations:
 
-* CK - a chaining key used as an intermediate key and later stretched into two session keys
-* AK - an authentication key used to authenticate both parties prior to final session key derivation
+* CK - a *chaining key* used as an intermediate key and later stretched into two session keys
+* AK - an *authentication key* used to authenticate both parties prior to final session key derivation
 * MOSK - Master to outstation session key 
 * OMSK - Outstation to master session key
+
+Note: The HASH() and HMAC() functions below always refer to the hash function specified by the master in the initial 
+*REQUEST_HANDSHAKE_BEGIN* message.  
 
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
-    * The master mixes the entire transmitted message in into its copy of the *handshake hash*.           
+    * The master sets the *handshake_hash* value equal to the hash of the entire transmitted message:
+        *set handshake_hash = HASH(message)*
 
 2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
 the certificate chain.
 
-    * The outstation mixes the entire received message into its copy of the *handshake hash*.
+    * The outstations sets the *handshake_hash* value equal to the hash of the entire received message:
+            *set handshake_hash = HASH(message)*
 
 3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
 certificate chain.
  
-    * The outstation mixes its entire transmitted message into its copy of the *handshake hash*.
+    * The outstation mixes the entire transmitted message into the *handshake hash*.
+        * set handshake_hash = HASH(handshake_hash || message)
  
-    * The outstation then derives two symmetric keys:
+    * The outstation then two derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
@@ -976,9 +983,10 @@ certificate chain.
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
 certificate chain.
 
-    * The master mixes the entire received message into its copy of the *handshake hash*.
+    * The master mixes the entire received message into the *handshake hash*.
+            * set handshake_hash = HASH(handshake_hash || message)
     
-    * The master then two derives symmetric keys:
+    * The master then two derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
@@ -999,19 +1007,17 @@ and session initialization as the outstation.
         
 ### Security Properties
 
-If any of the following properties do not hold, then master and outstation will not agree on the same keys:
+If any of the following properties do not hold, then master and outstation will not agree on the same *chaining_key* and
+*authentication_key*.
 
-* If a MitM tampers with the contents of either message, the two parties will have differing handshake hashes which 
-will produce different keys when feed into the key derivation function.
+* If a MitM tampers with the contents of either the *REQUEST_HANDSHAKE_BEGIN* message or the *REPLY_HANDSHAKE_BEGIN*, 
+the two parties will have differing handshake hashes which will produce different keys when feed into the key derivation
+function.
 
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
-transmitted, 
-they will be unable to perform the correct DH calculations and will not be able to calculate the same keys in the KDF.
+transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
+in the KDF.
  
-It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
-each other yet. There is merely a guarantee that only the identified parties will possess the same set of keys. Two
-additional messages are required to confirm the key agreement and authenticate.
-
 ### Message Exchanges
 
 A success handshake involves the exchange of the following four messages:
