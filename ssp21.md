@@ -136,11 +136,13 @@ probabilistically filtered out at a level below cryptographic checks for deliber
 For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing 
 protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations 
 and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing 
-redundancy in certain implementations could provide significant bandwidth savings.<!--- While true, I think this may 
-hinder adoption in that market, as it would mean that an SSP21-enhanced protocol is no longer interoperable with the 
-original protocol, but devices will still need to implement the original protocol. That means more code (two link 
-layers for the same protocol), more testing, more complex procurement, more complex deployment, ...
-At least in the beginning, I think we should not expect anything other than BitW on the outstation end... -->
+redundancy in certain implementations could provide significant bandwidth savings.
+
+<!--- RLC: While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced protocol 
+is no longer interoperable with the  original protocol, but devices will still need to implement the original protocol. 
+That means more code (two link layers for the same protocol), more testing, more complex procurement, more complex 
+deployment, ...At least in the beginning, I think we should not expect anything other than BitW on the outstation 
+end... -->
 
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side 
 when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot 
@@ -158,10 +160,9 @@ should be used for which hardware acceleration exists.
 
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. 
 Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per [NIST 
-guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to 
-reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped 
-protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to 
-reduce certificate sizes.
+guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to reduce overhead. BitS
+integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient\
+certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
 
 # Utility PKI
 
@@ -352,10 +353,10 @@ depend on the application layer of wrapped protocol.
 
 # Cryptographic Layer
 
-The cryptographic layer is derived with only minor modifications from [Noise](http://noiseprotocol.org), a 
-self-described framework for building cryptographic protocols. This specification picks from all the available options 
-and modes within Noise to create a subset appropriate for wrapping ICS serial protocols. This specification is
-self-contained: reading the Noise specification is not required to understand or implement SSP21.
+The cryptographic layer is inspired by the [Noise](http://noiseprotocol.org), a self-described framework for building 
+cryptographic protocols. This specification picks from all the available options and modes within Noise to create a 
+subset appropriate for wrapping ICS serial protocols. This specification is self-contained: reading the Noise 
+specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
@@ -393,18 +394,26 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
-key. <!--- Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a 
+key. 
+
+<!--- RLC: Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a 
 key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) 
 -->
 
+<!-- JAC: This is because the in Noise's definition the of the function, the key pair argument is mutable. I'm not 
+particularly fond of all the definitions in Noise, and we can change them --> 
+
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
-length _DHLEN_.<!--- Should perhaps mention, as in the RFC, to check for all zeroes. -->
+length _DHLEN_.
+
+<!--- RLC: Should perhaps mention, as in the RFC, to check for all zeroes. -->
+<!--- JAC: Yes, definitely. Keeping these comments here as a reminder. -->
 
 ### Hash Functions
 
-SSP21 currently only supports SHA256 described in [FIPS 
-190-4](http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf). SHA512 and/or hash function from the BLAKE 
-family will likely be supported in the future. The hash function serves two roles:
+SSP21 currently only supports SHA256 described in 
+[FIPS 190-4](http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf). SHA512 and/or hash function from the
+BLAKE family will likely be supported in the future. The hash function serves two roles:
 
 * Maintain a hash of all data sent and received during the key negotiation sequence. This running hash is then 
 incorporated into the authentication signatures and makes any tampering of handshake data detectable.
@@ -421,9 +430,7 @@ HMAC provides produces an authentication tag given a shared symmetric key and an
 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
-HMAC(~~private~~ key <!--- This would normally not be the private key (i.e. as used in public/private) - could be 
-confusing to call it such -->, message) - Calculate an authentication tag from an arbitrary length key and message 
-sequence.
+HMAC(key, message) - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
 
 ### HKDF
 
@@ -584,8 +591,8 @@ In practice, this only occurs for the *FUNCTION* enumeration.
 *Sequences* are variable length lists of particular type that, when serialized, are prefixed  with a *U8* or *U16* 
 count of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is some type id. 
 
-When sequences are typed on primitive values, the length of the sequence in bytes is easily 
-calculated as the count of elements multiplied by the size of primitive plus the size of the count.
+When sequences are typed on primitive values, the length of the sequence in bytes is calculated as the count of elements
+multiplied by the size of primitive plus the size of the count prefix field.
 
 ```
 message ByteSequence {
@@ -617,15 +624,15 @@ Suppose that we wish to encode the following sequence of byte sequences in the v
 The serialized ByteSequences message would be encoded as:
 
 ```
-[0x03, 0x00, 0x01, 0x07, 0x00, 0x02, 0x08, 0x09, 0x00, 0x03, 0x0A, 0x0B, 0x0C]
+[**0x03**, **0x00, 0x01**, 0x07, **0x00, 0x02**, 0x08, 0x09, **0x00, 0x03**, 0x0A, 0x0B, 0x0C]
 ```
 
 The first highlighted value of `0x03` refers to the fact that there are 3 byte sequences in the outer
 sequence. The subsequent highlighted values (`[0x00, 0x01], [0x00, 0x02], [0x00, 0x01]`) refer to the number of bytes 
 that follow in each sub-sequence.
 
-Despite the generality of the sequence definition over any type, in practice it is only used to define 
-**Seq*N*[U8]** and **Seq*N*[Seq*N*[U8]]**.
+Despite the generality of the sequence definition over any type, in practice it is only used to define **Seq*N*[U8]** 
+and **Seq*N*[Seq*N*[U8]]**.
 
 
 ### Definitions
@@ -790,8 +797,7 @@ placed in the sequence from the highest level of the chain down to the endpoint 
 ##### REPLY_HANDSHAKE_BEGIN
 
 The outstation replies to *REQUEST_HANDSHAKE_BEGIN* by sending *REPLY_HANDSHAKE_BEGIN*, unless an error occurs in which 
-case it responds
-with *REPLY_HANDSHAKE_ERROR*.
+case it responds with *REPLY_HANDSHAKE_ERROR*.
 
 ```
 message REPLY_HANDSHAKE_BEGIN {
@@ -812,11 +818,11 @@ After receiving a valid *REPLY_HANDSHAKE_BEGIN*, the master transmits a *REQUEST
 ```
 message REQUEST_HANDSHAKE_AUTH {
    function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH   
-   auth_tag: Seq8[U8]
+   hmac: Seq8[U8]
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
+* **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
 
 ##### REPLY_HANDSHAKE_AUTH
 
@@ -825,11 +831,11 @@ After receiving a valid and authenticated *REQUEST_HANDSHAKE_AUTH*, the outstati
 ```
 message REPLY_HANDSHAKE_AUTH {
    function : enum::FUNCTION::REPLY_HANDSHAKE_AUTH   
-   auth_tag: Seq8[U8]
+   hmac: Seq8[U8]
 }
 ```
 
-* **auth_tag** - An authentication tag consisting of a truncated HMAC ~~or AEAD tag~~<!--- not supported yet -->.
+* **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
 
 ##### REPLY_HANDSHAKE_ERROR
 
@@ -861,10 +867,16 @@ message UNCONFIRMED_SESSION_DATA {
 ```
 
 * **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
-* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment <!--- Should 
+* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment 
+
+<!--- RLC: Should 
 be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages 
 to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number 
 indicating its time -->.
+
+<!--- JAC: Yes, definitely, this is undefined ATM, but I am going to try and define this without exchanging time bases
+ -->
+
 * **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
 AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
@@ -975,6 +987,8 @@ The master implements the following state transition diagram for the key negotia
 
 ![Master handshake states](dot/master_handshake_states.png){#fig:master_handshake_states}
 
+
+<!--
 ### Security Variables
 
 A number of security variables are maintained during the key negotiation handshake and during active sessions.
