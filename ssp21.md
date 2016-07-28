@@ -933,7 +933,12 @@ handshake pattern where all Diffie Hellman operations are deferred until after f
 ### Procedure 
 
 The following steps are performed during a successful handshake. The various errors that can occur and early handshake
-terminations are described in the [state transition diagrams](State Transition Diagrams).
+terminations are described in the state transition diagrams.
+
+Notation:
+
+* Both parties maintain a hash of the entire handshake denoted by the variable *h*.
+* The HASH() and HMAC() functions always refer to the hash function requested by the master.
 
 DH keys in this section use the following abbrevations:
 
@@ -953,44 +958,41 @@ Symmetric session keys in this this section use the following abbrevations:
 * MOSK - Master to outstation session key 
 * OMSK - Outstation to master session key
 
-Note: The HASH() and HMAC() functions below always refer to the hash function specified by the master in the initial 
-*REQUEST_HANDSHAKE_BEGIN* message.  
-
 1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
-    * The master initializes the *handshake_hash* value to the hash of the entire transmitted message:
-        *set handshake_hash = HASH(message)*
+    * The master initializes the *handshake hash* value to the hash of the entire transmitted message:
+        * *set h = HASH(message)*
 
 2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
 the certificate chain.
 
-    * The outstations initializes the *handshake_hash* value equal to the hash of the entire received message:
-        *set handshake_hash = HASH(message)*
+    * The outstations initializes the *handshake hash* value equal to the hash of the entire received message:
+        * *set h = HASH(message)*
 
 3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
 certificate chain.
  
     * The outstation mixes the entire transmitted message into the *handshake hash*.
-        * set handshake_hash = HASH(handshake_hash || message)
+        * *set h = HASH(h || message)*
  
     * The outstation then derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
-        * *set (CK, AK) = HKDF(handshake_hash, dh1 || dh2 || dh3)* 
+        * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)* 
  
 4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
 certificate chain.
 
     * The master mixes the entire received message into the *handshake hash*.
-            * set handshake_hash = HASH(handshake_hash || message)
+        * set h = HASH(h || message)
     
     * The master then derives the *chaining key* and the *authentication key*:
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
-        * *set (CK, AK) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
+        * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)*
         
 5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x01])*.
     
@@ -1000,7 +1002,7 @@ certificate chain.
     * The outstation performs the final session key derivation by splitting the chaining key:
         * set (MOSK, OMSK) = HKDF(CK, [])
         
-    * The outstation initializes a new session with (MOSK, OMSK, nonce = 0)         
+    * The outstation initializes a new session with (MOSK, OMSK, nonce = 0)
     
 7.  The master receives the *REPLY_HANDSHAKE_AUTH*, verifies the HMAC, and performs the same key derivation
 and session initialization as the outstation.
