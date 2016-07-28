@@ -814,7 +814,7 @@ impact the version field ---->
 
 * **handshake_hash_mode** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
-* **SESSION_security_mode** - Specifies the full set of algorithms used to secure the session.
+* **session_security_mode** - Specifies the full set of algorithms used to secure the session.
    
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall contain not contain any certificates.
