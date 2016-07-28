@@ -984,15 +984,15 @@ certificate chain.
         * *set dh3* = *DH(MSVK, OEPK)*
         * *set (CK, AK) = HKDF(handshake_hash, dh1 || dh2 || dh3)*
         
-5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message, using *HMAC(AK, [0x00])*.
+5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x01])*.
     
 6. The outstation receives the *REQUEST_HANDSHAKE_AUTH* message, verifies the HMAC, and then transmits a 
-*REPLY_HANDSHAKE_AUTH* message using *HMAC(AK, [0xFF])*.
+*REPLY_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x02])*.
     
-    * The outstation then performs the final session key derivation by splitting the chaining key:
+    * The outstation performs the final session key derivation by splitting the chaining key:
         * set (MOSK, OMSK) = HKDF(CK, [])
         
-    * The outstation then initializes a new session with (MOSK, OMSK, nonce = 0)         
+    * The outstation initializes a new session with (MOSK, OMSK, nonce = 0)         
     
 7.  The master receives the *REPLY_HANDSHAKE_AUTH*, verifies the HMAC, and performs the same key derivation
 and session initialization as the outstation.
