@@ -966,7 +966,7 @@ additional metadata, and a certificate chain.
 the certificate chain.
 
     * The outstations initializes the *handshake_hash* value equal to the hash of the entire received message:
-            *set handshake_hash = HASH(message)*
+        *set handshake_hash = HASH(message)*
 
 3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
 certificate chain.
