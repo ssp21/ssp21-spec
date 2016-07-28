@@ -658,6 +658,27 @@ enum FUNCTION {
 }
 ```
 
+##### NONCE_VERIFICATION_MODE
+
+The *NONCE_VERIFICATION_MODE* enumeration specifies how the incrementing nonce (message counter) is verified to protect
+packets from replay.
+
+```
+enum NONCE_VERIFICATION_MODE {
+    INCREMENT_LAST_RX : 0
+    GREATER_THAN_LAST_RX : 1
+}
+```
+
+* **INCREMENT_LAST_RX** - If this mode is specified, the receiver of a session message will require that the
+received nonce strictly equally the last nonce plus one. This mode is intended to be used in session oriented 
+environments like TCP that provide ordered stream reassembly and **should always be used in such environments** as it
+provides the strongest guarantees.
+
+* **GREATER_THAN_LAST_RX** - If this mode is specified, the receiver of a session message will only require that the
+received nonce be greater the last nonce. This mode is intended to be used in session-less environments like serial or 
+UDP.
+
 ##### DH_MODE
 
 The *DH_MODE* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
@@ -701,16 +722,19 @@ enum SESSION_SECURITY_MODE {
 SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
 modes like AES-GCM.
 
-##### CERTIFICATE_TYPE
+##### CERTIFICATE_MODE
 
-The *CERTIFICATE_TYPE* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
+The *CERTIFICATE_MODE* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
 each other.
 
 ```
-enum CERTIFICATE_TYPE {
-    M2M : 0
+enum CERTIFICATE_MODE {
+    PRESHARED_KEYS : 0
+    M2M : 1
 }
 ```
+
+* **NONE_PRESHARED_KEYS** - No certificates are exchanged. Parties have preshared public static DH keys. 
 
 * **M2M** - Machine-to-machine certificate format
 
@@ -724,7 +748,7 @@ enum HANDSHAKE_ERROR {
     UNSUPPORTED_DH_MODE               : 1
     UNSUPPORTED_HASH_MODE             : 2
     UNSUPPORTED_SESSION_SECURITY_MODE : 3
-    UNSUPPORTED_CERTIFICATE_TYPE      : 4
+    UNSUPPORTED_CERTIFICATE_MODE      : 4
     BAD_CERTIFICATE_FORMAT            : 5
     UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
     BAD_HMAC                          : 7
@@ -743,7 +767,7 @@ had missing bytes, or fields with the incorrect lengths.
  
 * **UNSUPPORTED_SESSION_SECURITY_MODE** - The requested session security mode is not supported.
  
-* **UNSUPPORTED_CERTIFICATE_TYPE** - The requested certificate type is not supported.
+* **UNSUPPORTED_CERTIFICATE_MODE** - The requested certificate mode is not supported.
  
 * **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
  
@@ -761,23 +785,29 @@ The master initiates the process of establishing a new session by sending the *R
 
 ```
 message REQUEST_HANDSHAKE_BEGIN {
-   function : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
-   version : U16
-   handshake_dh_mode: enum::DH_MODE
-   handshake_hash_mode : enum::HASH_MODE
-   session_security_mode : enum::SESSION_SECURITY_MODE
-   certificate_type : enum::CERTIFICATE_TYPE
-   ephemeral_public_key: Seq8[U8]
-   certificates: Seq8[Seq16[U8]]
+   function                 : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
+   version                  : U16
+   nonce_verification_mode  : enum::NONCE_VERIFICATION_MODE
+   handshake_dh_mode        : enum::DH_MODE
+   handshake_hash_mode      : enum::HASH_MODE
+   session_security_mode    : enum::SESSION_SECURITY_MODE
+   certificate_mode         : enum::CERTIFICATE_MODE
+   ephemeral_public_key     : Seq8[U8]      
+   certificates             : Seq8[Seq16[U8]]
 }
 ```
 
-<!--- Consider using IETF TLS ciphersuite specifications so we won't have to update the spex to add cipher suites -->
-
 * **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible 
-changes to the specification which cannot be mitigated via configuration will increment this number. <!--- Consider 
-using a scheme that would allow new features to be added without losing backward compatibility, and indicating it - 
-e.g. a libtool-like versioning scheme -->
+changes to the specification which cannot be mitigated via configuration will increment this number. 
+
+<!--- RLC: Consider using a scheme that would allow new features to be added without losing backward compatibility, and 
+indicating it - e.g. a libtool-like versioning scheme -->
+
+<!--- JAC: Yes, definitely. Will look into this. Will also make it explicit that adding new cipher suite modes won't
+impact the version field ---->
+
+* **nonce_verification_mode** - Identifies one of two modes for verifying messages against replay with differing
+ security properties.
  
 * **handshake_dh_mode** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
@@ -786,13 +816,14 @@ e.g. a libtool-like versioning scheme -->
   
 * **SESSION_security_mode** - Specifies the full set of algorithms used to secure the session.
    
-* **certificate_type** - Specifies what type of certificates are being exchanged.
+* **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
+*PRESHARED_KEYS*, the *certificates* field shall contain not contain any certificates.
 
 * **ephemeral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
 *handshake_dh_mode*.
 
-* **certificates** - A certificate chain that is interpreted according to the *certificate_type* field. Chains are 
-placed in the sequence from the highest level of the chain down to the endpoint certificate.
+* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field. 
+Chains are placed in the sequence from the root level of the chain down to the endpoint certificate.
 
 ##### REPLY_HANDSHAKE_BEGIN
 
@@ -809,7 +840,9 @@ message REPLY_HANDSHAKE_BEGIN {
 
 * **empheral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
 
-* **certificates** - A certificate chain corresponding to the certificate type requested by the master.
+* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field
+ transmitted by the master.
+
 
 ##### REQUEST_HANDSHAKE_AUTH
 
