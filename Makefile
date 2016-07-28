@@ -15,6 +15,10 @@ default: $(TARGETS)
 clean:
 	rm $(TARGETS) $(ALL_GEN_FILES)
 
+wrap:
+	fold -w 120 -s ssp21.md > ssp21_folded.md
+	mv ssp21_folded.md ssp21.md
+
 #### Use pandoc to create PDF and HTML ####
 
 ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile $(ALL_GEN_FILES)

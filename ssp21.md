@@ -26,10 +26,13 @@ primitives substantially more efficient than RSA encryption.
 
 ## Asymmetric Certificate Revocation
 
-Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme <del>instead of</del><u>in addition to</u> <!--- rlc: we should not preclude the possibility of explicit revocation: if an outstation has access to a CRL it should be allowed to use it. -->
+Master certificates (certificates that identify masters to outstations), will use a fast expiration scheme <del>instead 
+of</del><u>in addition to</u> <!--- rlc: we should not preclude the possibility of explicit revocation: if an 
+outstation has access to a CRL it should be allowed to use it. -->
 explicit revocation. This works well in an operational environment where the utility has a reliable and isolated IP 
 network between an online authority and multiple master stations. An intermediate authority private key can be used to 
-periodically renew master certificates. Using CRLs with outstations <del>is</del><u>may be</u> undesirable as outstation <del>cannot</del><u>may not be able to</u> reach them on a 
+periodically renew master certificates. Using CRLs with outstations <del>is</del><u>may be</u> undesirable as 
+outstation <del>cannot</del><u>may not be able to</u> reach them on a 
 serial channel, and masters would have to push revocation notifications down to each endpoint and ensure that they 
 arrive. Outstations would then have to persist these CRLs in non-volatile memory.
 
@@ -58,7 +61,8 @@ with provably constant-time implementations should be preferred.
 ## Extensible only to the extent necessary
 
 * Endpoints shall be able to identify the protocols version to each other during key exchange.
-* Must be secure against protocol downgrade attacks<del> (e.g. see Noise handshake)</del><!--- Noise is an implementaion detail, not a requirement. -->.
+* Must be secure against protocol downgrade attacks<del> (e.g. see Noise handshake)</del><!--- Noise is an 
+implementaion detail, not a requirement. -->.
 * The protocol shall use security-suite specifications to allow new algorithms to be used in future versions, or to 
 provide more than one option for when algorithms, inevitably, are compromised.
 * The number of initial security suites will be limited to one or two, and will only support authentication.
@@ -79,7 +83,8 @@ etc.) to manage users at the platform level.
 
 Particular BitS implementations could potentially use some metadata in certificates to limit or constrain what is 
 allowed during a particular communication session. How this metadata is used or configured to limit permissions for a 
-particular protocol is outside the scope of SSP21<!--- This implies that the "lite" certificate format allows for extensions -->.
+particular protocol is outside the scope of SSP21<!--- This implies that the "lite" certificate format allows for 
+extensions -->.
 
 ## Protection from replay
 
@@ -103,7 +108,10 @@ Implementations will have to make these timing parameters configurable so that t
 bandwidth of any particular network. As relative clock drift can occur, sessions may need to renegotiated more 
 frequently or the configurable validity window of session messages made larger[^ieee1711].
 
-[^ieee1711:] This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication (aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid succession within a single session.
+[^ieee1711:] This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units 
+of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication 
+(aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid 
+succession within a single session.
 
 ## Optional encryption
 
@@ -136,7 +144,10 @@ probabilistically filtered out at a level below cryptographic checks for deliber
 For some protocols, this new secure serial layer could act as a replacement for redundant functionality in existing 
 protocols. For example, the DNP3 link-layer and transport function could be completely removed in BitS implementations 
 and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing 
-redundancy in certain implementations could provide significant bandwidth savings.<!--- While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced protocol is no longer interoperable with the original protocol, but devices will still need to implement the original protocol. That means more code (two link layers for the same protocol), more testing, more complex procurement, more complex deployment, ...
+redundancy in certain implementations could provide significant bandwidth savings.<!--- While true, I think this may 
+hinder adoption in that market, as it would mean that an SSP21-enhanced protocol is no longer interoperable with the 
+original protocol, but devices will still need to implement the original protocol. That means more code (two link 
+layers for the same protocol), more testing, more complex procurement, more complex deployment, ...
 At least in the beginning, I think we should not expect anything other than BitW on the outstation end... -->
 
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side 
@@ -154,7 +165,8 @@ byte can be emitted. Some tricks could be played with asymmetric baud rates to m
 should be used for which hardware acceleration exists.
 
 * **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. 
-Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per [NIST guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to 
+Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per [NIST 
+guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to 
 reduce overhead. BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped 
 protocol. An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to 
 reduce certificate sizes.
@@ -389,7 +401,9 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 All DH curves will support the following two algorithms with the key lengths specified above.
 
 * GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
-key. <!--- Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) -->
+key. <!--- Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a 
+key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) 
+-->
 
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
 length _DHLEN_.<!--- Should perhaps mention, as in the RFC, to check for all zeroes. -->
@@ -415,7 +429,9 @@ HMAC provides produces an authentication tag given a shared symmetric key and an
 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
-HMAC(~~private~~ key <!--- This would normally not be the private key (i.e. as used in public/private) - could be confusing to call it such -->, message) - Calculate an authentication tag from an arbitrary length key and message sequence.
+HMAC(~~private~~ key <!--- This would normally not be the private key (i.e. as used in public/private) - could be 
+confusing to call it such -->, message) - Calculate an authentication tag from an arbitrary length key and message 
+sequence.
 
 ### HKDF
 
@@ -667,7 +683,8 @@ enum HASH_MODE {
 
 ##### SESSION_SECURITY_MODE
 
-The *SESSION_SECURITY_MODE* enumeration specifies the complete set of algorithms that determine the security properties of
+The *SESSION_SECURITY_MODE* enumeration specifies the complete set of algorithms that determine the security properties 
+of
 the session. 
 
 ```
@@ -759,7 +776,9 @@ message REQUEST_HANDSHAKE_BEGIN {
 <!--- Consider using IETF TLS ciphersuite specifications so we won't have to update the spex to add cipher suites -->
 
 * **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible 
-changes to the specification which cannot be mitigated via configuration will increment this number. <!--- Consider using a scheme that would allow new features to be added without losing backward compatibility, and indicating it - e.g. a libtool-like versioning scheme -->
+changes to the specification which cannot be mitigated via configuration will increment this number. <!--- Consider 
+using a scheme that would allow new features to be added without losing backward compatibility, and indicating it - 
+e.g. a libtool-like versioning scheme -->
  
 * **handshake_dh_mode** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
 *ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
@@ -778,7 +797,8 @@ placed in the sequence from the highest level of the chain down to the endpoint 
 
 ##### REPLY_HANDSHAKE_BEGIN
 
-The outstation replies to *REQUEST_HANDSHAKE_BEGIN* by sending *REPLY_HANDSHAKE_BEGIN*, unless an error occurs in which case it responds
+The outstation replies to *REQUEST_HANDSHAKE_BEGIN* by sending *REPLY_HANDSHAKE_BEGIN*, unless an error occurs in which 
+case it responds
 with *REPLY_HANDSHAKE_ERROR*.
 
 ```
@@ -849,7 +869,10 @@ message UNCONFIRMED_SESSION_DATA {
 ```
 
 * **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
-* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment <!--- Should be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number indicating its time -->.
+* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment <!--- Should 
+be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages 
+to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number 
+indicating its time -->.
 * **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
 AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
 
@@ -929,7 +952,8 @@ If any of the following properties do not hold, then master and outstation will 
 * If a MitM tampers with the contents of either message, the two parties will have differing handshake hashes which 
 will produce different keys when feed into the key derivation function.
 
-* If either party does not possess the private DH keys corresponding to the ephemeral or static public keys transmitted, 
+* If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
+transmitted, 
 they will be unable to perform the correct DH calculations and will not be able to calculate the same keys in the KDF.
  
 It is important to note that at this phase of the handshake, the parties have not technically authenticated to 
