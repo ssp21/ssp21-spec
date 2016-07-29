@@ -1034,6 +1034,8 @@ The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 
 ![Error in  REQUEST_HANDSHAKE_AUTH](msc/handshake_error2.png){#fig:handshake_error2}
 
+
+<!--
 ### State Transition Diagrams
 
 #### Master
@@ -1045,9 +1047,24 @@ The master implements the following state machine to change the session keys.
 States:
 
 * **IDLE** - The master is not currently performing the key change and is idle.
-* **WAIT_BEGIN** - The master has transmitted *REQUEST_HANDSHAKE_BEGIN* and is waiting to receive *REPLY_HANDSHAKE_BEGIN*.
+
+* **WAIT_BEGIN** - The master has transmitted *REQUEST_HANDSHAKE_BEGIN* and is waiting to receive
+*REPLY_HANDSHAKE_BEGIN*.
+
 * **WAIT_AUTH** - The master has transmitted *REQUEST_HANDSHAKE_AUTH* and is waiting to receive *REPLY_HANDSHAKE_AUTH*.
 
+Events:
+
+* **begin** - The master begins the process of initializing session.
+* **rx_ok_1** - The master receives a properly formatted *REPLY_HANDSHAKE_BEGIN*.
+* **rx_err_1** - The master receives an improperly formatted *REPLY_HANDSHAKE_BEGIN* message.
+* **rx_err_2** - The master receives an improperly formatted *REPLY_HANDSHAKE_AUTH* or fails to authenticate it.
+
+Actions:
+
+* **a1** - The master transmits a *REQUEST_HANDSHAKE_BEGIN* message, and starts the response timer.
+* **a2** - The master transmits a *REQUEST_HANDSHAKE_AUTH* message, and starts the response timer.
+-->
 
 <!--
 ### Security Variables
