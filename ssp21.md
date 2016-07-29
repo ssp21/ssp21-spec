@@ -792,7 +792,7 @@ message REQUEST_HANDSHAKE_BEGIN {
    handshake_hash_mode      : enum::HASH_MODE
    session_security_mode    : enum::SESSION_SECURITY_MODE
    certificate_mode         : enum::CERTIFICATE_MODE
-   ephemeral_public_key     : Seq8[U8]      
+   ephemeral_public_key     : Seq8[U8]
    certificates             : Seq8[Seq16[U8]]
 }
 ```
@@ -850,7 +850,7 @@ After receiving a valid *REPLY_HANDSHAKE_BEGIN*, the master transmits a *REQUEST
 
 ```
 message REQUEST_HANDSHAKE_AUTH {
-   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH   
+   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH
    hmac: Seq8[U8]
 }
 ```
@@ -863,7 +863,7 @@ After receiving a valid and authenticated *REQUEST_HANDSHAKE_AUTH*, the outstati
 
 ```
 message REPLY_HANDSHAKE_AUTH {
-   function : enum::FUNCTION::REPLY_HANDSHAKE_AUTH   
+   function : enum::FUNCTION::REPLY_HANDSHAKE_AUTH
    hmac: Seq8[U8]
 }
 ```
@@ -894,7 +894,7 @@ to the other.
 message UNCONFIRMED_SESSION_DATA {
    function : enum::FUNCTION::UNCONFIRMED_SESSION_DATA
    nonce : U16
-   valid_until_ms : U32   
+   valid_until_ms : U32
    payload_and_auth_tag : SEQ16[U8]
 }
 ```
