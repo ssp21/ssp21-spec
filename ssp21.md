@@ -1036,12 +1036,17 @@ The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 
 ### State Transition Diagrams
 
-The master implements the following state transition diagram for the key negotiation handshake.
+#### Master
 
-
-**Note: This diagram is notional while we explore the full capabilities of graph generation**
+The master implements the following state machine to change the session keys.
 
 ![Master handshake states](dot/master_handshake_states.png){#fig:master_handshake_states}
+
+States:
+
+* **IDLE** - The master is not currently performing the key change and is idle.
+* **WAIT_BEGIN** - The master has transmitted *REQUEST_HANDSHAKE_BEGIN* and is waiting to receive *REPLY_HANDSHAKE_BEGIN*.
+* **WAIT_AUTH** - The master has transmitted *REQUEST_HANDSHAKE_AUTH* and is waiting to receive *REPLY_HANDSHAKE_AUTH*.
 
 
 <!--

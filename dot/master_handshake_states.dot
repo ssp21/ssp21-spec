@@ -1,9 +1,17 @@
 digraph G {	
 	rankdir=LR;
-	size="8,5"
-	IDLE -> WAIT_BHR [ label = " e1" ];
-	WAIT_BHR -> IDLE [ label = " timeout"];		
-	WAIT_BHR -> WAIT_RHA [ label = " e2" ];
-	WAIT_RHA -> READY [label = " e3"];
+	size="8,5";
+
+	IDLE [shape=Mdiamond];
+	WAIT_BEGIN;
+	WAIT_AUTH;
+
+	IDLE -> WAIT_BEGIN [ label = " need_change, a1()" ];
+	WAIT_BEGIN -> IDLE [ label = " timeout"];
+	WAIT_BEGIN -> IDLE [ label = " rx_err1"];
+	WAIT_BEGIN -> WAIT_AUTH [ label = " rx_ok1, a2()" ];
+	WAIT_AUTH -> IDLE [ label = " timeout"];
+	WAIT_AUTH -> IDLE [ label = " rx_err2"];
+	WAIT_AUTH -> IDLE [label = " rx_ok2, a3()"];
 }
 
