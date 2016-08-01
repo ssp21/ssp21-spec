@@ -1000,12 +1000,16 @@ certificate chain.
         * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)*
         
 5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x01])*.
-        * The master sets *time_tx = NOW()* for future use. 
+    
+    * The master recods the time this request was transmitted for future use.
+        
+        * set *time_tx = NOW()* 
     
 6. The outstation receives the *REQUEST_HANDSHAKE_AUTH* message, verifies the HMAC, and then transmits a 
 *REPLY_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x02])*.
     
-    * The outstation sets *time_session_init = NOW()* 
+    * The outstation sets records the session initialization time:
+        * *time_session_init = NOW()* 
     
     * The outstation performs the final session key derivation by splitting the chaining key:
         * set (MOSK, OMSK) = HKDF(CK, [])
