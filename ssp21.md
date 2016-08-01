@@ -899,8 +899,12 @@ message UNCONFIRMED_SESSION_DATA {
 }
 ```
 
-* **nonce** - An incrementing nonce that ensures every session message for a given key is unique.
-* **valid_until_ms** - A millisecond time-bound on the validity of the message since session establishment 
+* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
+from replay.
+
+* **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in section on key
+negotiation. Endpoints will add this value to *time_session_init* and ensure that it is less than or equal to NOW()
+before processing the message.
 
 <!--- RLC: Should 
 be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages 
@@ -915,7 +919,7 @@ AEAD mode of encryption. How this field is interpreted depends on the previously
 
 When *session_security_mode* is a truncated HMAC mode, *payload_and_auth* is defined as follows:
  
-*payload_and_auth* := plaintext_payload | HMAC(key, entire_message_except_for_hmac)
+*payload_and_auth_tag* := plaintext_payload | HMAC(key, entire_message_except_for_hmac)
 
 ## Key Negotiation Handshake
 
