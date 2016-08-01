@@ -939,6 +939,7 @@ Notation:
 
 * Both parties maintain a hash of the entire handshake denoted by the variable *h*.
 * The HASH() and HMAC() functions always refer to the hash function requested by the master.
+* NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds. 
 
 DH keys in this section use the following abbrevations:
 
@@ -995,17 +996,27 @@ certificate chain.
         * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)*
         
 5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x01])*.
+        * The master sets *time_tx = NOW()* for future use. 
     
 6. The outstation receives the *REQUEST_HANDSHAKE_AUTH* message, verifies the HMAC, and then transmits a 
 *REPLY_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x02])*.
     
+    * The outstation sets *time_session_init = NOW()* 
+    
     * The outstation performs the final session key derivation by splitting the chaining key:
         * set (MOSK, OMSK) = HKDF(CK, [])
         
-    * The outstation initializes a new session with (MOSK, OMSK, nonce = 0)
+    * The outstation initializes the session with (MOSK, OMSK, nonce = 0, time_session_init)
     
-7.  The master receives the *REPLY_HANDSHAKE_AUTH*, verifies the HMAC, and performs the same key derivation
-and session initialization as the outstation.
+7.  The master receives the *REPLY_HANDSHAKE_AUTH*, and verifies the HMAC.
+ 
+    * The master estimates the session initialization time: 
+        * set *time_session_init = time_tx + (NOW() - time_tx)/2*
+    
+    * The master performs the final session key derivation by splitting the chaining key:
+        * set *(MOSK, OMSK) = HKDF(CK, [])*
+    
+    * The master initializes the session with (MOSK, OMSK, nonce = 0, time_session_init)   
         
 ### Security Properties
 
@@ -1019,6 +1030,10 @@ function.
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
 transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
 in the KDF.
+
+* A MitM cannot tamper with the common *time_session_init* by delaying messages by more than whatever timeout setting
+ the master uses while waiting for replies from the outstation. This ensures that the common time-point, in two separate
+ relative time bases, is at least accurate to within this margin when the session is first initialized.
  
 ### Message Exchanges
 
