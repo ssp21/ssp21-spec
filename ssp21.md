@@ -1014,7 +1014,7 @@ certificate chain.
     * The outstation performs the final session key derivation by splitting the chaining key:
         * set (MOSK, OMSK) = HKDF(CK, [])
         
-    * The outstation initializes the session with (MOSK, OMSK, nonce = 0, time_session_init)
+    * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
 7.  The master receives the *REPLY_HANDSHAKE_AUTH*, and verifies the HMAC.
  
@@ -1024,7 +1024,7 @@ certificate chain.
     * The master performs the final session key derivation by splitting the chaining key:
         * set *(MOSK, OMSK) = HKDF(CK, [])*
     
-    * The master initializes the session with (MOSK, OMSK, nonce = 0, time_session_init)   
+    * The master initializes the session with (OMSK, MOSK, time_session_init)   
         
 ### Security Properties
 
@@ -1056,6 +1056,42 @@ The outstation may signal an error after REQUEST_HANDSHAKE_BEGIN:
 The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 
 ![Error in  REQUEST_HANDSHAKE_AUTH](msc/handshake_error2.png){#fig:handshake_error2}
+
+## Sessions
+
+### Initialization
+
+Sessions are initialized after a successful key negotiation handshake with the tuple of arguments 
+(RXSK, TXSK, time_session_init) as defined below:
+
+* A session key for validating received messages called the Receive Session Key (RXSK)   
+     
+* A session key for preparing transmitting messages called the Transmit Session Key (TXSK)     
+    
+* The time the session was considered initialized in the local relative time base (time_session_init).
+    
+The session shall also always maintain a few additional variables initialized internally:
+    
+* A 2-byte incrementing nonce (*n*) always initialized to zero, one for each session key.
+
+* A configurable session termination timeout after which the session will no longer be considered valid. 
+    
+### Invalidation
+
+Sessions will only become invalidated after one of the following conditions occurs:
+
+* The transmit or receive nonce reaches the maximum value of 2^16 - 1.
+
+* A configurable amount of time elapses. This session timeout will default to 1 day and will not be configurable
+ to be greater 49 days (the maximum session TTL of a message since initialization is ~49.7 days).
+ 
+* A complete, authenticated handshake occurs reinitializing any prior existing session.
+
+* In session oriented environments such as TCP, closing the underlying communication session will invalidate the SSP21
+ cryptographic session.
+
+Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
+other condition other than the ones listed above invalidate an existing session.
 
 
 <!--
