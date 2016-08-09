@@ -893,14 +893,11 @@ to the other.
 ```
 message UNCONFIRMED_SESSION_DATA {
    function : enum::FUNCTION::UNCONFIRMED_SESSION_DATA
-   nonce : U16
    valid_until_ms : U32
-   payload_and_auth_tag : SEQ16[U8]
+   nonce : U16   
+   payload : SEQ16[U8]
 }
 ```
-
-* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
-from replay.
 
 * **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in section on key
 negotiation. Endpoints will add this value to *time_session_init* and ensure that it is less than or equal to NOW()
@@ -913,13 +910,14 @@ indicating its time -->.
 
 <!--- JAC: Yes, definitely, this is undefined ATM, but I am going to try and define this without exchanging time bases
  -->
-
-* **payload_and_auth_tag** - Either a concatenation of the plaintext payload and a truncated HMAC or the output of an
-AEAD mode of encryption. How this field is interpreted depends on the previously agreed upon *session_security_mode*.
-
-When *session_security_mode* is a truncated HMAC mode, *payload_and_auth* is defined as follows:
  
-*payload_and_auth_tag* := plaintext_payload | HMAC(key, entire_message_except_for_hmac)
+* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
+from replay. 
+
+* **payload** - How this field is interpreted depends on the previously agreed upon *session_security_mode*. When 
+*session_security_mode* is a truncated HMAC mode, *payload* is defined as follows:
+ 
+*payload* := authenticated_plaintext | HMAC(key, entire_message_except_for_hmac)
 
 ## Key Negotiation Handshake
 
@@ -1062,14 +1060,14 @@ The outstation could also indicate an error in REQUEST_HANDSHAKE_AUTH:
 ### Initialization
 
 Sessions are initialized after a successful key negotiation handshake with the tuple of arguments 
-(RXSK, TXSK, time_session_init) as defined below:
+(RXSK, TXSK, time_session_init, verify, prepare) as defined below:
 
-* A session key for validating received messages called the Receive Session Key (RXSK)   
+* **RXSK** - A session key used to validate received messages.
      
-* A session key for preparing transmitting messages called the Transmit Session Key (TXSK)     
+* **TXSK** - A session key used to prepare transmitted messages.
     
-* The time the session was considered initialized in the local relative time base (time_session_init).
-    
+* **time_session_init**  - The time the session was considered initialized in the local relative time base.
+     
 The session shall also always maintain a few additional variables initialized internally:
     
 * A 2-byte incrementing nonce (*n*) always initialized to zero, one for each session key.
@@ -1092,6 +1090,34 @@ Sessions will only become invalidated after one of the following conditions occu
 
 Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
 other condition other than the ones listed above invalidate an existing session.
+
+### Sending *UNCONFIRMED_SESSION_DATA*
+
+The following procedure is followed to transmit an *UNCONFIRMED_SESSION_DATA* message:
+  
+* Increment the transmit nonce by 1 and sets this new value on the message. 
+(The first transmitted message from each party always has *n* = 1)
+
+* Set *valid_until_ms = NOW() + TTL*. <!-- TODO: reference TBD section on configuring TTLs -->
+ 
+* Set the message payload using the *session_security_mode* specific function agreed upon in the handshake.
+
+<!-- TODO: Rigorously define the function signature for Prepare/Verify so that it can work for any cipher suite -->
+  
+### Validating *UNCONFIRMED_SESSION_DATA*
+
+The following procedure is followed to validate a received *UNCONFIRMED_SESSION_DATA* message:
+
+* Verify the authenticity of the message using the *session_security_mode* specific function agreed upon in the 
+handshake. This function will also return the user level plaintext upon successful authentication.
+
+* Check that *valid_until_ms <= NOW()*.
+
+* Check the nonce using the *nonce_verification_mode* agreed upon in the handshake.
+
+* Set the current nonce equal to the value of the received nonce. 
+
+<!-- TODO: Rigorously define the function signature for Prepare/Verify so that it can work for any cipher suite -->
 
 
 <!--
