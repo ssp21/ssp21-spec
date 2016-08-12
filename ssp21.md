@@ -333,11 +333,13 @@ layer which would require a completely different organizational response than fr
 **Note: We are currently consulting with an expert on error detection algorithms and CRCs. A recommendation for the
  frame format and CRC algorithm will come from this engagement.**
 
-<!--
 ```
-[ start ][ destination ][ source ][ length ][ payload ... ][ CRC ]
+
+Notional diagram for frame format.
+
+[ start ][ destination ][ source ][ length ][ header CRC? ][ payload ... ][ CRC(s)]
+
 ```
--->
 
 The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency 
 with the Noise specification and the cryptographic layer. 
