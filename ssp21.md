@@ -325,24 +325,19 @@ The link layer provides three features:
 * **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC). 
 
 Since this functionality does not  have any cryptographic protections, it is designed with simplicity in mind and is
-completely stateless.  The non-cryptographic hash function (like a CRC) is important at this layer to detect data
-corruption from random sources (EMF, cosmic rays, etc).  This check is intended to prevent randomly corrupted payloads 
-from  reaching the cryptographic layer. This prevents "tampering" false positives from occurring at the cryptographic 
-layer which would require a completely different organizational response than from a sudden increase line noise.
-
-**Note: We are currently consulting with an expert on error detection algorithms and CRCs. A recommendation for the
- frame format and CRC algorithm will come from this engagement.**
+completely stateless.  The CRC is important at this layer to detect data corruption from random sources 
+(EMF, cosmic rays, etc).  This check is intended to prevent randomly corrupted payloads from  reaching the cryptographic
+layer. This prevents "tampering" false positives from occurring at the cryptographic layer which would require a 
+completely different organizational response than occasional randomly corrupted frames.
 
 ```
 
-Notional diagram for frame format.
-
-[ start ][ destination ][ source ][ length ][ header CRC? ][ payload ... ][ CRC(s)]
+[ start ][ destination ][ source ][ length ][ CRC ][ payload ... ][ CRC ]
 
 ```
 
-The frames consist of the following fields. All multi-byte integer fields are encoded in big endian for consistency 
-with the Noise specification and the cryptographic layer. 
+The frames consist of the following fields. All multi-byte integer fields (including the CRCs) are encoded in little 
+endian format.
 
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices 
 shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices 
@@ -352,6 +347,85 @@ shall not do any further processing of frames with an unknown destination addres
 depend on the application layer of wrapped protocol.
 
 **length** (2-bytes) - Length of the message, including the header and CRC, in bytes.
+
+**CRC** (2-bytes) - A 32-bit CRC value. The CRC polynomial is described in detail in the next section.
+ 
+## CRC Polynomial
+
+| HD        | IEEE 802.3    | Castagnoli   |  Koopman     |
+|           | (0x82608EDB)  | (0xFA567D89) | (0x992C1A4C) | 
+|-----------|---------------|--------------|--------------|
+| 8         |      11       |     34       |     16       |
+| 7         |      21       |     -        |      -       |
+| 6         |      33       |     4092     |     4092     |
+| 5         |      371      |     -        |      -       |
+| 4         |      11450    |     8187     |     8188     |
+
+
+
+<!---
+(koopman)
+Poly=0x992c1a4c startHD=3 maxHD=15
+# 0x992c1a4c  HD=3  len=65506  Example: Len=65507 {0} (0x80000000) (Bits=2)
+# 0x992c1a4c  HD=4  len=65506  Example: Len=65507 {0} (0x80000000) (Bits=2)
+# 0x992c1a4c  HD=5  len=32738  Example: Len=32739 {0,1} (0xc0000000) (Bits=4)
+# 0x992c1a4c  HD=6  len=32738  Example: Len=32739 {0,1} (0xc0000000) (Bits=4)
+# 0x992c1a4c  HD=7  len=134  Example: Len=135 {0,43,44,122,123} (0x80000000) (Bits=6)
+# 0x992c1a4c  HD=8  len=134  Example: Len=135 {0,43,44,122,123} (0x80000000) (Bits=6)
+# 0x992c1a4c  HD=9  len=26  Example: Len=27 {0,5,21,25} (0x84000440) (Bits=8)
+# 0x992c1a4c  HD=10  len=26  Example: Len=27 {0,5,21,25} (0x84000440) (Bits=8)
+# 0x992c1a4c  HD=11  len=16  Example: Len=17 {0,1,14} (0xc0024809) (Bits=10)
+# 0x992c1a4c  HD=12  len=16  Example: Len=17 {0,1,14} (0xc0024809) (Bits=10)
+# 0x992c1a4c  HD=13  len=3  Example: Len=4 {0} (0x8a099905) (Bits=12)
+# 0x992c1a4c  HD=14  len=3  Example: Len=4 {0} (0x8a099905) (Bits=12)
+# 0x992c1a4c  HD=15  NONE  Example: Len=1 {0} (0x992c1a4c) (Bits=14)
+0x992c1a4c {65506,65506,32738,32738,134,134,26,26,16,16,3,3}
+
+(castagnoli)
+Poly=0xfa567d89 startHD=3 maxHD=21
+# 0xfa567d89  HD=3  len=65502  Example: Len=65503 {0} (0x80000000) (Bits=2)
+# 0xfa567d89  HD=4  len=65502  Example: Len=65503 {0} (0x80000000) (Bits=2)
+# 0xfa567d89  HD=5  len=32736  Example: Len=32737 {0,1} (0xc0000000) (Bits=4)
+# 0xfa567d89  HD=6  len=32736  Example: Len=32737 {0,1} (0xc0000000) (Bits=4)
+# 0xfa567d89  HD=7  len=274  Example: Len=275 {0,164,204,205,239} (0x80000000) (Bits=6)
+# 0xfa567d89  HD=8  len=274  Example: Len=275 {0,164,204,205,239} (0x80000000) (Bits=6)
+# 0xfa567d89  HD=9  len=24  Example: Len=25 {0,20} (0x81020026) (Bits=8)
+# 0xfa567d89  HD=10  len=24  Example: Len=25 {0,20} (0x81020026) (Bits=8)
+# 0xfa567d89  HD=11  len=11  Example: Len=12 {0} (0xb5024012) (Bits=10)
+# 0xfa567d89  HD=12  len=11  Example: Len=12 {0} (0xb5024012) (Bits=10)
+# 0xfa567d89  HD=13  len=5  Example: Len=6 {0,3,5} (0x904058c8) (Bits=12)
+# 0xfa567d89  HD=14  len=5  Example: Len=6 {0,3,5} (0x904058c8) (Bits=12)
+# 0xfa567d89  HD=15  len=4  Example: Len=5 {0,3} (0xd42c4a82) (Bits=14)
+# 0xfa567d89  HD=16  len=4  Example: Len=5 {0,3} (0xd42c4a82) (Bits=14)
+# 0xfa567d89  HD=17  len=3  Example: Len=4 {0} (0xa6a2139e) (Bits=16)
+# 0xfa567d89  HD=18  len=3  Example: Len=4 {0} (0xa6a2139e) (Bits=16)
+# 0xfa567d89  HD=19  len=1  Example: Len=2 {0} (0x877d434d) (Bits=18)
+# 0xfa567d89  HD=20  len=1  Example: Len=2 {0} (0x877d434d) (Bits=18)
+# 0xfa567d89  HD=21  NONE  Example: Len=1 {0} (0xfa567d89) (Bits=20)
+0xfa567d89 {65502,65502,32736,32736,274,274,24,24,11,11,5,5,4,4,3,3,1,1}
+
+(ethernet crc 32)
+# 0x82608edb  HD=3  len=4294967263  Example: Len=4294967264 {0} (0x80000000) (Bits=2)
+... working; len=65536
+# 0x82608edb  HD=4  len=91607  Example: Len=91608 {0,41678} (0x80000000) (Bits=3)
+# 0x82608edb  HD=5  len=2974  Example: Len=2975 {0,2215,2866} (0x80000000) (Bits=4)
+# 0x82608edb  HD=6  len=268  Example: Len=269 {0,89,117,155} (0x80000000) (Bits=5)
+# 0x82608edb  HD=7  len=171  Example: Len=172 {0,79,85,123} (0x80004000) (Bits=6)
+# 0x82608edb  HD=8  len=91  Example: Len=92 {0,45,53,74,80} (0x90000000) (Bits=7)
+# 0x82608edb  HD=9  len=57  Example: Len=58 {0,5,13,16,36,41} (0xc0000000) (Bits=8)
+# 0x82608edb  HD=10  len=34  Example: Len=35 {0,2,3,18,19,32} (0x80400004) (Bits=9)
+# 0x82608edb  HD=11  len=21  Example: Len=22 {0,3,7} (0x80014928) (Bits=10)
+# 0x82608edb  HD=12  len=12  Example: Len=13 {0,5,7} (0xd14c0008) (Bits=11)
+# 0x82608edb  HD=13  len=10  Example: Len=11 {0,3,5,7,8} (0x8008a484) (Bits=12)
+# 0x82608edb  HD=14  len=10  Example: Len=11 {0,4,8,10} (0xe0a40142) (Bits=13)
+# 0x82608edb  HD=15  len=10  Example: Len=11 {0,4,8,10} (0xe0a40142) (Bits=13)
+# 0x82608edb  HD=16  NONE  Example: Len=1 {0} (0x82608edb) (Bits=15)
+0x82608edb {4294967263,91607,2974,268,171,91,57,34,21,12,10,10,10}
+
+
+-->
+
+
 
 # Cryptographic Layer
 
