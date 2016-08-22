@@ -364,8 +364,8 @@ candidate polynomials at different payload lengths. Our candidates included the 
   
 | notation  | DNP3     | IEEE 802.3 | **Castagnoli** |  Koopman   |
 |-----------|----------|------------|----------------|------------|
-| msb first | 0x3D65   | 0x04C11DB7 | **0xF4ACFB13** | 0x32583499 |
-| Koopman   | 0x9EB2   | 0x82608EDB | **0xFA567D89** | 0x992C1A4C |
+| msb first | 0x3d65   | 0x04c11db7 | **0xf4acfb13** | 0x32583499 |
+| Koopman   | 0x9eb2   | 0x82608edb | **0xfa567d89** | 0x992c1a4c |
 
 The polynomials provide the following maximum payload lengths (in bytes) at various hamming distances:
 
