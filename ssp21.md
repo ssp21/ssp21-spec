@@ -360,21 +360,50 @@ the *length* field in the header. This length shall never exceed 4092 bytes.
 
 
 The CRC polynomial for the SSP21 link frame was selected based on the Hamming distances (HD) provided by several 
-candidate polynomials at different payload lengths. For comparison purposes, we provide  
+candidate polynomials at different payload lengths. Our candidates included the following polynomials:
+  
+| notation  | DNP3     | IEEE 802.3 | **Castagnoli** |  Koopman   |
+|-----------|----------|------------|----------------|------------|
+| msb first | 0x3D65   | 0x04C11DB7 | **0xF4ACFB13** | 0x32583499 |
+| Koopman   | 0x9EB2   | 0x82608EDB | **0xFA567D89** | 0x992C1A4C |
 
+The polynomials provide the following maximum payload lengths (in bytes) at various hamming distances:
 
-| HD        | IEEE 802.3 (0x82608EDB) | Castagnoli (0xFA567D89)  |  Koopman (0x992C1A4C) |
-|-----------|-------------------------|--------------------------|-----------------------|
-| 8         |      11                 |     34                   |     16                |
-| 7         |      21                 |     -                    |     -                 |
-| 6         |      33                 |     4092                 |     4092              |
-| 5         |      371                |     -                    |     -                 |
-| 4         |      11450              |     8187                 |     8188              |
+| HD   |  DNP3   | IEEE 802.3 | Castagnoli |  Koopman  |
+|------|---------|------------|------------|-----------|
+| 8    |    0    |    11      |     34     |     16    |
+| 7    |    0    |    21      |     34     |     16    |
+| 6    |    16   |    33      |     4092   |     4092  |
+| 5    |    16   |    371     |     4092   |     4902  |
+| 4    |    16   |    11450   |     8187   |     8188  |
 
+Four byte polynomials can provide significantly better error detection across longer payload lengths. The Koopman
+and Castagnoli polynomials were discovered using exhaustive search techniques and better significantly longer
+runs of HD = 6 protection than IEEE 802.3. We selected the Castagnoli polynomial because of slightly better HD=8 
+coverage for very short frames. The error detection properties of this polynomial have also been independently verified
+by at least two researchers.
 
+The maximum HD=6 payload length of 4092 determines the bound for the maximum link layer frame size allowed by the 
+standard.
 
 
 <!---
+
+(dnp3)
+Poly=0x9eb2 startHD=3 maxHD=11
+# 0x9eb2  HD=3  len=135  Example: Len=136 {0} (0x8000) (Bits=2)
+# 0x9eb2  HD=4  len=135  Example: Len=136 {0} (0x8000) (Bits=2)
+# 0x9eb2  HD=5  len=135  Example: Len=136 {0} (0x8000) (Bits=2)
+# 0x9eb2  HD=6  len=135  Example: Len=136 {0} (0x8000) (Bits=2)
+# 0x9eb2  HD=7  len=6  Example: Len=7 {0,1,4,6} (0x8200) (Bits=6)
+# 0x9eb2  HD=8  len=6  Example: Len=7 {0,1,4,6} (0x8200) (Bits=6)
+# 0x9eb2  HD=9  len=4  Example: Len=5 {0,2,3,4} (0xd800) (Bits=8)
+# 0x9eb2  HD=10  len=4  Example: Len=5 {0,2,3,4} (0xd800) (Bits=8)
+# 0x9eb2  HD=11  NONE  Example: Len=1 {0} (0x9eb2) (Bits=10)
+0x9eb2 {135,135,135,135,6,6,4,4}
+
+
+
 (koopman)
 Poly=0x992c1a4c startHD=3 maxHD=15
 # 0x992c1a4c  HD=3  len=65506  Example: Len=65507 {0} (0x80000000) (Bits=2)
