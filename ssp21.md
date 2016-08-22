@@ -332,7 +332,7 @@ completely different organizational response than occasional randomly corrupted 
 
 ```
 
-[ start ][ destination ][ source ][ length ][ crc-h ][ payload ... ][ crc-b ]
+[ start ][ destination ][ source ][ length ][ crc-h ][ payload ][ crc-p ]
 
 ```
 
@@ -354,7 +354,7 @@ The CRC polynomial is described in detail in the next section.
 **payload** (0 to 4092 bytes) - An opaque payload that is passed to the cryptographic layer. The length is determined by
 the *length* field in the header. This length shall never exceed 4092 bytes.
 
-**crc-b** (4-bytes) - A 32-bit CRC value calculated over the payload bytes.
+**crc-p** (4-bytes) - A 32-bit CRC value calculated over the payload bytes.
  
 ## CRC Polynomial
 
