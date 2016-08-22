@@ -332,7 +332,7 @@ completely different organizational response than occasional randomly corrupted 
 
 ```
 
-[ start ][ destination ][ source ][ length ][ CRC ][ payload ... ][ CRC ]
+[ start ][ destination ][ source ][ length ][ crc-h ][ payload ... ][ crc-b ]
 
 ```
 
@@ -348,9 +348,18 @@ depend on the application layer of wrapped protocol.
 
 **length** (2-bytes) - Length of the message, including the header and CRC, in bytes.
 
-**CRC** (2-bytes) - A 32-bit CRC value. The CRC polynomial is described in detail in the next section.
+**crc-h** (4-bytes) - A 32-bit CRC value calculated over the header (start, destination, source, and length fields). 
+The CRC polynomial is described in detail in the next section.
+
+**payload** (0 to 4092 bytes) - An opaque payload that is passed to the cryptographic layer. The length is determined by
+the *length* field in the header. This length shall never exceed 4092 bytes.
+
+**crc-b** (4-bytes) - A 32-bit CRC value calculated over the payload bytes.
  
 ## CRC Polynomial
+
+The CRC polynomial for the SSP21 link frame was selected based on the Hamming distances (HD) provided by several 
+candidate polynomials at different payload lengths. For comparison purposes, we provide  
 
 | HD        | IEEE 802.3    | Castagnoli   |  Koopman     |
 |           | (0x82608EDB)  | (0xFA567D89) | (0x992C1A4C) | 
