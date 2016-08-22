@@ -378,7 +378,7 @@ The polynomials provide the following maximum payload lengths (in bytes) at vari
 | 4    |    16   |    11450   |     8187   |     8188  |
 
 Four byte polynomials can provide significantly better error detection across longer payload lengths. The Koopman
-and Castagnoli polynomials were discovered using exhaustive search techniques and better significantly longer
+and Castagnoli polynomials were discovered using exhaustive search techniques and have significantly longer
 runs of HD = 6 protection than IEEE 802.3. We selected the Castagnoli polynomial because of slightly better HD=8 
 coverage for very short frames. The error detection properties of this polynomial have also been independently verified
 by at least two researchers.
