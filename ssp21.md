@@ -358,17 +358,19 @@ the *length* field in the header. This length shall never exceed 4092 bytes.
  
 ## CRC Polynomial
 
+
 The CRC polynomial for the SSP21 link frame was selected based on the Hamming distances (HD) provided by several 
 candidate polynomials at different payload lengths. For comparison purposes, we provide  
 
-| HD        | IEEE 802.3    | Castagnoli   |  Koopman     |
-|           | (0x82608EDB)  | (0xFA567D89) | (0x992C1A4C) | 
-|-----------|---------------|--------------|--------------|
-| 8         |      11       |     34       |     16       |
-| 7         |      21       |     -        |      -       |
-| 6         |      33       |     4092     |     4092     |
-| 5         |      371      |     -        |      -       |
-| 4         |      11450    |     8187     |     8188     |
+
+| HD        | IEEE 802.3 (0x82608EDB) | Castagnoli (0xFA567D89)  |  Koopman (0x992C1A4C) |
+|-----------|-------------------------|--------------------------|-----------------------|
+| 8         |      11                 |     34                   |     16                |
+| 7         |      21                 |     -                    |     -                 |
+| 6         |      33                 |     4092                 |     4092              |
+| 5         |      371                |     -                    |     -                 |
+| 4         |      11450              |     8187                 |     8188              |
+
 
 
 
