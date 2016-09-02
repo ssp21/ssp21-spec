@@ -1211,11 +1211,11 @@ A success handshake involves the exchange of the following four messages:
 
 The outstation may signal an error after receiving a *Request Hanshake Begin*:
 
-![Error in REQUEST_HANDSHAKE_BEGIN](msc/handshake_error1.png){#fig:handshake_error1}
+![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
 
 The outstation could also indicate an error in *Request Hanshake Auth*:
 
-![Error in  REQUEST_HANDSHAKE_AUTH](msc/handshake_error2.png){#fig:handshake_error2}
+![Error in Request Handshake Auth](msc/handshake_error2.png){#fig:handshake_error2}
 
 ## Sessions
 
