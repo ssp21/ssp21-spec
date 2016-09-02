@@ -1089,7 +1089,7 @@ terminations are described in the state transition diagrams.
 
 Notation:
 
-* Both parties maintain a hash of the entire handshake denoted by the variable *h*.
+* Both parties maintain a *chaining key* denoted by the variable *ck* which is HASH_LEN in length.
 * The HASH() and HMAC() functions always refer to the hash function requested by the master.
 * NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds. 
 
@@ -1114,63 +1114,76 @@ Symmetric keys in this this section use the following abbrevations:
 1. The master sends the *Request Handshake Begin* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
-    * The master initializes the *handshake hash* value to the hash of the entire transmitted message:
-        * *set h = HASH(message)*
+    * The master initializes the *chaining key* value to the hash of the entire transmitted message:
+        * *set ck = HASH(message)*
 
 2. The outstation receives the *Request Handshake Begin* message, and then validates that it trusts the public key via 
 the certificate chain.
 
-    * The outstations initializes the *handshake hash* value equal to the hash of the entire received message:
-        * *set h = HASH(message)*
+    * The outstations initializes the *chaining key* value equal to the hash of the entire received message:
+        * *set ck = HASH(message)*
 
 3. The outstation sends the *Reply Handshake Begin* message containing its own ephemeral public DH key and
 certificate chain.
  
-    * The outstation mixes the entire transmitted message into the *handshake hash*.
-        * *set h = HASH(h || message)*
+    * The outstation mixes the entire transmitted message into the *chaining key*.
+        * *set ck = HASH(ck || message)*
  
-    * The outstation then derives the *chaining key* and the *authentication key*:
+    * The outstation then derives a new *chaining key* and the *authentication key*:
         * *set dh1* = *DH(OEVK, MEPK)*
         * *set dh2* = *DH(OEVK, MSPK)*
         * *set dh3* = *DH(OSVK, MEPK)*
-        * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)* 
+        * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)* 
  
 4. The master receives the *Reply Handshake Begin* message and validates that it trusts the public key via the 
 certificate chain.
 
-    * The master mixes the entire received message into the *handshake hash*.
-        * set h = HASH(h || message)
+    * The master mixes the entire received message into the *chaining key*.
+        * set ck = HASH(ck || message)
     
-    * The master then derives the *chaining key* and the *authentication key*:
+    * The master then derives a new *chaining key* and the *authentication key*:
         * *set dh1* = *DH(MEVK, OEPK)*
         * *set dh2* = *DH(MEVK, OSPK)*
         * *set dh3* = *DH(MSVK, OEPK)*
-        * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)*
+        * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)*
         
-5. The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(AK, [0x01])*.
+5. The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
+
+    * The master mixes the entire transmitted message into the chaining key.
+        * set ck = HASH(ck || message)
     
     * The master records the time this request was transmitted for future use.
         
         * set *time_tx = NOW()* 
     
-6. The outstation receives the *Request Handshake Auth* message, verifies the HMAC, and then transmits a 
-*Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
+6. The outstation receives the *Request Handshake Auth* message, and verifies the HMAC.
     
-    * The outstation sets records the session initialization time:
-        * *time_session_init = NOW()* 
+    * The outstation mixes the entire received message into the chaining key.
+        * set ck = HASH(ck || message)
+
+    * The outstation records the session initialization time:
+        * *time_session_init = NOW()*               
     
+    * The outstation transmits a *Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
+    
+    * The outstation mixes the entire transmitted message into the chaining key.
+        * set ck = HASH(ck || message)
+        
     * The outstation performs the final session key derivation by splitting the chaining key:
-        * set (MOSK, OMSK) = HKDF(CK, [])
+        * set (MOSK, OMSK) = HKDF(ck, [])
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
 7.  The master receives the *Reply Handshake Auth*, and verifies the HMAC.
+    
+    * The master mixes the entire received message into the chaining key.
+        * set ck = HASH(ck || message)
  
     * The master estimates the session initialization time: 
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
     * The master performs the final session key derivation by splitting the chaining key:
-        * set *(MOSK, OMSK) = HKDF(CK, [])*
+        * set *(MOSK, OMSK) = HKDF(ck, [])*
     
     * The master initializes the session with (OMSK, MOSK, time_session_init)   
         
