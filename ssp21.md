@@ -1168,7 +1168,7 @@ certificate chain.
     * The outstation mixes the entire transmitted message into the chaining key.
         * set ck = HASH(ck || message)
         
-    * The outstation performs the final session key derivation by splitting the chaining key:
+    * The outstation performs the final session key derivation by expanding the chaining key:
         * set (rxsk, txsk) = HKDF(ck, [])
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
@@ -1181,7 +1181,7 @@ certificate chain.
     * The master estimates the session initialization time: 
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
-    * The master performs the final session key derivation by splitting the chaining key:
+    * The master performs the final session key derivation by expanding the chaining key:
         * set *(txsk, rxsk) = HKDF(ck, [])*
     
     * The master initializes the session with (OMSK, MOSK, time_session_init)   
