@@ -1106,10 +1106,9 @@ DH keys in this section use the following abbrevations:
 
 Symmetric keys in this this section use the following abbrevations:
 
-* CK - a *chaining key* used as an intermediate key and later stretched into two session keys
-* AK - an *authentication key* used to authenticate both parties prior to final session key derivation
-* MOSK - Master to outstation session key 
-* OMSK - Outstation to master session key
+* ak - an *authentication key* used to authenticate both parties prior to final session key derivation
+* txsk - transmit session key 
+* rxsk - receive session key
 
 1. The master sends the *Request Handshake Begin* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
@@ -1170,7 +1169,7 @@ certificate chain.
         * set ck = HASH(ck || message)
         
     * The outstation performs the final session key derivation by splitting the chaining key:
-        * set (MOSK, OMSK) = HKDF(ck, [])
+        * set (rxsk, txsk) = HKDF(ck, [])
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
@@ -1183,7 +1182,7 @@ certificate chain.
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
     * The master performs the final session key derivation by splitting the chaining key:
-        * set *(MOSK, OMSK) = HKDF(ck, [])*
+        * set *(txsk, rxsk) = HKDF(ck, [])*
     
     * The master initializes the session with (OMSK, MOSK, time_session_init)   
         
