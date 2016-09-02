@@ -3,8 +3,8 @@ msc {
 
   a [label="master"], b [label="outstation"];
 
-  a=>b [ label = "REQUEST_HANDSHAKE_BEGIN" ];
-  b=>a [ label = "REPLY_HANDSHAKE_BEGIN" ];
-  a=>b [ label = "REQUEST_HANDSHAKE_AUTH" ];
-  b=>a [ label = "REPLY_HANDSHAKE_AUTH" ];
+  a=>b [ label = "Request Handshake Begin" ];
+  b=>a [ label = "Reply Handshake Begin" ];
+  a=>b [ label = "Request Handshake Auth" ];
+  b=>a [ label = "Reply Handshake Auth" ];
 }

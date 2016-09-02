@@ -3,6 +3,6 @@ msc {
 
   a [label="master"], b [label="outstation"];
 
-  a=>b [ label = "REQUEST_HANDSHAKE_BEGIN" ];
-  b=>a [ label = "REPLY_HANDSHAKE_ERROR" ];
+  a=>b [ label = "Request Handshake Begin" ];
+  b=>a [ label = "Reply Handshake Error" ];
 }
