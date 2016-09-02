@@ -625,13 +625,13 @@ interpreted according the defined structure of that type.
 
 SSP21 uses a lightweight structural syntax to define the contents of messages
 and to specify how the message shall be serialized. These definitions
-are meant to precisely define the contents of a message, however, they are not
-meant to be used by a compiler to automatically generate source code.
+are meant to precisely define the contents of a message, and allow implementations
+to use code generation.
 
-Messages consist of the following structure:
+Groupings of fields are called Structs. Structs use the following syntax:
 
 ```
-message <message-name> {
+struct <struct-name> {
   <field1-name> : <field1-type>
   <field2-name> : <field2-type>
   ...
@@ -639,23 +639,35 @@ message <message-name> {
 }
 ```
 
-The following basic types are defined. All multi-byte integers are serialized in big-endian format.
+*Messages* are special *Structs* whose first field is always a constant value of the *Function* enumeration.
+
+```
+message <message-name> {
+  function : enum::Function::<function-name>
+  <field1-name> : <field1-type>
+  <field2-name> : <field2-type>
+  ...
+  <field3-name> : <field3-type>
+}
+```
+
+The following primitive types are defined. All multi-byte integers are serialized in network byte order.
 
 * **U8** - 8-bit (1-byte) unsigned integer.
 * **U16** - 16-bit (2 byte) unsigned integer.
 * **U32** - 32-bit (4 byte) unsigned integer.
 
-The following example defines a message that provides counts of various types of flowers:
+The following example defines a struct that provides counts of various types of flowers:
 
 ```
-message FLOWERS {
+struct Flowers {
   num_roses : U8
   num_violets : U16
   num_petunias : U32
 }
 ```
 
-The serialized size of a *flowers* message would always be 7 bytes 
+The serialized size of a *Flowers* struct would always be 7 bytes 
 (sizeof(U8) + sizeof(U16) + sizeof(U32)).
 
 #### Enumerations
@@ -681,33 +693,42 @@ enum COLOR {
 }
 ```
 
-Enumeration types can be referenced from within a message definition using the following notation:
+Enumeration types can be referenced from within a *Struct* or *Message* definition using the following notation:
 
 ```
-message <message-name> {
+struct <struct-name> {
   <enum-field-name> : enum::<enum-name>
 }
 ```
 
-Using the COLOR example above we could define a message that represents the intensity of a single color:
+Using the COLOR example above we could define a *Struct* that represents the intensity of a single color:
 
 ```
-message INTENSITY {
+struct Intensity {
   color : enum::COLOR
   value : U8
 }
 ```
 
-Message definitions can reference a constant enumeration value by specifying a specific value after the type:
+#### Bitfields
+
+Bitfields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each bit
+using the following syntax:
 
 ```
-message RED_INTENSITY {
-  color : enum::COLOR::RED
-  value : U8
-}
+bitfield <bitfield-name> { "name top bit", "name top bit - 1",  ... "name bottom bit" }
 ```
 
-In practice, this only occurs for the *FUNCTION* enumeration.
+Bitfields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit names.
+Unspecified bits shall always be encoded as zero.  Parsers shall fail parsing if any unspecified bit is set in the input.
+
+```
+bitfield Flags { "flag1", "flag2", "flag3" }
+```
+
+The bitfield above with flag1 = true, flag2 = false, and flag3 = true would have a serialized representation of
+0b10100000 (0xA0). An example of input that would fail a parsing for this bitfield is 0b10100010 (0XA2).
+
 
 #### Sequences
 
@@ -718,7 +739,7 @@ When sequences are typed on primitive values, the length of the sequence in byte
 multiplied by the size of primitive plus the size of the count prefix field.
 
 ```
-message ByteSequence {
+struct ByteSequence {
   value : Seq16[U8]
 }
 ```
@@ -733,7 +754,7 @@ Sequences of sequences are also allowed, but only to this maximum depth of 2. Fo
 a message containing a sequence of byte sequences as follows:
 
 ```
-message ByteSequences {
+struct ByteSequences {
   values : Seq8[Seq16[U8]]
 }
 ```
@@ -764,14 +785,14 @@ and **Seq*N*[Seq*N*[U8]]**.
 
 Common enumeration types that are used in one or more messages are defined here.
 
-##### FUNCTION 
+##### Function
 
-SSP21 message definitions always begin with a fixed value of the *FUNCTION* enumeration. This fixed value allows a 
+SSP21 message definitions always begin with a fixed value of the *Function* enumeration. This fixed value allows a 
 parser to determine the type of the message by inspecting the first byte of an opaque message delivered by the link 
 layer. The correct message-specific parser can then be invoked.
       
 ```
-enum FUNCTION {
+enum Function {
     REQUEST_HANDSHAKE_BEGIN  : 0
     REPLY_HANDSHAKE_BEGIN    : 1
     REQUEST_HANDSHAKE_AUTH   : 2
@@ -781,13 +802,13 @@ enum FUNCTION {
 }
 ```
 
-##### NONCE_VERIFICATION_MODE
+##### Nonce Verification Mode
 
-The *NONCE_VERIFICATION_MODE* enumeration specifies how the incrementing nonce (message counter) is verified to protect
+The *Nonce Verification Mode* enumeration specifies how the incrementing nonce (message counter) is verified to protect
 packets from replay.
 
 ```
-enum NONCE_VERIFICATION_MODE {
+enum NonceVerificationMode {
     INCREMENT_LAST_RX : 0
     GREATER_THAN_LAST_RX : 1
 }
@@ -802,36 +823,34 @@ provides the strongest guarantees.
 received nonce be greater the last nonce. This mode is intended to be used in session-less environments like serial or 
 UDP.
 
-##### DH_MODE
+##### DH Mode
 
-The *DH_MODE* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
+The *DH Mode* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
 material.
 
 ```
-enum DH_MODE {
+enum DHMode {
     X25519 : 0
 }
 ```
 
-##### HASH_MODE
+##### Hash Mode
 
-The *HASH_MODE* enumeration specifies which hash algorithm will be used during the handshake process to prevent
+The *Hash Mode* enumeration specifies which hash algorithm will be used during the handshake process to prevent
 tampering.
 
 ```
-enum HASH_MODE {
+enum HashMode {
     SHA256 : 0
 }
 ```
 
-##### SESSION_SECURITY_MODE
+##### Session Mode
 
-The *SESSION_SECURITY_MODE* enumeration specifies the complete set of algorithms that determine the security properties 
-of
-the session. 
+The *Session Mode* enumeration specifies the complete set of algorithms used to secure the session. 
 
 ```
-enum SESSION_SECURITY_MODE {
+enum SessionMode {
     HMAC-SHA256-16 : 0
 }
 ```
@@ -845,13 +864,13 @@ enum SESSION_SECURITY_MODE {
 SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
 modes like AES-GCM.
 
-##### CERTIFICATE_MODE
+##### Certificate Mode
 
-The *CERTIFICATE_MODE* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
+The *Certificate Mode* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
 each other.
 
 ```
-enum CERTIFICATE_MODE {
+enum CertificateMode {
     PRESHARED_KEYS : 0
     M2M : 1
 }
@@ -861,12 +880,12 @@ enum CERTIFICATE_MODE {
 
 * **M2M** - Machine-to-machine certificate format
 
-##### HANDSHAKE_ERROR
+##### Handshake Error
 
-The *HANDSHAKE_ERROR* enumeration denotes an error condition that occurred during the handshake process.
+The *Handshake Error* enumeration denotes an error condition that occurred during the handshake process.
 
 ```
-enum HANDSHAKE_ERROR {
+enum HandshakeError {
     BAD_MESSAGE_FORMAT                : 0
     UNSUPPORTED_DH_MODE               : 1
     UNSUPPORTED_HASH_MODE             : 2
@@ -902,19 +921,19 @@ had missing bytes, or fields with the incorrect lengths.
 
 #### Handshake Messages
 
-##### REQUEST_HANDSHAKE_BEGIN
+##### Request Handshake Begin
 
-The master initiates the process of establishing a new session by sending the *REQUEST_HANDSHAKE_BEGIN* message.
+The master initiates the process of establishing a new session by sending the *Request Handshake Begin* message.
 
 ```
-message REQUEST_HANDSHAKE_BEGIN {
-   function                 : enum::FUNCTION::REQUEST_HANDSHAKE_BEGIN
+message RequestHandshakeBegin {
+   function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
    version                  : U16
-   nonce_verification_mode  : enum::NONCE_VERIFICATION_MODE
-   handshake_dh_mode        : enum::DH_MODE
-   handshake_hash_mode      : enum::HASH_MODE
-   session_security_mode    : enum::SESSION_SECURITY_MODE
-   certificate_mode         : enum::CERTIFICATE_MODE
+   nonce_verification_mode  : enum::NonceVerificationMode
+   handshake_dh_mode        : enum::DHMode
+   handshake_hash_mode      : enum::HashMode
+   session_mode             : enum::SessionMode
+   certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
    certificates             : Seq8[Seq16[U8]]
 }
@@ -937,7 +956,7 @@ impact the version field ---->
 
 * **handshake_hash_mode** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
-* **session_security_mode** - Specifies the full set of algorithms used to secure the session.
+* **session_mode** - Specifies the full set of algorithms used to secure the session.
    
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall contain not contain any certificates.
@@ -948,14 +967,14 @@ impact the version field ---->
 * **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field. 
 Chains are placed in the sequence from the root level of the chain down to the endpoint certificate.
 
-##### REPLY_HANDSHAKE_BEGIN
+##### Reply Handshake Begin
 
-The outstation replies to *REQUEST_HANDSHAKE_BEGIN* by sending *REPLY_HANDSHAKE_BEGIN*, unless an error occurs in which 
-case it responds with *REPLY_HANDSHAKE_ERROR*.
+The outstation replies to *Request Handshake Begin* by sending *Reply Handshake Begin*, unless an error occurs in which 
+case it responds with *Reply Handshake Error*.
 
 ```
-message REPLY_HANDSHAKE_BEGIN {
-   function : enum::FUNCTION::REPLY_HANDSHAKE_BEGIN
+message ReplyHandshakeBegin {
+   function : enum::Function::REPLY_HANDSHAKE_BEGIN
    ephemeral_public_key: Seq8[U8]
    certificates: Seq8[Seq16[U8]]
 }
@@ -967,57 +986,65 @@ message REPLY_HANDSHAKE_BEGIN {
  transmitted by the master.
 
 
-##### REQUEST_HANDSHAKE_AUTH
+##### Request Handshake Auth
 
-After receiving a valid *REPLY_HANDSHAKE_BEGIN*, the master transmits a *REQUEST_HANDSHAKE_AUTH*.
+After receiving a valid *Reply Handshake Begin*, the master transmits a *Request Handshake Auth*.
 
 ```
-message REQUEST_HANDSHAKE_AUTH {
-   function : enum::FUNCTION::REQUEST_HANDSHAKE_AUTH
+message RequestHandshakeAuth {
+   function : enum::Function::REQUEST_HANDSHAKE_AUTH
    hmac: Seq8[U8]
 }
 ```
 
 * **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
 
-##### REPLY_HANDSHAKE_AUTH
+##### Reply Handshake Auth
 
-After receiving a valid and authenticated *REQUEST_HANDSHAKE_AUTH*, the outstation transmits a *REPLY_HANDSHAKE_AUTH*.
+After receiving a valid and authenticated *Request Handshake Auth*, the outstation transmits a *Reply Handshake Auth*.
 
 ```
-message REPLY_HANDSHAKE_AUTH {
-   function : enum::FUNCTION::REPLY_HANDSHAKE_AUTH
+message ReplyHandshakeAuth {
+   function : enum::function::REPLY_HANDSHAKE_AUTH
    hmac: Seq8[U8]
 }
 ```
 
 * **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
 
-##### REPLY_HANDSHAKE_ERROR
+##### Reply Handshake Error
 
-The outstation can reply to a *REQUEST_HANDSHAKE_BEGIN* or a *REQUEST_HANDSHAKE_AUTH* message with a 
-*REPLY_HANDSHAKE_ERROR* message. This message is for debugging purposes only during commissioning and cannot be
+The outstation can reply to a *Request Handshake Begin* or a *RequestHandshakeAuth* message with a 
+*Reply Handshake Error* message. This message is for debugging purposes only during commissioning and cannot be
 authenticated.
 
 ```
-message REPLY_HANDSHAKE_ERROR {
-   function : enum::FUNCTION::REPLY_HANDSHAKE_ERROR
-   error_code : enum::HANDSHAKE_ERROR
+message ReplyHandshakeError {
+   function : enum::Function::REPLY_HANDSHAKE_ERROR
+   error_code : enum::HandshakeError
 }
 ```
 
 * **error_code** - An error code that enumerates possible error conditions that can occur during the handshake.
 
-##### UNCONFIRMED_SESSION_DATA
+##### Unconfirmed Session Data
 
 After the successful completion of a key negotiation handshake, either party may transmit *UNCONFIRMED_SESSION_DATA*
 to the other.
 
 ```
-message UNCONFIRMED_SESSION_DATA {
-   function : enum::FUNCTION::UNCONFIRMED_SESSION_DATA
-   valid_until_ms : U32
-   nonce : U16   
+
+bitfield SessionFlags { "fir", "fin" }
+
+struct AuthMetadata {
+    nonce : U16
+    valid_until_ms : U32
+    flags : bitfield::SessionFlags
+}
+
+message UnconfirmedSessionData {
+   function : enum::Function::UNCONFIRMED_SESSION_DATA
+   metadata : struct::AuthMetadata   
    payload : SEQ16[U8]
 }
 ```
@@ -1084,19 +1111,19 @@ Symmetric keys in this this section use the following abbrevations:
 * MOSK - Master to outstation session key 
 * OMSK - Outstation to master session key
 
-1. The master sends the *REQUEST_HANDSHAKE_BEGIN* message to the outstation containing an ephemeral public key, some
+1. The master sends the *Request Handshake Begin* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
 
     * The master initializes the *handshake hash* value to the hash of the entire transmitted message:
         * *set h = HASH(message)*
 
-2. The outstation receives the *REQUEST_HANDSHAKE_BEGIN* message, and then validates that it trusts the public key via 
+2. The outstation receives the *Request Handshake Begin* message, and then validates that it trusts the public key via 
 the certificate chain.
 
     * The outstations initializes the *handshake hash* value equal to the hash of the entire received message:
         * *set h = HASH(message)*
 
-3. The outstation sends the *REPLY_HANDSHAKE_BEGIN* message containing its own ephemeral public DH key and
+3. The outstation sends the *Reply Handshake Begin* message containing its own ephemeral public DH key and
 certificate chain.
  
     * The outstation mixes the entire transmitted message into the *handshake hash*.
@@ -1108,7 +1135,7 @@ certificate chain.
         * *set dh3* = *DH(OSVK, MEPK)*
         * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)* 
  
-4. The master receives the *REPLY_HANDSHAKE_BEGIN* message and validates that it trusts the public key via the 
+4. The master receives the *Reply Handshake Begin* message and validates that it trusts the public key via the 
 certificate chain.
 
     * The master mixes the entire received message into the *handshake hash*.
@@ -1120,14 +1147,14 @@ certificate chain.
         * *set dh3* = *DH(MSVK, OEPK)*
         * *set (CK, AK) = HKDF(h, dh1 || dh2 || dh3)*
         
-5. The master transmits a *REQUEST_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x01])*.
+5. The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(AK, [0x01])*.
     
-    * The master recods the time this request was transmitted for future use.
+    * The master records the time this request was transmitted for future use.
         
         * set *time_tx = NOW()* 
     
-6. The outstation receives the *REQUEST_HANDSHAKE_AUTH* message, verifies the HMAC, and then transmits a 
-*REPLY_HANDSHAKE_AUTH* message setting *hmac = HMAC(AK, [0x02])*.
+6. The outstation receives the *Request Handshake Auth* message, verifies the HMAC, and then transmits a 
+*Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
     
     * The outstation sets records the session initialization time:
         * *time_session_init = NOW()* 
@@ -1137,7 +1164,7 @@ certificate chain.
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
-7.  The master receives the *REPLY_HANDSHAKE_AUTH*, and verifies the HMAC.
+7.  The master receives the *Reply Handshake Auth*, and verifies the HMAC.
  
     * The master estimates the session initialization time: 
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
@@ -1152,7 +1179,7 @@ certificate chain.
 If any of the following properties do not hold, then master and outstation will not agree on the same *chaining_key* and
 *authentication_key*.
 
-* If a MitM tampers with the contents of either the *REQUEST_HANDSHAKE_BEGIN* message or the *REPLY_HANDSHAKE_BEGIN*, 
+* If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
 the two parties will have differing handshake hashes which will produce different keys when feed into the key derivation
 function.
 
@@ -1214,9 +1241,9 @@ Sessions will only become invalidated after one of the following conditions occu
 Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
 other condition other than the ones listed above invalidate an existing session.
 
-### Sending *UNCONFIRMED_SESSION_DATA*
+### Sending *Unconfirmed Session Data*
 
-The following procedure is followed to transmit an *UNCONFIRMED_SESSION_DATA* message:
+The following procedure is followed to transmit an *Unconfirmed Session Data* message:
   
 * Increment the transmit nonce by 1 and sets this new value on the message. 
 (The first transmitted message from each party always has *n* = 1)
@@ -1227,11 +1254,11 @@ The following procedure is followed to transmit an *UNCONFIRMED_SESSION_DATA* me
 
 <!-- TODO: Rigorously define the function signature for Prepare/Verify so that it can work for any cipher suite -->
   
-### Validating *UNCONFIRMED_SESSION_DATA*
+### Validating *Unconfirmed Session Data*
 
-The following procedure is followed to validate a received *UNCONFIRMED_SESSION_DATA* message:
+The following procedure is followed to validate a received *Unconfirmed Session Data* message:
 
-* Verify the authenticity of the message using the *session_security_mode* specific function agreed upon in the 
+* Verify the authenticity of the message using the *session_mode* specific function agreed upon in the 
 handshake. This function will also return the user level plaintext upon successful authentication.
 
 * Check that *valid_until_ms <= NOW()*.
