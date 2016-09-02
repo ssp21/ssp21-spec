@@ -1119,10 +1119,10 @@ additional metadata, and a certificate chain.
 2. The outstation receives the *Request Handshake Begin* message, and then validates that it trusts the public key via 
 the certificate chain.
 
-    * The outstations initializes the *chaining key* value equal to the hash of the entire received message:
+    * The outstation initializes the *chaining key* value equal to the hash of the entire received message:
         * *set ck = HASH(message)*
 
-3. The outstation sends the *Reply Handshake Begin* message containing its own ephemeral public DH key and
+    * The outstation transmit a *Reply Handshake Begin* message containing its own ephemeral public DH key and
 certificate chain.
  
     * The outstation mixes the entire transmitted message into the *chaining key*.
@@ -1134,7 +1134,7 @@ certificate chain.
         * *set dh3* = *DH(OSVK, MEPK)*
         * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)* 
  
-4. The master receives the *Reply Handshake Begin* message and validates that it trusts the public key via the 
+3. The master receives the *Reply Handshake Begin* message and validates that it trusts the public key via the 
 certificate chain.
 
     * The master mixes the entire received message into the *chaining key*.
@@ -1146,7 +1146,7 @@ certificate chain.
         * *set dh3* = *DH(MSVK, OEPK)*
         * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)*
         
-5. The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
+    * The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
 
     * The master mixes the entire transmitted message into the chaining key.
         * set ck = HASH(ck || message)
@@ -1155,7 +1155,7 @@ certificate chain.
         
         * set *time_tx = NOW()* 
     
-6. The outstation receives the *Request Handshake Auth* message, and verifies the HMAC.
+4. The outstation receives the *Request Handshake Auth* message, and verifies the HMAC.
     
     * The outstation mixes the entire received message into the chaining key.
         * set ck = HASH(ck || message)
@@ -1173,7 +1173,7 @@ certificate chain.
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
-7.  The master receives the *Reply Handshake Auth*, and verifies the HMAC.
+5.  The master receives the *Reply Handshake Auth*, and verifies the HMAC.
     
     * The master mixes the entire received message into the chaining key.
         * set ck = HASH(ck || message)
