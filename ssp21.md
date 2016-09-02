@@ -1029,8 +1029,10 @@ message ReplyHandshakeError {
 
 ##### Unconfirmed Session Data
 
-After the successful completion of a key negotiation handshake, either party may transmit *UNCONFIRMED_SESSION_DATA*
+After the successful completion of a key negotiation handshake, either party may transmit *Unconfirmed Session Data*
 to the other.
+
+The message uses the following subfields:
 
 ```
 
@@ -1041,18 +1043,14 @@ struct AuthMetadata {
     valid_until_ms : U32
     flags : bitfield::SessionFlags
 }
-
-message UnconfirmedSessionData {
-   function : enum::Function::UNCONFIRMED_SESSION_DATA
-   metadata : struct::AuthMetadata   
-   payload : SEQ16[U8]
-}
 ```
+
+* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
+from replay. 
 
 * **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in section on key
 negotiation. Endpoints will add this value to *time_session_init* and ensure that it is less than or equal to NOW()
 before processing the message.
-
 <!--- RLC: Should 
 be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages 
 to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number 
@@ -1061,13 +1059,19 @@ indicating its time -->.
 <!--- JAC: Yes, definitely, this is undefined ATM, but I am going to try and define this without exchanging time bases
  -->
  
-* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
-from replay. 
+* **flags** - First and final bits used for message reassembly.
 
-* **payload** - How this field is interpreted depends on the previously agreed upon *session_security_mode*. When 
-*session_security_mode* is a truncated HMAC mode, *payload* is defined as follows:
- 
-*payload* := authenticated_plaintext | HMAC(key, entire_message_except_for_hmac)
+```
+message UnconfirmedSessionData {
+   function : enum::Function::UNCONFIRMED_SESSION_DATA
+   metadata : struct::AuthMetadata   
+   payload : SEQ16[U8]
+}
+```
+
+* **metadata** - The metadata struct is always covered by the authentication mechanism of the negotiated *Session Mode*. 
+
+* **payload** - This opaque field is interpreted according the negotiated *Session Mode*.
 
 ## Key Negotiation Handshake
 
