@@ -804,7 +804,7 @@ The master initiates the process of establishing a new session by sending the *R
 message RequestHandshakeBegin {
    function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
    version                  : U16
-   nonce_verification_mode  : enum::NonceVerificationMode
+   nonce_mode               : enum::NonceMode
    handshake_dh_mode        : enum::DHMode
    handshake_hash_mode      : enum::HashMode
    session_mode             : enum::SessionMode
@@ -823,24 +823,23 @@ indicating it - e.g. a libtool-like versioning scheme -->
 <!--- JAC: Yes, definitely. Will look into this. Will also make it explicit that adding new cipher suite modes won't
 impact the version field ---->
 
-* **nonce_verification_mode** - Identifies one of two modes for verifying messages against replay with differing
+* **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
  security properties.
  
-* **handshake_dh_mode** - Specifies what DH algorithm to be used , and implicitly determines the expected length of 
-*ephemeral_public_key* and the type/length of the public key used lowest certificate in any chain.
+* **handshake_dh_mode** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
+the expected length of *ephemeral_public_key*.
 
 * **handshake_hash_mode** - Specifies what hash algorithm is used to prevent tampering of handshake data.
   
 * **session_mode** - Specifies the full set of algorithms used to secure the session.
    
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
-*PRESHARED_KEYS*, the *certificates* field shall contain not contain any certificates.
+*PRESHARED_KEYS*, the *certificates* field shall be empty.
 
 * **ephemeral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
 *handshake_dh_mode*.
 
-* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field. 
-Chains are placed in the sequence from the root level of the chain down to the endpoint certificate.
+* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field.
 
 ##### Reply Handshake Begin
 
