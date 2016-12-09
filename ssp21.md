@@ -741,18 +741,16 @@ modes like AES-GCM.
 ##### Certificate Mode
 
 The *Certificate Mode* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
-each other.
+each other during the handshake.
 
 ```
 enum CertificateMode {
     PRESHARED_KEYS : 0
-    M2M : 1
 }
 ```
 
-* **NONE_PRESHARED_KEYS** - No certificates are exchanged. Parties have preshared public static DH keys. 
-
-* **M2M** - Machine-to-machine certificate format
+* **PRESHARED_KEYS** - No certificates are exchanged. Parties use eachothers preshared public static DH keys to
+authenticate. The *certificates* field in handshake messages will be left empty.
 
 ##### Handshake Error
 
