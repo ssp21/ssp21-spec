@@ -676,26 +676,25 @@ enum Function {
 }
 ```
 
-##### Nonce Verification Mode
+##### Nonce Mode
 
-The *Nonce Verification Mode* enumeration specifies how the incrementing nonce (message counter) is verified to protect
+The *Nonce Mode* enumeration specifies how the nonce (message counter) is verified to protect
 packets from replay.
 
 ```
-enum NonceVerificationMode {
+enum NonceMode {
     INCREMENT_LAST_RX : 0
     GREATER_THAN_LAST_RX : 1
 }
 ```
 
-* **INCREMENT_LAST_RX** - If this mode is specified, the receiver of a session message will require that the
-received nonce strictly equally the last nonce plus one. This mode is intended to be used in session oriented 
-environments like TCP that provide ordered stream reassembly and **should always be used in such environments** as it
-provides the strongest guarantees.
+* **INCREMENT_LAST_RX** - The receiver of a session message will verify that the each received nonce is strictly 
+equal to the last valid nonce plus one. This is the default mode and should always be used in session oriented 
+environments like TCP that provide stream integrity and ordering guarantees.
 
-* **GREATER_THAN_LAST_RX** - If this mode is specified, the receiver of a session message will only require that the
-received nonce be greater the last nonce. This mode is intended to be used in session-less environments like serial or 
-UDP.
+* **GREATER_THAN_LAST_RX** - The receiver of a session message will verify that each received is greater the last valid nonce. 
+This mode is intended to be used in session-less environments like serial or UDP and allows for loss of authenticated packets,
+but also relaxes security allowing a MitM to selectively drop messages from a session.
 
 ##### DH Mode
 
