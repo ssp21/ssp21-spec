@@ -138,11 +138,11 @@ protocols. For example, the DNP3 link-layer and transport function could be comp
 and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing 
 redundancy in certain implementations could provide significant bandwidth savings.
 
-<!--- RLC: While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced protocol 
-is no longer interoperable with the  original protocol, but devices will still need to implement the original protocol. 
-That means more code (two link layers for the same protocol), more testing, more complex procurement, more complex 
-deployment, ...At least in the beginning, I think we should not expect anything other than BitW on the outstation 
-end... -->
+<!--- RLC: While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced
+protocol is no longer interoperable with the  original protocol, but devices will still need to implement the
+original protocol. That means more code (two link layers for the same protocol), more testing, more complex
+procurement, more complex deployment, ...At least in the beginning, I think we should not expect anything other
+than BitW on the outstation end... -->
 
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side 
 when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot 
@@ -586,15 +586,16 @@ struct Intensity {
 
 #### Bitfields
 
-Bitfields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each bit
-using the following syntax:
+Bitfields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each
+bit using the following syntax:
 
 ```
 bitfield <bitfield-name> { "name top bit", "name top bit - 1",  ... "name bottom bit" }
 ```
 
-Bitfields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit names.
-Unspecified bits shall always be encoded as zero.  Parsers shall fail parsing if any unspecified bit is set in the input.
+Bitfields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
+names. Unspecified bits shall always be encoded as zero.  Parsers shall fail parsing if any unspecified bit is set in
+the input.
 
 ```
 bitfield Flags { "flag1", "flag2", "flag3" }
@@ -692,9 +693,9 @@ enum NonceMode {
 equal to the last valid nonce plus one. This is the default mode and should always be used in session oriented 
 environments like TCP that provide stream integrity and ordering guarantees.
 
-* **GREATER_THAN_LAST_RX** - The receiver of a session message will verify that each received is greater the last valid nonce. 
-This mode is intended to be used in session-less environments like serial or UDP and allows for loss of authenticated packets,
-but also relaxes security allowing a MitM to selectively drop messages from a session.
+* **GREATER_THAN_LAST_RX** - The receiver of a session message will verify that each received is greater the last 
+valid nonce. This mode is intended to be used in session-less environments like serial or UDP and allows for loss 
+of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 
 ##### DH Mode
 
@@ -942,7 +943,8 @@ message UnconfirmedSessionData {
 }
 ```
 
-* **metadata** - The metadata struct is always covered by the authentication mechanism of the negotiated *Session Mode*. 
+* **metadata** - The metadata struct is always covered by the authentication mechanism of the negotiated *Session 
+Mode*. 
 
 * **payload** - This opaque field is interpreted according the negotiated *Session Mode*.
 
