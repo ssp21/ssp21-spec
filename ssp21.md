@@ -484,50 +484,6 @@ following simplifications:
 * The optional info parameter is a zero byte sequence
 * Extract and expand steps are collapsed into a single function
   
-### Digital Signature Algorithms (DSA)
-  
-While SSP21 does not use any DSA in the core key negotiation or session, implementations will need to support some set
-of DSAs to verify certificates. SSP21 will initially support only usage of the Machine-to-Machine certificate format
-defined in an  [RFC draft](https://tools.ietf.org/html/draft-ford-m2mcertificate-00).
-     
-**TODO: research all the DSAs used in M2M**
-
-<!--
-### Cipher Functions
-
-SSP21 allows for the future use of AEAD cipher modes to encrypt session traffic and the key negotiation data as 
-supported by Noise. The initial version of the specification, however, shall only support HMAC based authentication. 
-Throughout the rest of the document it is assumed that the functions *Encrypt* and *Decrypt* are synonymous with *Sign* 
-or *Verify* respectively when an authentication-only cipher mode is specified. Noise defines the following abstract 
-AEAD Cipher functions.
-
-* **ENCRYPT(k, n, ad, plaintext)**: Encrypts *plaintext* using the 32-byte key (*k*) and an unsigned 8-byte nonce (*n*) 
-which must be unique for the key (*k*). Returns the ciphertext.  Encryption is performed using an AEAD encryption mode 
-with the associated data (*ad*). The returned ciphertext is the same size as the plaintext plus 16 bytes for an 
-authentication tag.
-
-* **DECRYPT(k, n, ad, ciphertext)**: Decrypts *ciphertext* using 32-byte key (*k*), and 8-byte nonce (*n*), and 
-associated data (*ad*). Returns the plaintext if authentications succeeds, otherwise it signals an error in the event 
-of authentication failure.
-
-To support authentication-only modes, SSP21 redefines *Encrypt* and *Decrypt* as *Sign* and *Verify* in terms of HMAC 
-over the same set of fields. The *message* input to the HMAC calculation is defined as a concatenation of the 8-byte 
-nonce (*n*), the 1-byte length of the associated data (*len(ad)*) for domain separation, the associated data (*ad*), 
-and the plaintext:
-
-*message* = *n* || *len(ad)* || *ad* || *plaintext*
-
-* **SIGN(k, n, ad, plaintext)**:  Calculates the HMAC tag based on the message definition above and appends it to the 
-plaintext.
-
-* **VERIFY(k, n, ad, ciphertext)**: Interprets the ciphertext argument as a concatenation of the plaintext and the HMAC 
-tag. Calculates the correct HMAC tag according to the message definition above. Uses a constant-time comparison 
-algorithm to
-check the input and calculated tag values for equality. Returns the plaintext if authentication succeeds, otherwise 
-signals an error in the event of authentication failure.
--->
-
-
 ### CSPRNG
 
 A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral 
