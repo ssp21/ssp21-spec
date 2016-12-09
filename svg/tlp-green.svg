@@ -1,0 +1,17 @@
+<svg width="435" height="180" xmlns="http://www.w3.org/2000/svg">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <g>
+  <title>background</title>
+  <rect fill="#ffffff" id="canvas_background" height="182" width="437" y="-1" x="-1"/>
+  <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" height="99.000004" width="378.000038" y="18.950012" x="25.499993" stroke-width="1.5" stroke="#ffffff" fill="#389867"/>
+  <text transform="matrix(17.9821, 0, 0, 1.42471, -2515.76, -72.1318)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_2" y="191.950012" x="148.5" stroke-width="0" stroke="#000000" fill="#000000"/>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="36" id="svg_4" y="81.950012" x="43.5" stroke-width="0" stroke="#ffffff" fill="#ffffff">CES-21 TLP GREEN</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_7" y="151.950012" x="30.5" stroke-width="0" stroke="#5b4c4c" fill="#000000">ORIG: Automatak</text>
+ </g>
+</svg>
