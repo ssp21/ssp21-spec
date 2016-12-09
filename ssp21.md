@@ -460,7 +460,7 @@ incorporated into the authentication signatures and makes any tampering of hands
 
 ### Hashed Message Authentication Code (HMAC)
 
-HMAC provides produces an authentication tag given a shared symmetric key and an input message. It is described in [RFC 
+HMAC provides produces an authentication tag given a shared key and an input message. It is described in [RFC 
 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
