@@ -759,35 +759,38 @@ The *Handshake Error* enumeration denotes an error condition that occurred durin
 ```
 enum HandshakeError {
     BAD_MESSAGE_FORMAT                : 0
-    UNSUPPORTED_DH_MODE               : 1
-    UNSUPPORTED_HASH_MODE             : 2
-    UNSUPPORTED_SESSION_SECURITY_MODE : 3
-    UNSUPPORTED_CERTIFICATE_MODE      : 4
-    BAD_CERTIFICATE_FORMAT            : 5
-    UNSUPPORTED_CERTIFICATE_ALGORITHM : 6
-    AUTHENTICATION_ERROR              : 7
+    UNSUPPORTED_VERSION               : 1
+    UNSUPPORTED_DH_MODE               : 2
+    UNSUPPORTED_HASH_MODE             : 3
+    UNSUPPORTED_SESSION_MODE          : 4
+    UNSUPPORTED_CERTIFICATE_MODE      : 6
+    BAD_CERTIFICATE_FORMAT            : 7
+    UNSUPPORTED_CERTIFICATE_FEATURE   : 8
+    AUTHENTICATION_ERROR              : 9
+    NO_PRIOR_HANDSHAKE_BEGIN          : 10
     INTERNAL                          : 255
 }
 ```
 
 **Note: Implementations shall NEVER define custom error codes as this can allow implementation fingerprinting**
 
-* **BAD_MESSAGE_FORMAT** - A received handshake message was malformed in some manner, e.g. it was improperly encoded,
-had missing bytes, or fields with the incorrect lengths.
+* **BAD_MESSAGE_FORMAT** - A received handshake message was malformed in some manner, i.e. it was improperly encoded.
+
+* **UNSUPPORTED_VERSION** - The specified protocol version is not supported.
 
 * **UNSUPPORTED_DH_MODE** - The requested Diffie Hellman mode is not supported.
  
 * **UNSUPPORTED_HASH_MODE** - The requested hash algorithm is not supported.
  
-* **UNSUPPORTED_SESSION_SECURITY_MODE** - The requested session security mode is not supported.
+* **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
  
 * **UNSUPPORTED_CERTIFICATE_MODE** - The requested certificate mode is not supported.
  
 * **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
  
-* **UNSUPPORTED_CERTIFICATE_ALGORITHM** - The specified algorithm in one of the certificates is not supported.
+* **UNSUPPORTED_CERTIFICATE_FEATURE** - The feature or specified algorithm in one of the certificates is not supported.
 
-* **AUTHENTICATION_ERROR** - The outstation was unable to authenticate the master.
+* **AUTHENTICATION_ERROR** - The responder was unable to authenticate the initiator.
  
 * **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
 
