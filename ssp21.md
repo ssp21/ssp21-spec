@@ -420,15 +420,7 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 
 All DH curves will support the following two algorithms with the key lengths specified above.
 
-* GeneratePublicKey(key_pair) - Given a key pair, generate a random private key and calculate the corresponding public 
-key. 
-
-<!--- RLC: Why ``given a key pair''? Noise defines GenerateKeyPair() that doesn't take any parameters and generates a 
-key pair. I don't see anything that generates a new key pair from an existing one..? (Don't see it in the RFC either) 
--->
-
-<!-- JAC: This is because the in Noise's definition the of the function, the key pair argument is mutable. I'm not 
-particularly fond of all the definitions in Noise, and we can change them --> 
+* GeneratePublicKey() - Generate a random private key and calculate the corresponding public key.
 
 * DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
 length _DHLEN_.
@@ -1046,7 +1038,7 @@ certificate chain.
     * The master performs the final session key derivation by expanding the chaining key:
         * set *(txsk, rxsk) = HKDF(ck, [])*
     
-    * The master initializes the session with (OMSK, MOSK, time_session_init)   
+    * The master initializes the session with (OMSK, MOSK, time_session_init)
         
 ### Security Properties
 
