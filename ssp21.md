@@ -254,14 +254,8 @@ would grant the user commissioning the field asset the permission to generate a 
 authority would maintain a database of a few items:
 
 * An editable set of field assets that will require enrollment.
-* A set of users
-* A set of permissions for the users (user editing, key generation by asset, etc).
-* Properly hashed/salted passwords for the set of users that follow a strong password policy 
-<!--- rlc: I don't see why 
-the authority database would have a password for the user: I would expect the user to be authenticated through an LDAP 
-or similar mechanism and have the appropriate access to the database, which would only need to contain information 
-necessary to audit enrollment and the data for the device. -->.
-* A system for 2-factor authentication of the users like a key token.
+* A means of authenticating users and roles/permissions. This information is likely to come from an external identity
+management systeem.
 
 The database will already be configured by the system administrator with all of the authorized metadata for each 
 certificate in question. The only piece of information the person generating the outstation certificate needs to 
