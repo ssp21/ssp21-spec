@@ -1118,7 +1118,6 @@ The following procedure is followed to transmit an *Unconfirmed Session Data* me
  
 * Set the message payload using the *session_security_mode* specific function agreed upon in the handshake.
 
-<!-- TODO: Rigorously define the function signature for Prepare/Verify so that it can work for any cipher suite -->
   
 ### Validating *Unconfirmed Session Data*
 
@@ -1167,80 +1166,4 @@ Actions:
 * **a2** - The master transmits a *REQUEST_HANDSHAKE_AUTH* message, and starts the response timer.
 -->
 
-<!--
-### Security Variables
 
-A number of security variables are maintained during the key negotiation handshake and during active sessions.
-These variables and the routines that operate on them are slightly modified from their definitions in Noise. The
-high-level objected-oriented definitions in Noise are reused here as they provide useful clues to
-implementers for organizing data structures and functions the operate on them.
-
-#### CipherState ####
-
-A *CipherState* can sign/verify or encrypt/decrypt a message based on the following variables:
-
-* **k**: A symmetric key of 32 bytes (which may be empty as indicated by a flag or state variable). This key
-is used in HMAC calculations.
-
-* **n**: A 4-byte (32-bit) unsigned integer nonce.
-
-The following methods will be associated with *CipherState*.  The maximum value of nonce (*n*) of 2^64 - 1 is reserved 
-for future use and shall not be used. If incrementing *n* results in the maximum value, any further *EncryptWithAd()* 
-or  *DecryptWithAd()* calls will signal an error.
-
-* **InitializeKey(key)**: Sets *k* = key, and sets *n* = 0.
-
-* **HasKey()**: Returns true if *k* is non-empty, false otherwise.
-
-* **EncryptWithAd(ad, plaintext)**: If *k* is non-empty returns *ENCRYPT(k, n++, ad, plaintext)*, otherwise signals an 
-error to the caller.
-
-* **DecryptWithAd(ad, ciphertext)**: If *k* is empty, signals an error to the caller. Otherwise it attempts decryption 
-by calling *DECRYPT(k, n++, ad, plaintext)*. If an authentication error occurs, it is signaled to the caller, otherwise
-it returns the plaintext.
-
-#### Symmetric State
-
-A *SymmetricState* object contains a *CipherState* plus the following variables:
-
-* **ck**: A chaining key of *HASHLEN* bytes.
-
-* **h**: A hash output of *HASHLEN* bytes.
-
-The following methods will be associated with *SymmetricState*:
-
-* **Initialize()**:
-    * Sets h equal to all zeros. 
- 
-**TODO: research consequences of setting h to a fixed value. Shouldn't matter since 
-all the fixed Noise patterns would produce a deterministic hash value anyway**
-    * Sets *ck* = *h*.
-    * Calls *InitializeKey(empty)*.
-
-* **MixKey(input_key_material)**:
-    * Sets *ck*, *temp_k* = *HKDF(ck, input_key_material)*.
-    * If *HASHLEN* is 64, then truncates *temp_k* to 32 bytes.
-    * Calls *InitializeKey(temp_k)*.
-
-* **MixHash(data)**:
-    * Sets *h* = *HASH(h* || *data)*
-
-* **EncryptAndHash(plaintext)**:
-   * Sets *ciphertext = EncryptWithAd(h, plaintext)*.
-   * Calls *MixHash(ciphertext).
-   * returns *ciphertext*.
-   * Note: if *k* is *empty*, the *EncryptWithAd()* call will set *ciphertext* equal to  *plaintext*.
-
-* **DecryptAndHash(ciphertext)**:
-    * Sets *plaintext = DecryptWithAd(h, ciphertext)*
-    * calls *MixHash(ciphertext)*
-    * returns *plaintext*.
-    * Note that if *k* is *empty*, the *DecryptWithAd()* call will set *plaintext* equal to *ciphertext*.
-
-* **Split()**: Returns a pair of *CipherState* objects for encrypting transport messages.
-    * Sets *temp_k1, temp_k2* = *HKDF(ck, [])*.
-    * If *HASHLEN* is 64, then truncates *temp_k1* and *temp_k2* to 32 bytes.
-    * Creates two new *CipherState* objects *cs1* and *cs2*.
-    * Calls *cs1.InitializeKey(temp_k1)* and *cs2.InitializeKey(temp_k2)*.
-    * Returns the pair *(cs1, cs2)*.
--->
