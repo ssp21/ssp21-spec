@@ -912,12 +912,10 @@ struct AuthMetadata {
 }
 ```
 
-* **nonce** - An incrementing nonce that ensures every session message for a given key is unique to provide protection
-from replay. 
+* **nonce** - An incrementing nonce that provides protection from replay of session messages.
 
-* **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in section on key
-negotiation. Endpoints will add this value to *time_session_init* and ensure that it is less than or equal to NOW()
-before processing the message.
+* **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in the section on key
+negotiation.
  
 * **flags** - First and final bits used for message reassembly.
 
@@ -929,10 +927,9 @@ message UnconfirmedSessionData {
 }
 ```
 
-* **metadata** - The metadata struct is always covered by the authentication mechanism of the negotiated *Session 
-Mode*. 
+* **metadata** - Metadata sub-struct covered by the authentication mechanism of the negotiated *Session Mode*. 
 
-* **payload** - This opaque field is interpreted according the negotiated *Session Mode*.
+* **payload** - Opaque payload field is interpreted according the negotiated *Session Mode*. Contains user data and an authentication tag.
 
 ## Key Negotiation Handshake
 
