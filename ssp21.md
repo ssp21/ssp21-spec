@@ -860,11 +860,11 @@ After receiving a valid *Reply Handshake Begin*, the master transmits a *Request
 ```
 message RequestHandshakeAuth {
    function : enum::Function::REQUEST_HANDSHAKE_AUTH
-   hmac: Seq8[U8]
+   mac: Seq8[U8]
 }
 ```
 
-* **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
+* **mac** - An untruncated HMAC tag calculated using the handshake hash function.
 
 ##### Reply Handshake Auth
 
