@@ -888,11 +888,11 @@ authenticated.
 ```
 message ReplyHandshakeError {
    function : enum::Function::REPLY_HANDSHAKE_ERROR
-   error_code : enum::HandshakeError
+   error : enum::HandshakeError
 }
 ```
 
-* **error_code** - An error code that enumerates possible error conditions that can occur during the handshake.
+* **error** - An error code that enumerates possible error conditions that can occur during the handshake.
 
 ##### Unconfirmed Session Data
 
@@ -918,20 +918,13 @@ from replay.
 * **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in section on key
 negotiation. Endpoints will add this value to *time_session_init* and ensure that it is less than or equal to NOW()
 before processing the message.
-<!--- RLC: Should 
-be clearer as to when that is: I think it would be better to include an arbitrary ms counter in the first two messages 
-to establish a time base (i.e. have the master send a number indicating its time, and the outstation a number 
-indicating its time -->.
-
-<!--- JAC: Yes, definitely, this is undefined ATM, but I am going to try and define this without exchanging time bases
- -->
  
 * **flags** - First and final bits used for message reassembly.
 
 ```
 message UnconfirmedSessionData {
    function : enum::Function::UNCONFIRMED_SESSION_DATA
-   metadata : struct::AuthMetadata   
+   metadata : struct::AuthMetadata
    payload : SEQ16[U8]
 }
 ```
