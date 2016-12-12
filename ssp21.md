@@ -873,11 +873,11 @@ After receiving a valid and authenticated *Request Handshake Auth*, the outstati
 ```
 message ReplyHandshakeAuth {
    function : enum::function::REPLY_HANDSHAKE_AUTH
-   hmac: Seq8[U8]
+   mac: Seq8[U8]
 }
 ```
 
-* **hmac** - An untruncated HMAC authentication tag calculated using the handshake hash function.
+* **mac** - An untruncated HMAC tag calculated using the handshake hash function.
 
 ##### Reply Handshake Error
 
