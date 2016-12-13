@@ -1083,9 +1083,28 @@ Upon complete of a successfully authenticated handshake, the communication sessi
 
 * **time_session_init**  - The time the session was considered initialized in the local relative time base.
 
-* **read** - A function used to authenticate (and possibly decrypt) a received message's payload.
+* **read** - An abstract function corresponding to the specified *session_mode* used to process a received 
+message's payload.
+    * returns:
+        * Cleartext payload, or [] if an error occurs.
+    * errors:
+        * Signals an error if the message does not authenticate and/or decrypt properly.
+        * Signals an error if input or output buffers do not meet required sizes.
+    * arguments:
+        * **key** - The session key used to perform the cryptographic operations.
+        * **metadata** - Additional bytes that are covered by the payload's authentication tag.  
+        * **payload** - Payload bytes from the received message.
 
-* **write** - A function used to authenticate (and possibly encrypt) a transmitted message's payload.
+* **write** - An abstract function corresponding to the specified *session_mode* used to prepare a transmitted 
+message's payload.
+    * returns:
+        * The payload to be transmitted with the outgoing message.
+    * errors:
+        * Signals an error if input or output buffers do not meet required sizes.
+    * arguments:
+        * **key** - The session key used to perform the cryptographic operations.
+        * **metadata** - Additional bytes to be covered by the payload's authentication tag.
+        * **cleartext** - Cleartext bytes to be placed into the payload.
   
 * **nonce_func** - A function used to verify the message nonce.
   
