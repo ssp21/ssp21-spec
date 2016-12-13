@@ -1046,8 +1046,7 @@ If any of the following properties do not hold, then master and outstation will 
 *authentication_key*.
 
 * If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
-the two parties will have differing handshake hashes which will produce different keys when feed into the key derivation
-function.
+the two parties will have differing handshake hashes which will produce different keys when feed into the KDF.
 
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
 transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
@@ -1075,15 +1074,21 @@ The outstation could also indicate an error in *Request Hanshake Auth*:
 
 ### Initialization
 
-Sessions are initialized after a successful key negotiation handshake with the tuple of arguments 
-(RXSK, TXSK, time_session_init, verify, prepare) as defined below:
+Upon complete of a successfully authenticated handshake, the communication session is initialized 
+(or possibly reinitialized) with the following arguments:
 
-* **RXSK** - A session key used to validate received messages.
+* **RXSK** - A session key used to authenticate decrypt received messages.
      
-* **TXSK** - A session key used to prepare transmitted messages.
-    
+* **TXSK** - A session key used to sign/encrypt transmitted messages.
+
 * **time_session_init**  - The time the session was considered initialized in the local relative time base.
-     
+
+* **read** - A function used to authenticate (and possibly decrypt) a received message's payload.
+
+* **write** - A function used to authenticate (and possibly encrypt) a transmitted message's payload.
+  
+* **nonce_func** - A function used to verify the message nonce.
+  
 The session shall also always maintain a few additional variables initialized internally:
     
 * A 2-byte incrementing nonce (*n*) always initialized to zero, one for each session key.
@@ -1132,7 +1137,7 @@ handshake. This function will also return the user level plaintext upon successf
 
 * Set the current nonce equal to the value of the received nonce. 
 
-<!-- TODO: Rigorously define the function signature for Prepare/Verify so that it can work for any cipher suite -->
+
 
 
 <!--
