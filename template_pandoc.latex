@@ -143,8 +143,14 @@ $endif$
 \date{$date$}
 
 \begin{document}
+
 $if(title)$
-\maketitle
+\begin{titlepage}
+    \centering
+    \maketitle
+    \includegraphics[width=4cm,height=4cm,keepaspectratio]{svg/tlp-green.png} % also works with logo.pdf    
+    \thispagestyle{empty}
+\end{titlepage}
 $endif$
 
 $for(include-before)$
