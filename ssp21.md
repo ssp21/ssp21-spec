@@ -1197,33 +1197,33 @@ should publish information about the maximum possible clock drift.
 
 A strategy for setting the TTL in each transmitted message must take into account the following factors:
   
-* session key change interval (I) - The longer the interval between session key changes, the more the relative clocks 
+* *session key change interval* (**I**) - The longer the interval between session key changes, the more the relative clocks 
 can drift apart.
 
-* maximum relative drift (D) - The maximum possible difference in the rate of time on the initiator and responder 
-expressed as a number greater than 1. E.g., 1.0001 specifies that a .0001% difference can accumulate after some period
-of time.
+* *maximum relative drift rate* (**R**) - The maximum possible drift rate expressed as a number greater than 1. For 
+example, 1.0001 specifies that clocks can diverge by as much as 1/100th of 1% of the time elapsed.
 
-* initiator handshake response timeout (R) - The longer the response timeout in the handshake, the greater potential 
+* *initiator handshake response timeout* (**T**) - The longer the response timeout in the handshake, the greater potential 
 mismatch in the session initialization time on the initiator and responder.
 
-* maximum network latency (L) - The maximum amount of time it might take for a message to reach its destination under 
+* *maximum network latency* (**L**) - The maximum amount of time it might take for a message to reach its destination under 
 normal conditions.
 
 A simple scheme would be to add a fixed value to the current session time as specified below. 
 
 ```
 set current_session_time = session_init_time - NOW()
-set max_drift = I * D
-set TTL = current_session_time + max_drift + R + L
+set max_drift = I * R
+set TTL = current_session_time + max_drift + T + L
 ``` 
 
-Schemes where the maximum drift dead-band is calculated dynamically are also possible:
+Schemes where the maximum drift dead-band is calculated dynamically based on the elapsed session time 
+are also possible:
 
 ```
 set current_session_time = session_init_time - NOW()
-set max_drift = current_session_time * D
-set TTL = current_session_time + max_drift + R + L
+set max_drift = current_session_time * R
+set TTL = current_session_time + max_drift + T + L
 ```
 
 Regardless of the scheme chosen, implementations shall document whatever method they use for determining the TTL on 
