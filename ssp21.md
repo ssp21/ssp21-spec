@@ -9,7 +9,7 @@ date:       'pre-release'
 Secure SCADA Protocol (SSP) is cryptographic wrapper designed to secure point-to-multipoint serial protocols, or to act 
 as a security layer for new SCADA applications. It is intended to fill a gap where existing technologies like TLS are 
 not applicable, or require too much processing power or bandwidth. It can be used as a protocol agnostic bump in the 
-wire (BitW) at outstation endpoints or as a bump in the stack (BitS) on the master or the outstation. No provision is 
+wire (BitW) at initiator endpoints or as a bump in the stack (BitS) on the master or the outstation. No provision is 
 made for retrofitting masters with a BitW as we assume that masters can be much more easily upgraded than outstations.
 
 # Requirements
@@ -923,9 +923,9 @@ message UnconfirmedSessionData {
 
 * **payload** - Opaque payload field is interpreted according the negotiated *Session Mode*. Contains user data and an authentication tag.
 
-## Key Negotiation Handshake
+## Key Agreement Handshake
 
-Key negotiation in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
+Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
 the handshake and both parities. The SSP21 handshake most closely resembles the following message pattern from Noise:
 
 ```
@@ -934,7 +934,16 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 ```
 
 It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
-handshake pattern where all Diffie-Hellman operations are deferred until after first two messages are exchanged.
+handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
+pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
+cryptographic community.
+ 
+### Terminology
+ 
+There are two parties in a key agreement handshake: an *initiator* and a *responder*. Since the handshake is a 
+request-reply protocol, the initiator is expected to be the SCADA master, and the responder is expected to be an
+outstation. Since it's perfectly possible to flip this relationship in certain circumstances, and have the outstation
+initiate the key agreement we use the terms initiator and responder to preserve the generality of the specification.
  
 ### Procedure 
 
@@ -949,100 +958,104 @@ Notation:
 
 DH keys in this section use the following abbreviations:
 
-* OEVK - Outstation ephemeral private key
-* OEPK - Outstation ephemeral public key
-* OSVK - Outstation static private key
-* OSPK - Outstation static public key
-* MEVK - Master ephemeral private key
-* MEPK - Master ephemeral public key
-* MSVK - Master static private key
-* MSPK - Master static public key
+* re_vk - responder ephemeral private key
+* re_pk - responder ephemeral public key
+* rs_vk - responder static private key
+* rs_pk - responder static public key
+* ie_vk - initiator ephemeral private key
+* ie_pv - initiator ephemeral public key
+* is_vk - initiator static private key
+* is_pk - initiator static public key
 
 Symmetric keys in this this section use the following abbreviations:
 
 * ak - an *authentication key* used to authenticate both parties prior to final session key derivation
-* tx_sk - transmit session key 
+* tx_sk - transmit session key
 * rx_sk - receive session key
 
-1. The master sends the *Request Handshake Begin* message to the outstation containing an ephemeral public key, some
-additional metadata, and a certificate chain.
+1. The initiator sends the *Request Handshake Begin* message to the responder containing an ephemeral public key, some
+additional metadata, and optional certificate data.
 
-    * The master initializes the *chaining key* value to the hash of the entire transmitted message:
+    * The initiator sets the *chaining key* value to the hash of the entire transmitted message:
         * *set ck = HASH(message)*
 
-2. The outstation receives the *Request Handshake Begin* message, and then validates that it trusts the public key via 
-the certificate chain.
+2. The responder receives the *Request Handshake Begin* message.
 
-    * The outstation initializes the *chaining key* value equal to the hash of the entire received message:
+    * If using certificates, the responder validates that it trusts the public key via the certificate data.
+
+    * The responder sets the *chaining key* value equal to the hash of the entire received message:
         * *set ck = HASH(message)*
 
-    * The outstation transmit a *Reply Handshake Begin* message containing its own ephemeral public DH key and
-certificate chain.
+    * The responder transmits a *Reply Handshake Begin* message containing its own ephemeral public DH key and    
+certificate data as requested by the initiators's requested certificate mode.
  
-    * The outstation mixes the entire transmitted message into the *chaining key*.
+    * The responder mixes the entire transmitted message into the *chaining key*.
         * *set ck = HASH(ck || message)*
  
-    * The outstation then derives a new *chaining key* and the *authentication key*:
-        * *set dh1* = *DH(OEVK, MEPK)*
-        * *set dh2* = *DH(OEVK, MSPK)*
-        * *set dh3* = *DH(OSVK, MEPK)*
+    * The responder then derives a new *chaining key* and the *authentication key*:
+        * *set dh1* = *DH(re_vk, ie_pk)*
+        * *set dh2* = *DH(re_vk, is_pk)*
+        * *set dh3* = *DH(rs_vk, ie_pk)*
         * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)* 
  
-3. The master receives the *Reply Handshake Begin* message and validates that it trusts the public key via the 
-certificate chain.
+3. The initiator receives the *Reply Handshake Begin* message.
 
-    * The master mixes the entire received message into the *chaining key*.
+    * If using certificates, the initiator validates that it trusts the public key via the certificate data.
+
+    * The initiator mixes the entire received message into the *chaining key*.
         * set ck = HASH(ck || message)
     
-    * The master then derives a new *chaining key* and the *authentication key*:
-        * *set dh1* = *DH(MEVK, OEPK)*
-        * *set dh2* = *DH(MEVK, OSPK)*
-        * *set dh3* = *DH(MSVK, OEPK)*
+    * The initiator then derives a new *chaining key* and the *authentication key*:
+        * *set dh1* = *DH(ie_vk, re_pk)*
+        * *set dh2* = *DH(ie_vk, rs_pk)*
+        * *set dh3* = *DH(is_vk, re_pk)*
         * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)*
         
-    * The master transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
+    * The initiator transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
 
-    * The master mixes the entire transmitted message into the chaining key.
+    * The initiator mixes the entire transmitted message into the chaining key.
         * set ck = HASH(ck || message)
     
-    * The master records the time this request was transmitted for future use.
+    * The initiator records the time this request was transmitted for future use.
         
         * set *time_tx = NOW()* 
     
-4. The outstation receives the *Request Handshake Auth* message, and verifies the HMAC.
+4. The responder receives the *Request Handshake Auth* message, and verifies the HMAC.
     
-    * The outstation mixes the entire received message into the chaining key.
+    * The responder mixes the entire received message into the chaining key.
         * set ck = HASH(ck || message)
 
-    * The outstation records the session initialization time:
+    * The responder records the session initialization time:
         * *time_session_init = NOW()*               
     
-    * The outstation transmits a *Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
+    * The responder transmits a *Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
     
-    * The outstation mixes the entire transmitted message into the chaining key.
+    * The responder mixes the entire transmitted message into the chaining key.
         * set ck = HASH(ck || message)
         
-    * The outstation performs the final session key derivation by expanding the chaining key:
+    * The responder performs the final session key derivation by expanding the chaining key:
         * set (rx_sk, tx_sk) = HKDF(ck, [])
         
-    * The outstation initializes the session with (MOSK, OMSK, time_session_init)
+    * The responder initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce).        
     
-5.  The master receives the *Reply Handshake Auth*, and verifies the HMAC.
+5.  The initiator receives the *Reply Handshake Auth*, and verifies the HMAC.
     
-    * The master mixes the entire received message into the chaining key.
+    * The initiator mixes the entire received message into the chaining key.
         * set ck = HASH(ck || message)
  
-    * The master estimates the session initialization time: 
+    * The initiator estimates the session initialization time: 
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
-    * The master performs the final session key derivation by expanding the chaining key:
+    * The initiator performs the final session key derivation by expanding the chaining key:
         * set *(tx_sk, rx_sk) = HKDF(ck, [])*
     
-    * The master initializes the session with (OMSK, MOSK, time_session_init)
+    * The initiator initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce). 
+    
+**Note:** See the section on session initialization for definitions of read, write, and verify_nonce functions.     
         
 ### Security Properties
 
-If any of the following properties do not hold, then master and outstation will not agree on the same *chaining_key* and
+If any of the following properties do not hold, then initiator and responder will not agree on the same *chaining_key* and
 *authentication_key*.
 
 * If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
@@ -1053,7 +1066,7 @@ transmitted, they will be unable to perform the correct DH calculations and will
 in the KDF.
 
 * A MitM cannot tamper with the common *time_session_init* by delaying messages by more than whatever timeout setting
- the master uses while waiting for replies from the outstation. This ensures that the common time-point, in two separate
+ the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
  relative time bases, is at least accurate to within this margin when the session is first initialized.
  
 ### Message Exchanges
@@ -1062,11 +1075,11 @@ A success handshake involves the exchange of the following four messages:
 
 ![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
 
-The outstation may signal an error after receiving a *Request Hanshake Begin*:
+The responder may signal an error after receiving a *Request Hanshake Begin*:
 
 ![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
 
-The outstation could also indicate an error in *Request Hanshake Auth*:
+The responder could also indicate an error in *Request Hanshake Auth*:
 
 ![Error in Request Handshake Auth](msc/handshake_error2.png){#fig:handshake_error2}
 
