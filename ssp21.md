@@ -409,7 +409,7 @@ The following notation will be used in algorithm pseudo-code:
 and then increments it by 1.
 
 
-### Diffie Hellman (DH) functions
+### Diffie-Hellman (DH) functions
 
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 
 7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
@@ -684,7 +684,7 @@ of authenticated packets, but also relaxes security allowing a MitM to selective
 
 ##### DH Mode
 
-The *DH Mode* enumeration specifies which Diffie Hellman function will be used during the handshake to derive key
+The *DH Mode* enumeration specifies which Diffie-Hellman function will be used during the handshake to derive key
 material.
 
 ```
@@ -763,7 +763,7 @@ enum HandshakeError {
 
 * **UNSUPPORTED_VERSION** - The specified protocol version is not supported.
 
-* **UNSUPPORTED_DH_MODE** - The requested Diffie Hellman mode is not supported.
+* **UNSUPPORTED_DH_MODE** - The requested Diffie-Hellman mode is not supported.
  
 * **UNSUPPORTED_HASH_MODE** - The requested hash algorithm is not supported.
  
@@ -934,7 +934,7 @@ the handshake and both parities. The SSP21 handshake most closely resembles the 
 ```
 
 It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
-handshake pattern where all Diffie Hellman operations are deferred until after first two messages are exchanged.
+handshake pattern where all Diffie-Hellman operations are deferred until after first two messages are exchanged.
  
 ### Procedure 
 
@@ -947,7 +947,7 @@ Notation:
 * The HASH() and HMAC() functions always refer to the hash function requested by the master.
 * NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds. 
 
-DH keys in this section use the following abbrevations:
+DH keys in this section use the following abbreviations:
 
 * OEVK - Outstation ephemeral private key
 * OEPK - Outstation ephemeral public key
@@ -958,11 +958,11 @@ DH keys in this section use the following abbrevations:
 * MSVK - Master static private key
 * MSPK - Master static public key
 
-Symmetric keys in this this section use the following abbrevations:
+Symmetric keys in this this section use the following abbreviations:
 
 * ak - an *authentication key* used to authenticate both parties prior to final session key derivation
-* txsk - transmit session key 
-* rxsk - receive session key
+* tx_sk - transmit session key 
+* rx_sk - receive session key
 
 1. The master sends the *Request Handshake Begin* message to the outstation containing an ephemeral public key, some
 additional metadata, and a certificate chain.
@@ -1023,7 +1023,7 @@ certificate chain.
         * set ck = HASH(ck || message)
         
     * The outstation performs the final session key derivation by expanding the chaining key:
-        * set (rxsk, txsk) = HKDF(ck, [])
+        * set (rx_sk, tx_sk) = HKDF(ck, [])
         
     * The outstation initializes the session with (MOSK, OMSK, time_session_init)
     
@@ -1036,7 +1036,7 @@ certificate chain.
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
     * The master performs the final session key derivation by expanding the chaining key:
-        * set *(txsk, rxsk) = HKDF(ck, [])*
+        * set *(tx_sk, rx_sk) = HKDF(ck, [])*
     
     * The master initializes the session with (OMSK, MOSK, time_session_init)
         
@@ -1077,15 +1077,15 @@ The outstation could also indicate an error in *Request Hanshake Auth*:
 Upon complete of a successfully authenticated handshake, the communication session is initialized 
 (or possibly reinitialized) with the following arguments:
 
-* **RXSK** - A session key used to authenticate decrypt received messages.
+* **rx_sk** - A session key used to authenticate decrypt received messages.
      
-* **TXSK** - A session key used to sign/encrypt transmitted messages.
+* **tx_sk** - A session key used to sign/encrypt transmitted messages.
 
 * **time_session_init**  - The time the session was considered initialized in the local relative time base.
 
-* **read** - An abstract function corresponding to the specified *session_mode* used to process a received 
+* **read** - A function corresponding to the specified *session_mode* used to process a received 
 message's payload.
-    * returns:
+    * returns: 
         * Cleartext payload, or [] if an error occurs.
     * errors:
         * Signals an error if the message does not authenticate and/or decrypt properly.
@@ -1095,7 +1095,7 @@ message's payload.
         * **metadata** - Additional bytes that are covered by the payload's authentication tag.  
         * **payload** - Payload bytes from the received message.
 
-* **write** - An abstract function corresponding to the specified *session_mode* used to prepare a transmitted 
+* **write** - A function corresponding to the specified *session_mode* used to prepare a transmitted 
 message's payload.
     * returns:
         * The payload to be transmitted with the outgoing message.
@@ -1107,6 +1107,11 @@ message's payload.
         * **cleartext** - Cleartext bytes to be placed into the payload.
   
 * **nonce_func** - A function used to verify the message nonce.
+    * returns: 
+        * A boolean value that is true if the new nonce is valid, and false otherwise.
+    * arguments:
+        * **last_nonce** - the last valid nonce, or zero for a newly initialized session.
+        * **new_nonce** - the nonce from the current message.
   
 The session shall also always maintain a few additional variables initialized internally:
     
