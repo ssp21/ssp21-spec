@@ -1141,8 +1141,8 @@ Sessions will only become invalidated after one of the following conditions occu
 
 * The transmit or receive nonce reaches the maximum value of 2^16 - 1.
 
-* A configurable amount of time elapses. This session timeout will default to 1 day and will not be configurable
- to be greater 49 days (the maximum session TTL of a message since initialization is ~49.7 days).
+* A configurable amount of time elapses. This session timeout shall default to 1 day and shall not be configurable
+ to be greater than 30 days (the maximum session TTL of a message since initialization is ~49.7 days).
  
 * A complete, authenticated handshake occurs reinitializing any prior existing session.
 
