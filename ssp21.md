@@ -413,10 +413,6 @@ The following notation will be used in algorithm pseudo-code:
 
 * The **||** operator denotes the concatenation of two byte sequences.
 * The **[b1, b2, .. bn]** syntax denotes a, possibly empty, byte sequence.
-* The **len()** function returns the length of a byte sequence as a 2-byte unsigned big endian byte sequence.
-* The **++** operator applied after an integer variable implements post-increment, namely it returns the current value 
-and then increments it by 1.
-
 
 ### Diffie-Hellman (DH) functions
 
@@ -723,15 +719,8 @@ enum SessionMode {
 }
 ```
 
-**Authentication-only session modes**
-
-* **HMAC-SHA256-16** - Plaintext is authenticated with HMAC-SHA256 truncated to the leftmost 16 bytes.
+* **HMAC-SHA256-16** - A MAC session mode using HMAC-SHA256 truncated to the leftmost 16 bytes.
  
-**Encrypted and authenticated session modes** 
- 
-SSP21 does not currently support encrypted sessions. Future versions of the protocol may support AEAD cipher
-modes like AES-GCM.
-
 ##### Certificate Mode
 
 The *Certificate Mode* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
@@ -1108,7 +1097,7 @@ message's payload.
         * Signals an error if input or output buffers do not meet required sizes.
     * arguments:
         * **key** - The session key used to perform the cryptographic operations.
-        * **metadata** - Additional bytes that are covered by the payload's authentication tag.  
+        * **ad** - Additional data to be covered by the payload's authentication tag.  
         * **payload** - Payload bytes from the received message.
 
 * **write** - A function corresponding to the specified *session_mode* used to prepare a transmitted 
@@ -1119,7 +1108,7 @@ message's payload.
         * Signals an error if input or output buffers do not meet required sizes.
     * arguments:
         * **key** - The session key used to perform the cryptographic operations.
-        * **metadata** - Additional bytes to be covered by the payload's authentication tag.
+        * **ad** - Additional data to be covered by the payload's authentication tag.
         * **cleartext** - Cleartext bytes to be placed into the payload.
   
 * **verify_nonce** - A function used to verify the message nonce.
@@ -1180,8 +1169,38 @@ successfully authentication, the cleartext payload is returned.
 
 * Check the nonce using the *verify_nonce* function with which the session was initialized.
 
-* Set the current nonce equal to the value of the received nonce. 
+* Set the current nonce equal to the value of the received nonce.
 
+### Session Modes
+
+The *session_mode* specified by the initiator determines the concrete *read* and *write* functions with which the 
+session is initialized. In general, these functions fall into two general classes: truncated MAC based functions that
+only provide authentication, and Authenticated Encryption with Associated Data (AEAD) algorithms that encrypt the 
+payload and additionally authenticate both the payload and associated data in the message.
+
+#### MAC Modes
+
+MAC session modes are based on some kind of MAC function, like a truncated HMAC. 
+
+The write function of these modes can specified generically in terms of the MAC function 
+(which may internally truncate).
+   
+```
+write (key, ad, cleartext) -> payload {
+  return cleartext | mac(key, len(ad) || ad || cleartext)
+}
+```
+
+**Note:** len(ad) denotes the single byte length of the additional data, which cannot exceed 255.
+
+The MAC is calculated over the concatenation of a single byte unsigned length of the additional data, the additional data 
+itself, and the cleartext message.  Appending the length of additional data provides domain separation between the 
+additional data and the payload. Although the additional data in SSP21 is of a fixed length currently, this future
+proofs the protocol in the event that *ad* becomes a variable-length parameter in the future.
+
+The corresponding *read* function splits the payload into cleartext and MAC, and then calculates the expected 
+value of the MAC using the same arguments as the *write* function. It then uses a constant-time comparison to 
+authenticate the MAC before returning the cleartext.
 
 <!--
 ### State Transition Diagrams
