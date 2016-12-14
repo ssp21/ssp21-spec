@@ -1180,10 +1180,8 @@ payload and additionally authenticate both the payload and associated data in th
 
 #### MAC Modes
 
-MAC session modes are based on some kind of MAC function, like a truncated HMAC. 
-
-The write function of these modes can specified generically in terms of the MAC function 
-(which may internally truncate).
+MAC session modes are based on some kind of MAC function, like a truncated HMAC. The write function of these modes can
+be specified generically in terms of the MAC function.
    
 ```
 write (key, ad, cleartext) -> payload {
