@@ -1177,6 +1177,66 @@ successfully authentication, the cleartext payload is returned.
 
 * Set the current nonce equal to the value of the received nonce.
 
+### Time-to-live
+
+Each session message contains a time-to-live (TTL) parameter called *valid_until_ms*. This parameter is a count of
+milliseconds since session initialization (as defined in the handshake section), after which, the receiving party
+shall not accept an authenticated packet. This TTL prevents attackers from holding back a number of valid session 
+messages and then replaying them in rapid succession.
+  
+While this feature provides an additional security guarantee absent in most IT security protocols, it must be configured
+appropriately.
+
+#### Clock drift
+
+SSP21 Implementations are required to have an accurate relative clock with at least millisecond precision. This
+standard does not require a particular minimum drift rate from real-time, however, hardware solutions deploying SSP21
+should publish information about the maximum possible clock drift.
+
+#### Setting the TTL
+
+A strategy for setting the TTL in each transmitted message must take into account the following factors:
+  
+* session key change interval (I) - The longer the interval between session key changes, the more the relative clocks 
+can drift apart.
+
+* maximum relative drift (D) - The maximum possible difference in the rate of time on the initiator and responder 
+expressed as a number greater than 1. E.g., 1.0001 specifies that a .0001% difference can accumulate after some period
+of time.
+
+* initiator handshake response timeout (R) - The longer the response timeout in the handshake, the greater potential 
+mismatch in the session initialization time on the initiator and responder.
+
+* maximum network latency (L) - The maximum amount of time it might take for a message to reach its destination under 
+normal conditions.
+
+A simple scheme would be to add a fixed value to the current session time as specified below. 
+
+```
+set current_session_time = session_init_time - NOW()
+set max_drift = I * D
+set TTL = current_session_time + max_drift + R + L
+``` 
+
+Schemes where the maximum drift dead-band is calculated dynamically are also possible:
+
+```
+set current_session_time = session_init_time - NOW()
+set max_drift = current_session_time * D
+set TTL = current_session_time + max_drift + R + L
+```
+
+Regardless of the scheme chosen, implementations shall document whatever method they use for determining the TTL on 
+transmitted packets.
+ 
+#### Disabling Support
+
+In applications that do not require a TTL, or where no accurate clock is available, implementations may optionally 
+disable support for the TTL.
+
+* In the receive direction, implementations may be configurable to ignore the received TTL entirely.
+* In the transmit direction, implementations may be configurable to set the TTL to the maximum value of 2^32 - 1.   
+
 ### Session Modes
 
 The *session_mode* specified by the initiator determines the concrete *read* and *write* functions with which the 
