@@ -1187,16 +1187,12 @@ be specified generically in terms of the MAC function.
    
 ```
 write (key, ad, cleartext) -> payload {
-  return cleartext | mac(key, len(ad) || ad || cleartext)
+  return cleartext | mac(key, ad || cleartext)
 }
 ```
 
-**Note:** len(ad) denotes the single byte length of the additional data, which cannot exceed 255.
-
-The MAC is calculated over the concatenation of a single byte unsigned length of the additional data, the additional data 
-itself, and the cleartext message.  Appending the length of additional data provides domain separation between the 
-additional data and the payload. Although the additional data in SSP21 is of a fixed length currently, this future
-proofs the protocol in the event that *ad* becomes a variable-length parameter in the future.
+The MAC is calculated over the concatenation of the additional data and the cleartext message. No domain separation is
+required between these two values, as *ad* is always a fixed length in SSP21.
 
 The corresponding *read* function splits the payload into cleartext and MAC, and then calculates the expected 
 value of the MAC using the same arguments as the *write* function. It then uses a constant-time comparison to 
