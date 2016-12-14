@@ -1106,7 +1106,7 @@ message's payload.
         * **metadata** - Additional bytes to be covered by the payload's authentication tag.
         * **cleartext** - Cleartext bytes to be placed into the payload.
   
-* **nonce_func** - A function used to verify the message nonce.
+* **verify_nonce** - A function used to verify the message nonce.
     * returns: 
         * A boolean value that is true if the new nonce is valid, and false otherwise.
     * arguments:
