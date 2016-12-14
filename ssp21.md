@@ -1156,28 +1156,31 @@ other condition other than the ones listed above invalidate an existing session.
 
 The following procedure is followed to transmit an *Unconfirmed Session Data* message:
   
-* Increment the transmit nonce by 1 and sets this new value on the message. 
-(The first transmitted message from each party always has *n* = 1)
+* Ensure that the transmit nonce is not equal to the maximum value.
+  
+* Increment the transmit nonce by 1 and set this new value on the message.
 
-* Set *valid_until_ms = NOW() + TTL*. <!-- TODO: reference TBD section on configuring TTLs -->
+* Set *valid_until_ms = NOW() + TTL*. 
  
-* Set the message payload using the *session_security_mode* specific function agreed upon in the handshake.
+* Set the message payload using the *write* function with which the session was initialized.
+
+**Note:** The first transmitted session message from each party always has *n* = 1.
+
+**Note:** See the TTL session for advice on how to set appropriate TTLs.
 
   
 ### Validating *Unconfirmed Session Data*
 
 The following procedure is followed to validate a received *Unconfirmed Session Data* message:
 
-* Verify the authenticity of the message using the *session_mode* specific function agreed upon in the 
-handshake. This function will also return the user level plaintext upon successful authentication.
+* Verify the authenticity of the message using the *read* function with which the session was initialized. Upon
+successfully authentication, the cleartext payload is returned.
 
 * Check that *valid_until_ms <= NOW()*.
 
-* Check the nonce using the *nonce_verification_mode* agreed upon in the handshake.
+* Check the nonce using the *verify_nonce* function with which the session was initialized.
 
 * Set the current nonce equal to the value of the received nonce. 
-
-
 
 
 <!--
