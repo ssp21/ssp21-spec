@@ -1180,6 +1180,8 @@ payload and additionally authenticate both the payload and associated data in th
 
 #### MAC Modes
 
+<!-- There's some kind of weird formatting issue going on here with PDF -->
+
 MAC session modes are based on some kind of MAC function, like a truncated HMAC. The write function of these modes can
 be specified generically in terms of the MAC function.
    
