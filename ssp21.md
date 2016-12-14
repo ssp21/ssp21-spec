@@ -157,11 +157,12 @@ can double latencies in BitW integrations as the entire packet must be received 
 byte can be emitted. Some tricks could be played with asymmetric baud rates to minimize this effect. MAC algorithms 
 should be used for which hardware acceleration exists.
 
-* **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 BPS. 
-Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated (per [NIST 
-guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to reduce overhead. BitS
-integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol. An efficient\
-certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce certificate sizes.
+* **reduced bandwidth** – It is not uncommon for serial SCADA systems to operate at rates as low as 1200 bits per 
+second. Cryptographic encodings need to be sensitive to tight polling margins. HMACs can be truncated 
+(per [NIST guidelines](http://csrc.nist.gov/publications/nistpubs/800-107-rev1/sp800-107-rev1.pdf)) to reduce overhead. 
+BitS integration may be able to remove redundant layers provided by both the SSP21 and the wrapped protocol.
+An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce
+certificate sizes.
 
 # Utility PKI
 
@@ -1178,6 +1179,9 @@ session is initialized. In general, these functions fall into two general classe
 only provide authentication, and Authenticated Encryption with Associated Data (AEAD) algorithms that encrypt the 
 payload and additionally authenticate both the payload and associated data in the message.
 
+**Note:** Empty session messages are explicitly disallowed. Even authenticated empty messages should be treated and 
+logged as an error, and never passed to user layer.
+
 #### MAC Modes
 
 <!-- There's some kind of weird formatting issue going on here with PDF -->
@@ -1197,6 +1201,12 @@ required between these two values, as *ad* is always a fixed length in SSP21.
 The corresponding *read* function splits the payload into cleartext and MAC, and then calculates the expected 
 value of the MAC using the same arguments as the *write* function. It then uses a constant-time comparison to 
 authenticate the MAC before returning the cleartext.
+
+# Definitions and Acronyms
+
+
+
+
 
 <!--
 ### State Transition Diagrams
