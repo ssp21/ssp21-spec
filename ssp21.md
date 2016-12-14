@@ -180,10 +180,13 @@ requiring parties to only place their trust in a central signing authority. The 
 established via certification from this authority. To understand the attractiveness of such an architecture, it useful 
 to compare it is to a few alternatives.
 
-## Alternative: Symmetric keys only
+## Alternative: Shared secrets
 
-In this architecture, each communication link has a unique symmetric key that both parties possess prior to any 
-communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key. 
+In this architecture, each communication link has a shared-secret that both parties possess prior to any 
+communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key.
+Typically the long-lived shared secret is used to establish and authenticate a session using Password Authenticated Key
+Exchange (PAKE) or session keys are encrypted before transmission using something like AES key wrap.
+
 In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each 
 outstation (N), and the master would possess a copy of all N keys for the outstations with which it communicates. The 
 primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several of 
@@ -196,7 +199,7 @@ surface and the risk of compromise, or the number of keys in the system must be 
 asset, the key must be entrusted to field personnel, possibly contractors.
 
 * Compromise of a field asset always requires that the channel be rekeyed. Compromise of the master requires that the 
-entire system be rekeyed.
+entire system be re-keyed.
 
 ## Alternative: Asymmetric keys without an authority
 
@@ -217,6 +220,8 @@ A number of potential problems still remain:
 
 * Installing or authorizing additional masters requires either sharing the master private key with the backup master, 
 or installing an additional master public key on all outstations.
+
+SSP21 is able to operate without an authority by using the pre-shared key mode.
 
 ## Small vs big systems
 
