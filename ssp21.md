@@ -382,7 +382,7 @@ standard.
 
 The cryptographic layer is inspired by the [Noise](http://noiseprotocol.org), a self-described framework for building 
 cryptographic protocols. This specification picks from all the available options and modes within Noise to create a 
-subset appropriate for wrapping ICS serial protocols. This specification is self-contained: reading the Noise 
+subset appropriate for wrapping ICS serial protocols. This specification is self-contained. Reading the Noise 
 specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
@@ -390,15 +390,24 @@ Modifications to Noise include:
 * A single handshake pattern is used, therefore the concept of handshake patterns have been removed entirely.
 * Modifying Noise to support authentication only (handshake and session)
 * Message identifiers to make session renegotiation possible on serial networks
-* Initiator-specified cipher suites to allow masters to specify sets of cryptographic algorithms
+* Masters can specify sets of cryptographic algorithms
 * Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
 * Static public keys are always transmitted as part of a certificate
 
+## Terminology
+
+The key agreement handshake in SSP21 is a request-reply protocol, thus are two parties: an *initiator* and a 
+*responder*. Normally, the initiator is expected to be the SCADA master, and the responder is expected to be an
+outstation. It's perfectly possible, however, to flip this relationship in certain circumstances, and have the 
+outstation initiate the key agreement. To preserve the generality of the specification the terms initiator and responder
+are used in place of master and outstation.
+
 ## Algorithms
 
 SSP21 uses a number of cryptographic algorithms. They are described here within the context of the functionality they 
-provide. SSP21 initially specifies a smaller subset of algorithms available in Noise.
+provide. The initial SSP21 specification contains a minimal subset of algorithms, but the protocol is capable of 
+extension.
 
 The following notation will be used in algorithm pseudo-code:
 
@@ -412,7 +421,7 @@ and then increments it by 1.
 ### Diffie-Hellman (DH) functions
 
 SSP21 currently only supports Curve25519 for session key agreement. It is described in detail in [RFC 
-7748](https://www.ietf.org/rfc/rfc7748.txt). Curve448 will likely be supported in the future.
+7748](https://www.ietf.org/rfc/rfc7748.txt).
 
 | DH Curve       | length (*DHLEN*)       |
 | ---------------|------------------------|
@@ -420,9 +429,9 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 
 All DH curves will support the following two algorithms with the key lengths specified above.
 
-* GeneratePublicKey() - Generate a random private key and calculate the corresponding public key.
+* GenerateKeyPair() - Generate a random public/private key pair.
 
-* DH(key_pair, public_key) - Given a local key pair and remotely supplied public key, calculate a sequence of bytes of 
+* DH(private_key, public_key) - Given a local private key and remotely supplied public key, calculate bytes of 
 length _DHLEN_.
 
 <!--- RLC: Should perhaps mention, as in the RFC, to check for all zeroes. -->
@@ -891,7 +900,7 @@ message ReplyHandshakeError {
 After the successful completion of a key negotiation handshake, either party may transmit *Unconfirmed Session Data*
 to the other.
 
-The message uses the following subfields:
+The message uses the following sub-fields:
 
 ```
 
@@ -921,7 +930,8 @@ message UnconfirmedSessionData {
 
 * **metadata** - Metadata sub-struct covered by the authentication mechanism of the negotiated *Session Mode*. 
 
-* **payload** - Opaque payload field is interpreted according the negotiated *Session Mode*. Contains user data and an authentication tag.
+* **payload** - Opaque payload field is interpreted according the negotiated *Session Mode*. Contains user data and an 
+authentication tag.
 
 ## Key Agreement Handshake
 
@@ -937,13 +947,6 @@ It's not important to understand the specifics of Noise's notation. The importan
 handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
 pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
 cryptographic community.
- 
-### Terminology
- 
-There are two parties in a key agreement handshake: an *initiator* and a *responder*. Since the handshake is a 
-request-reply protocol, the initiator is expected to be the SCADA master, and the responder is expected to be an
-outstation. Since it's perfectly possible to flip this relationship in certain circumstances, and have the outstation
-initiate the key agreement we use the terms initiator and responder to preserve the generality of the specification.
  
 ### Procedure 
 
