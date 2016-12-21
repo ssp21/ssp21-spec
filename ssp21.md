@@ -737,7 +737,7 @@ enum CertificateMode {
 }
 ```
 
-* **PRESHARED_KEYS** - No certificates are exchanged. Parties use eachothers preshared public static DH keys to
+* **PRESHARED_KEYS** - No certificates are exchanged. Parties use each others preshared public static DH keys to
 authenticate. The *certificates* field in handshake messages will be left empty.
 
 ##### Handshake Error
@@ -786,7 +786,7 @@ enum HandshakeError {
 
 ##### Request Handshake Begin
 
-The master initiates the process of establishing a new session by sending the *Request Handshake Begin* message.
+The initiator starts the process of establishing a new session by sending the *Request Handshake Begin* message.
 
 ```
 message RequestHandshakeBegin {
@@ -831,7 +831,7 @@ the expected length of *ephemeral_public_key*.
 
 ##### Reply Handshake Begin
 
-The outstation replies to *Request Handshake Begin* by sending *Reply Handshake Begin*, unless an error occurs in which 
+The responder replies to *Request Handshake Begin* by sending *Reply Handshake Begin*, unless an error occurs in which 
 case it responds with *Reply Handshake Error*.
 
 ```
@@ -850,7 +850,7 @@ message ReplyHandshakeBegin {
 
 ##### Request Handshake Auth
 
-After receiving a valid *Reply Handshake Begin*, the master transmits a *Request Handshake Auth*.
+After receiving a valid *Reply Handshake Begin*, the initiator transmits a *Request Handshake Auth*.
 
 ```
 message RequestHandshakeAuth {
@@ -863,7 +863,7 @@ message RequestHandshakeAuth {
 
 ##### Reply Handshake Auth
 
-After receiving a valid and authenticated *Request Handshake Auth*, the outstation transmits a *Reply Handshake Auth*.
+After receiving a valid and authenticated *Request Handshake Auth*, the responder transmits a *Reply Handshake Auth*.
 
 ```
 message ReplyHandshakeAuth {
