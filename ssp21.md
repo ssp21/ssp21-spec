@@ -1084,10 +1084,10 @@ The responder could also indicate an error in *Request Hanshake Auth*:
 
 ### Initialization
 
-Upon complete of a successfully authenticated handshake, the communication session is initialized 
+Upon completion of a successfully authenticated handshake, the communication session is initialized 
 (or possibly reinitialized) with the following arguments:
 
-* **rx_sk** - A session key used to authenticate decrypt received messages.
+* **rx_sk** - A session key used to authenticate/decrypt received messages.
      
 * **tx_sk** - A session key used to sign/encrypt transmitted messages.
 

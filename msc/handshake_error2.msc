@@ -1,7 +1,7 @@
 # MSC for successful handshakes
 msc {
 
-  a [label="master"], b [label="outstation"];
+  a [label="initiator"], b [label="responder"];
 
    a=>b [ label = "Request Handshake Begin" ];
    b=>a [ label = "Reply Handshake Begin" ];
