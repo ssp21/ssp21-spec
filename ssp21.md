@@ -313,11 +313,8 @@ do the necessary encryption (which should normally be the case). -->
 
 # The Link Layer
 
-SSP21 specifies a two layer architecture for delivering secure data to the user layer.
-
-![SSP21 stack - The link and crypto layers are defined in this specification](svg/stack.png){#fig:stack}
-
-The link layer provides three features: 
+SSP21 specifies a two layer architecture for delivering secure data to the user layer. The link layer provides three
+features: 
 
 * **Framing** - A procedure is defined to identify a frame from a stream of bytes.
 * **Addressing** - The frame contains source and destination addresses for the transmitter and receiver.
@@ -384,9 +381,11 @@ by at least two researchers.
 The maximum HD=6 payload length of 4092 determines the bound for the maximum link layer frame size allowed by the 
 standard.
 
+![SSP21 stack - The link and crypto layers are defined in this specification](svg/stack.png){#fig:stack}
+
 # Cryptographic Layer
 
-The cryptographic layer is inspired by the [Noise](http://noiseprotocol.org), a self-described framework for building 
+The cryptographic layer is inspired by [Noise](http://noiseprotocol.org), a self-described framework for building 
 cryptographic protocols. This specification picks from all the available options and modes within Noise to create a 
 subset appropriate for wrapping ICS serial protocols. This specification is self-contained. Reading the Noise 
 specification is not required to understand or implement SSP21.
