@@ -96,12 +96,12 @@ establishment. Session messages shall include a timestamp in milliseconds since 
 the last possible moment when the packet should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency and 
-bandwidth of any particular network. As relative clock drift can occur, sessions may need to renegotiated more 
-frequently or the configurable validity window of session messages made larger[^ieee1711].
+bandwidth of any particular network. As relative clock drift can occur, sessions may need to be renegotiated more 
+frequently or the configurable validity window of session messages made larger.
 
-[^ieee1711:] This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units 
-of time. DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication 
-(aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid 
+This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time.
+DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication
+(aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid
 succession within a single session.
 
 ## Optional encryption
