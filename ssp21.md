@@ -178,7 +178,7 @@ never share the private key with another entity (human or machine), and can free
 purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by 
 requiring parties to only place their trust in a central signing authority. The identity of all other parties is then 
 established via certification from this authority. To understand the attractiveness of such an architecture, it useful 
-to compare it is to a few alternatives.
+to compare it to a few alternatives.
 
 ## Alternative: Shared secrets
 
