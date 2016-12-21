@@ -189,10 +189,10 @@ Exchange (PAKE) or session keys are encrypted before transmission using somethin
 
 In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each 
 outstation (N), and the master would possess a copy of all N keys for the outstations with which it communicates. The 
-primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several of 
+primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several
 reasons:
 
-* If multiple masters are needed for redundancy purposes, the keys must be shared with the master increasing the attack 
+* If multiple masters are needed for redundancy purposes, the keys must be shared with each master increasing the attack 
 surface and the risk of compromise, or the number of keys in the system must be doubled from N to 2N.
 
 * This type of an architecture does a poor job of limiting access to sensitive key data. To commission a new field 
