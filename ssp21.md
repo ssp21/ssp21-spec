@@ -984,7 +984,7 @@ additional metadata, and optional certificate data.
     * The responder sets the *chaining key* value equal to the hash of the entire received message:
         * *set ck = HASH(message)*
 
-    * The responder transmits a *Reply Handshake Begin* message containing its own ephemeral public DH key and    
+    * The responder transmits a *Reply Handshake Begin* message containing its own ephemeral public DH key and
 certificate data as requested by the initiators's requested certificate mode.
  
     * The responder mixes the entire transmitted message into the *chaining key*.
@@ -1034,7 +1034,7 @@ certificate data as requested by the initiators's requested certificate mode.
     * The responder performs the final session key derivation by expanding the chaining key:
         * set (rx_sk, tx_sk) = HKDF(ck, [])
         
-    * The responder initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce).        
+    * The responder initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce).
     
 5.  The initiator receives the *Reply Handshake Auth*, and verifies the HMAC.
     
@@ -1049,7 +1049,7 @@ certificate data as requested by the initiators's requested certificate mode.
     
     * The initiator initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce). 
     
-**Note:** See the section on session initialization for definitions of read, write, and verify_nonce functions.     
+**Note:** See the section on session initialization for definitions of read, write, and verify_nonce functions.
         
 ### Security Properties
 
@@ -1235,7 +1235,7 @@ In applications that do not require a TTL, or where no accurate clock is availab
 disable support for the TTL.
 
 * In the receive direction, implementations may be configurable to ignore the received TTL entirely.
-* In the transmit direction, implementations may be configurable to set the TTL to the maximum value of 2^32 - 1.   
+* In the transmit direction, implementations may be configurable to set the TTL to the maximum value of 2^32 - 1.
 
 ### Session Modes
 
