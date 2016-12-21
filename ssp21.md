@@ -683,13 +683,14 @@ enum NonceMode {
 }
 ```
 
-* **INCREMENT_LAST_RX** - The receiver of a session message will verify that the each received nonce is strictly 
+* **INCREMENT_LAST_RX** - The receiver of a session message will verify that each received nonce is strictly 
 equal to the last valid nonce plus one. This is the default mode and should always be used in session oriented 
 environments like TCP that provide stream integrity and ordering guarantees.
 
 * **GREATER_THAN_LAST_RX** - The receiver of a session message will verify that each received is greater the last 
 valid nonce. This mode is intended to be used in session-less environments like serial or UDP and allows for loss 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
+The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
 
 ##### DH Mode
 
