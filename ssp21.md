@@ -261,7 +261,7 @@ authority would maintain a database of a few items:
 
 * An editable set of field assets that will require enrollment.
 * A means of authenticating users and roles/permissions. This information is likely to come from an external identity
-management systeem.
+management system.
 
 The database will already be configured by the system administrator with all of the authorized metadata for each 
 certificate in question. The only piece of information the person generating the outstation certificate needs to 
