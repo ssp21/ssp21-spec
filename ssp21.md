@@ -1168,7 +1168,7 @@ The following procedure is followed to transmit an *Unconfirmed Session Data* me
 The following procedure is followed to validate a received *Unconfirmed Session Data* message:
 
 * Verify the authenticity of the message using the *read* function with which the session was initialized. Upon
-successfully authentication, the cleartext payload is returned.
+successful authentication, the cleartext payload is returned.
 
 * Check that *valid_until_ms <= NOW()*.
 
@@ -1265,12 +1265,6 @@ required between these two values, as *ad* is always a fixed length in SSP21.
 The corresponding *read* function splits the payload into cleartext and MAC, and then calculates the expected 
 value of the MAC using the same arguments as the *write* function. It then uses a constant-time comparison to 
 authenticate the MAC before returning the cleartext.
-
-# Definitions and Acronyms
-
-
-
-
 
 <!--
 ### State Transition Diagrams
