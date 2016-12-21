@@ -632,18 +632,17 @@ struct ByteSequences {
 Suppose that we wish to encode the following sequence of byte sequences in the values field above:
 
 ```
-{ {0x07}, {0x08, 0x09}, {0x0A, 0x0B, 0x0C} }
+{ {0x07}, {0x08, 0x09}, {0x0A} }
 ```
 
 The serialized ByteSequences message would be encoded as:
 
 ```
-[**0x03**, **0x00, 0x01**, 0x07, **0x00, 0x02**, 0x08, 0x09, **0x00, 0x03**, 0x0A, 0x0B, 0x0C]
+[0x03, 0x00, 0x01, 0x07, 0x00, 0x02, 0x08, 0x09, 0x00, 0x01, 0x0A]
 ```
 
-The first highlighted value of `0x03` refers to the fact that there are 3 byte sequences in the outer
-sequence. The subsequent highlighted values (`[0x00, 0x01], [0x00, 0x02], [0x00, 0x01]`) refer to the number of bytes 
-that follow in each sub-sequence.
+The first value of `0x03` indicates that there are 3 byte sequences in the outer sequence. Sub-sequences
+are prefixed by their lengths (1, 2, and 1 respectively) encoded as unsigned big endian integers.
 
 Despite the generality of the sequence definition over any type, in practice it is only used to define **Seq*N*[U8]** 
 and **Seq*N*[Seq*N*[U8]]**.
