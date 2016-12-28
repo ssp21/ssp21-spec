@@ -839,8 +839,10 @@ message RequestHandshakeBegin {
    function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
    version                  : U16
    nonce_mode               : enum::NonceMode
-   handshake_dh_mode        : enum::DHMode
-   handshake_hash_mode      : enum::HashMode
+   handshake_dh             : enum::DHMode
+   handshake_hash           : enum::HandshakeHash
+   handshake_kdf            : enum::HandshakeKDF
+   handshake_mac            : enum::HandshakeMAC
    session_mode             : enum::SessionMode
    certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
@@ -859,14 +861,18 @@ impact the version field ---->
 
 * **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
  security properties.
- 
-* **handshake_dh_mode** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
+
+* **handshake_dh** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
 the expected length of *ephemeral_public_key*.
 
-* **handshake_hash_mode** - Specifies what hash algorithm is used to prevent tampering of handshake data.
+* **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
+
+* **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
+
+* **handshake_mac** - Specifies which MAC algorithm is used to authenticate the handshake.
   
 * **session_mode** - Specifies the full set of algorithms used to secure the session.
-   
+
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall be empty.
 
