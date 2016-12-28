@@ -677,7 +677,7 @@ enum Function {
     REQUEST_HANDSHAKE_AUTH   : 2
     REPLY_HANDSHAKE_AUTH     : 3
     REPLY_HANDSHAKE_ERROR    : 4
-    UNCONFIRMED_SESSION_DATA : 5
+    SESSION_DATA             : 5
 }
 ```
 
@@ -713,16 +713,43 @@ enum DHMode {
 }
 ```
 
-##### Hash Mode
+##### Handshake Hash
 
-The *Hash Mode* enumeration specifies which hash algorithm will be used during the handshake process to prevent
+The *Handshake Hash* enumeration specifies which hash algorithm will be used during the handshake process to prevent
 tampering.
 
 ```
-enum HashMode {
+enum HandshakeHash {
     SHA256 : 0
 }
 ```
+
+* **SHA256** - Use SHA256
+
+##### Handshake KDF
+
+The *Handshake KDF* enumeration specifies which KDF is used to derive session keys and intermediate keys.
+
+```
+enum HandshakeKDF {
+    HKDF_SHA256 : 0
+}
+```
+
+* **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
+
+##### Handshake MAC
+
+The *Handshake MAC* enumeration specifies which MAC algorithm is used to authenticate the handshake
+
+```
+enum HandshakeMAC {
+    HMAC_SHA256 : 0
+}
+```
+
+* **HMAC_SHA256** - Use HMAC-SHA256
+
 
 ##### Session Mode
 
@@ -734,7 +761,7 @@ enum SessionMode {
 }
 ```
 
-* **HMAC-SHA256-16** - A MAC session mode using HMAC-SHA256 truncated to the leftmost 16 bytes.
+* **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
 ##### Certificate Mode
 
