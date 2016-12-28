@@ -786,13 +786,16 @@ enum HandshakeError {
     BAD_MESSAGE_FORMAT                : 0
     UNSUPPORTED_VERSION               : 1
     UNSUPPORTED_DH_MODE               : 2
-    UNSUPPORTED_HASH_MODE             : 3
-    UNSUPPORTED_SESSION_MODE          : 4
-    UNSUPPORTED_CERTIFICATE_MODE      : 6
-    BAD_CERTIFICATE_FORMAT            : 7
-    UNSUPPORTED_CERTIFICATE_FEATURE   : 8
-    AUTHENTICATION_ERROR              : 9
-    NO_PRIOR_HANDSHAKE_BEGIN          : 10
+    UNSUPPORTED_HANDSHAKE_HASH        : 3
+    UNSUPPORTED_HANDSHAKE_KDF         : 4
+    UNSUPPORTED_HANDSHAKE_MAC         : 5
+    UNSUPPORTED_SESSION_MODE          : 6
+    UNSUPPORTED_NONCE_MODE            : 7
+    UNSUPPORTED_CERTIFICATE_MODE      : 8
+    BAD_CERTIFICATE_FORMAT            : 9
+    UNSUPPORTED_CERTIFICATE_FEATURE   : 10
+    AUTHENTICATION_ERROR              : 11
+    NO_PRIOR_HANDSHAKE_BEGIN          : 12
     INTERNAL                          : 255
 }
 ```
@@ -805,9 +808,15 @@ enum HandshakeError {
 
 * **UNSUPPORTED_DH_MODE** - The requested Diffie-Hellman mode is not supported.
  
-* **UNSUPPORTED_HASH_MODE** - The requested hash algorithm is not supported.
+* **UNSUPPORTED_HANDSHAKE_HASH** - The requested hash algorithm is not supported.
+
+* **UNSUPPORTED_HANDSHAKE_KDF** - The requested KDF algorithm is not supported.
+
+* **UNSUPPORTED_HANDSHAKE_MAC** - The requested MAC algorithm is not supported.
  
 * **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
+
+* **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
  
 * **UNSUPPORTED_CERTIFICATE_MODE** - The requested certificate mode is not supported.
  
