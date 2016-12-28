@@ -832,18 +832,39 @@ enum HandshakeError {
 
 ##### Request Handshake Begin
 
-The initiator starts the process of establishing a new session by sending the *Request Handshake Begin* message.
+The initiator starts the process of establishing a new session by sending the *Request Handshake Begin* message. This
+message contains a specification of all of the abstract algorithms to be used during the handshake and the session.
 
 ```
-message RequestHandshakeBegin {
-   function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
-   version                  : U16
+struct CryptoSpec {
    nonce_mode               : enum::NonceMode
    handshake_dh             : enum::DHMode
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
    handshake_mac            : enum::HandshakeMAC
    session_mode             : enum::SessionMode
+}
+```
+
+* **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
+ security properties.
+
+* **handshake_dh** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
+the expected length of *ephemeral_public_key*.
+
+* **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
+
+* **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
+
+* **handshake_mac** - Specifies which MAC algorithm is used to authenticate the handshake.
+  
+* **session_mode** - Specifies the full set of algorithms used to secure the session.
+
+```
+message RequestHandshakeBegin {
+   function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
+   version                  : U16
+   spec                     : struct::CryptoSpec
    certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
    certificates             : Seq8[Seq16[U8]]
@@ -859,19 +880,7 @@ indicating it - e.g. a libtool-like versioning scheme -->
 <!--- JAC: Yes, definitely. Will look into this. Will also make it explicit that adding new cipher suite modes won't
 impact the version field ---->
 
-* **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
- security properties.
-
-* **handshake_dh** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
-the expected length of *ephemeral_public_key*.
-
-* **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
-
-* **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
-
-* **handshake_mac** - Specifies which MAC algorithm is used to authenticate the handshake.
-  
-* **session_mode** - Specifies the full set of algorithms used to secure the session.
+* **spec** - Struct that defines the various abstract algorithms to be used.
 
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall be empty.
@@ -911,7 +920,7 @@ message RequestHandshakeAuth {
 }
 ```
 
-* **mac** - An untruncated HMAC tag calculated using the handshake hash function.
+* **mac** - A MAC calculated using the specified handshake MAC algorithm.
 
 ##### Reply Handshake Auth
 
@@ -924,7 +933,7 @@ message ReplyHandshakeAuth {
 }
 ```
 
-* **mac** - An untruncated HMAC tag calculated using the handshake hash function.
+* **mac** - A MAC calculated using the specified handshake MAC algorithm.
 
 ##### Reply Handshake Error
 
@@ -970,14 +979,16 @@ negotiation.
 message UnconfirmedSessionData {
    function : enum::Function::UNCONFIRMED_SESSION_DATA
    metadata : struct::AuthMetadata
-   payload : SEQ16[U8]
+   user_data : SEQ16[U8]
+   auth_tag : SEQ8[U8]
 }
 ```
 
 * **metadata** - Metadata sub-struct covered by the authentication mechanism of the negotiated *Session Mode*. 
 
-* **payload** - Opaque payload field is interpreted according the negotiated *Session Mode*. Contains user data and an 
-authentication tag.
+* **user_data** - A blob of (possibly encrypted) user data.
+
+* **auth_tag** - A tag used to authenticate the message.
 
 ## Key Agreement Handshake
 
@@ -1154,19 +1165,19 @@ message's payload.
         * Signals an error if input or output buffers do not meet required sizes.
     * arguments:
         * **key** - The session key used to perform the cryptographic operations.
-        * **ad** - Additional data to be covered by the payload's authentication tag.  
-        * **payload** - Payload bytes from the received message.
+        * **message** - A parsed *SessionData* message.
 
 * **write** - A function corresponding to the specified *session_mode* used to prepare a transmitted 
 message's payload.
     * returns:
-        * The payload to be transmitted with the outgoing message.
+        * The *user_data* to be transmitted with the outgoing message
+        * the *auth_tag* to be transmitted with the outgoing message
     * errors:
         * Signals an error if input or output buffers do not meet required sizes.
     * arguments:
         * **key** - The session key used to perform the cryptographic operations.
         * **ad** - Additional data to be covered by the payload's authentication tag.
-        * **cleartext** - Cleartext bytes to be placed into the payload.
+        * **user_data** - Cleartext user data bytes to be placed that might be encrypted.
   
 * **verify_nonce** - A function used to verify the message nonce.
     * returns: 
@@ -1306,17 +1317,23 @@ MAC session modes are based on some kind of MAC function, like a truncated HMAC.
 be specified generically in terms of the MAC function.
    
 ```
-write (key, ad, cleartext) -> payload {
-  return cleartext | mac(key, ad || cleartext)
+write (key, ad, cleartext) -> (user_data, auth_tag) {
+  set auth_tag = mac(key, ad || len(cleartext) || cleartext)
+  return (cleartext, auth_tag)
 }
 ```
 
-The MAC is calculated over the concatenation of the additional data and the cleartext message. No domain separation is
-required between these two values, as *ad* is always a fixed length in SSP21.
+The MAC is calculated over the concatenation of the following parameters:
 
-The corresponding *read* function splits the payload into cleartext and MAC, and then calculates the expected 
-value of the MAC using the same arguments as the *write* function. It then uses a constant-time comparison to 
-authenticate the MAC before returning the cleartext.
+* The serialized form of the additional data (ad).
+* The length of the cleartext as an unsigned big endian 16-bit integer
+* The cleartext itself
+
+**Note: * Incorporating the length of the cleartext provides domain separation between *ad* and *cleartext*. This
+futures proofs the specification in the event that *ad* is ever becomes a variable length structure.
+
+The corresponding *read* function calculates the same MAC, verifies it using a constant-time comparison, and returns
+the user_data field of the message as the cleartext.
 
 <!--
 ### State Transition Diagrams
