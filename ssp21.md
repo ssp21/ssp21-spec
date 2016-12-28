@@ -461,19 +461,29 @@ construct, and the corresponding HMAC function will produce a tag with the same 
 
 HMAC(key, message) - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
 
-### HKDF
+### Key Derivation Function (KDF)
 
-SSP21 uses the same key derivation function defined in Noise, however, it is invoked with slightly different
-parameters as described in the [section][Key Negotiation Handshake] on key negotiation. 
+SSP21 has extensible support for an abstract KDF used during the handshake process.
+
+All KDFs take *salt* and *input_key_material* parameters and return two keys, each 32-bytes in length.
+
+```
+  KDF(salt, input_key_material) -> (key1, key2)
+```
+
+#### HKDF
+
+The default KDF is HKDF defined in [RFC 5869](https://www.ietf.org/rfc/rfc5869.txt).
 
 * *HKDF(salt, input_key_material)*: Calculates a pair of session keys based on input key material. 
     * Sets *temp_key* = *HMAC(salt, input_key_material)*.
     * Sets *key1* = *HMAC(temp_key, [0x01])*.
     * Sets *key2* = *HMAC(temp_key, key1 || [0x02])*.
     * Returns the pair of keys *(key1, key2)*.
+
+**Note: ** If the output of the HMAC exceeds 32 bytes, the keys are truncated to left-most 32 bytes.
     
-Note: This function is the same function as defined in [RFC 5869](https://www.ietf.org/rfc/rfc5869.txt), but with the
-following simplifications:
+The pseudo code here offers the following simplifications from the generic construction in the RFC:
  
 * Specialized to only two output keys
 * The optional info parameter is a zero byte sequence
@@ -993,7 +1003,7 @@ certificate data as requested by the initiators's requested certificate mode.
         * *set dh1* = *DH(re_vk, ie_pk)*
         * *set dh2* = *DH(re_vk, is_pk)*
         * *set dh3* = *DH(rs_vk, ie_pk)*
-        * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)* 
+        * *set (ck, ak) = KDF(ck, dh1 || dh2 || dh3)* 
  
 3. The initiator receives the *Reply Handshake Begin* message.
 
@@ -1006,7 +1016,7 @@ certificate data as requested by the initiators's requested certificate mode.
         * *set dh1* = *DH(ie_vk, re_pk)*
         * *set dh2* = *DH(ie_vk, rs_pk)*
         * *set dh3* = *DH(is_vk, re_pk)*
-        * *set (ck, ak) = HKDF(ck, dh1 || dh2 || dh3)*
+        * *set (ck, ak) = KDF(ck, dh1 || dh2 || dh3)*
         
     * The initiator transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
 
@@ -1031,7 +1041,7 @@ certificate data as requested by the initiators's requested certificate mode.
         * set ck = HASH(ck || message)
         
     * The responder performs the final session key derivation by expanding the chaining key:
-        * set (rx_sk, tx_sk) = HKDF(ck, [])
+        * set (rx_sk, tx_sk) = KDF(ck, [])
         
     * The responder initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce).
     
@@ -1044,7 +1054,7 @@ certificate data as requested by the initiators's requested certificate mode.
         * set *time_session_init = time_tx + (NOW() - time_tx)/2*
     
     * The initiator performs the final session key derivation by expanding the chaining key:
-        * set *(tx_sk, rx_sk) = HKDF(ck, [])*
+        * set *(tx_sk, rx_sk) = KDF(ck, [])*
     
     * The initiator initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce). 
     
