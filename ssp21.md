@@ -950,10 +950,9 @@ message ReplyHandshakeError {
 
 * **error** - An error code that enumerates possible error conditions that can occur during the handshake.
 
-##### Unconfirmed Session Data
+##### Session Data
 
-After the successful completion of a key negotiation handshake, either party may transmit *Unconfirmed Session Data*
-to the other.
+After the successful completion of a key negotiation handshake, either party may transmit *Session Data* messages.
 
 The message uses the following sub-fields:
 
@@ -976,8 +975,8 @@ negotiation.
 * **flags** - First and final bits used for message reassembly.
 
 ```
-message UnconfirmedSessionData {
-   function : enum::Function::UNCONFIRMED_SESSION_DATA
+message SessionData {
+   function : enum::Function::SESSION_DATA
    metadata : struct::AuthMetadata
    user_data : SEQ16[U8]
    auth_tag : SEQ8[U8]
@@ -1209,9 +1208,9 @@ Sessions will only become invalidated after one of the following conditions occu
 Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
 other condition other than the ones listed above invalidate an existing session.
 
-### Sending *Unconfirmed Session Data*
+### Sending *Session Data*
 
-The following procedure is followed to transmit an *Unconfirmed Session Data* message:
+The following procedure is followed to transmit a *Session Data* message:
   
 * Ensure that the transmit nonce is not equal to the maximum value.
   
@@ -1226,9 +1225,9 @@ The following procedure is followed to transmit an *Unconfirmed Session Data* me
 **Note:** See the TTL session for advice on how to set appropriate TTLs.
 
   
-### Validating *Unconfirmed Session Data*
+### Validating *Session Data*
 
-The following procedure is followed to validate a received *Unconfirmed Session Data* message:
+The following procedure is followed to validate a received *Session Data* message:
 
 * Verify the authenticity of the message using the *read* function with which the session was initialized. Upon
 successful authentication, the cleartext payload is returned.
