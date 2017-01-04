@@ -676,13 +676,13 @@ struct SomeStruct {
 
 Parsers should always enforce constraints internally and signal errors whenever a constraint has been violated.
 
-The table below details all of the defined and the field types to which they apply.
+The table defines the allowed constraints and the field types to which they apply.
 
-| Field Type             | Constraint ID   | Constraint value                            |
-| -----------------------|-----------------|---------------------------------------------|
-| Seq8[U8] and Seq16[U8] | min             | minimum number of elements in the sequence  |
-| Seq8[U8] and Seq16[U8] | max             | maximum number of elements in the sequence  |
-| Seq8[U8] and Seq16[U8] | count           | required number of elements in the sequence |
+| Field Type(s)        | Constraint ID | Value semantics             |
+| ---------------------|---------------|-----------------------------|
+| Seq8[U8] / Seq16[U8] | min           | minimum number of elements  |
+| Seq8[U8] / Seq16[U8] | max           | maximum number of elements  |
+| Seq8[U8] / Seq16[U8] | count         | required number of elements |
 
 
 ### Definitions
