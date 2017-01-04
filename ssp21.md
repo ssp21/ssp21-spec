@@ -657,6 +657,33 @@ are prefixed by their lengths (1, 2, and 1 respectively) encoded as unsigned big
 Despite the generality of the sequence definition over any type, in practice it is only used to define **Seq*N*[U8]** 
 and **Seq*N*[Seq*N*[U8]]**.
 
+#### Constraints
+
+Certain field types may have optional constraints placed on their contents. Constraints on a field are expressed
+with the following notation:
+
+<field-name> : <field-type>(<id-1> = <value-1>, ..., <id-N> = <value-N>)
+
+Any field without the trailing constraint syntax (...) is implicitly defined to have no constraints.
+
+For example, a sequence may have a *count* constraint that defines the required number of elements for the sequence.
+
+```
+struct SomeStruct {
+  id : Seq8[U8](count = 16)
+}
+```
+
+Parsers should always enforce constraints internally and signal errors whenever a constraint has been violated.
+
+The table below details all of the defined and the field types to which they apply.
+
+| Field Type             | Constraint ID   | Constraint value                            |
+| -----------------------|-----------------|---------------------------------------------|
+| Seq8[U8] and Seq16[U8] | min             | minimum number of elements in the sequence  |
+| Seq8[U8] and Seq16[U8] | max             | maximum number of elements in the sequence  |
+| Seq8[U8] and Seq16[U8] | count           | required number of elements in the sequence |
+
 
 ### Definitions
 
@@ -867,7 +894,7 @@ message RequestHandshakeBegin {
    spec                     : struct::CryptoSpec
    certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
-   certificates             : Seq8[Seq16[U8]]
+   certificates             : Seq8[Seq16[U8]](max = 6)
 }
 ```
 
@@ -899,7 +926,7 @@ case it responds with *Reply Handshake Error*.
 message ReplyHandshakeBegin {
    function : enum::Function::REPLY_HANDSHAKE_BEGIN
    ephemeral_public_key: Seq8[U8]
-   certificates: Seq8[Seq16[U8]]
+   certificates: Seq8[Seq16[U8]](max = 6)
 }
 ```
 
