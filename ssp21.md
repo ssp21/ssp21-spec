@@ -887,11 +887,24 @@ the expected length of *ephemeral_public_key*.
   
 * **session_mode** - Specifies the full set of algorithms used to secure the session.
 
+The message also includes some constraints on the session to be established.
+
+```
+struct SessionConstraints {
+   max_nonce : U16
+   max_session_time : U32
+}
+```
+
+* **max_nonce** - The maximum allowed value of either the transmit or receive nonce.
+* **max_session_time** - The maximum allowed session time after which messages are no longer considered valid.
+
 ```
 message RequestHandshakeBegin {
    function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
    version                  : U16
    spec                     : struct::CryptoSpec
+   constraints              : struct::Constraints
    certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
    certificates             : Seq8[Seq16[U8]](max = 6)
