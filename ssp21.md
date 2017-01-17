@@ -920,7 +920,9 @@ indicating it - e.g. a libtool-like versioning scheme -->
 <!--- JAC: Yes, definitely. Will look into this. Will also make it explicit that adding new cipher suite modes won't
 impact the version field ---->
 
-* **spec** - Struct that defines the various abstract algorithms to be used.
+* **spec** - Struct that specifies the various abstract algorithms to be used.
+
+* **constraints** - Struct that specifies contraints on the session.
 
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall be empty.
