@@ -148,7 +148,7 @@ $if(title)$
 \begin{titlepage}
     \centering
     \maketitle
-    \includegraphics[width=6cm,keepaspectratio]{svg/tlp-green.png} % also works with logo.pdf    
+    \includegraphics[width=6cm,keepaspectratio]{svg/tlp-white.png} % also works with logo.pdf    
     \thispagestyle{empty}
 \end{titlepage}
 $endif$

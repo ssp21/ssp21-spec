@@ -1,7 +1,7 @@
 ---
 title:      'SSP21'
 author:     'Adam Crain (jadamcrain@automatak.com)'
-date:       'pre-release'
+date:       '1/18/17'
 ---
 
 # Introduction
