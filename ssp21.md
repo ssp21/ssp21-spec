@@ -1108,8 +1108,8 @@ certificate data as requested by the initiators's requested certificate mode.
     
     * The initiator then derives a new *chaining key* and the *authentication key*:
         * *set dh1* = *DH(ie_vk, re_pk)*
-        * *set dh2* = *DH(ie_vk, rs_pk)*
-        * *set dh3* = *DH(is_vk, re_pk)*
+        * *set dh2* = *DH(is_vk, re_pk)*
+        * *set dh3* = *DH(ie_vk, rs_pk)*
         * *set (ck, ak) = KDF(ck, dh1 || dh2 || dh3)*
         
     * The initiator transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
