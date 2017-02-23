@@ -1371,7 +1371,7 @@ The MAC is calculated over the concatenation of the following parameters:
 * The length of the cleartext as an unsigned big endian 16-bit integer
 * The cleartext itself
 
-**Note: * Incorporating the length of the cleartext provides domain separation between *ad* and *cleartext*. This
+**Note:** Incorporating the length of the cleartext provides domain separation between *ad* and *cleartext*. This
 futures proofs the specification in the event that *ad* is ever becomes a variable length structure.
 
 The corresponding *read* function calculates the same MAC, verifies it using a constant-time comparison, and returns
