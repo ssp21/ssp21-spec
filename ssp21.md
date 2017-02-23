@@ -18,7 +18,7 @@ The following requirements guided the design of the specification and the select
 
 ## Basis of trust - "Utility PKI"
 
-All trust in the system are based on a Public Key Infrastructure (PKI) wholly controlled by the asset owner. A more 
+All trust in the system is based on a Public Key Infrastructure (PKI) wholly controlled by the asset owner. A more 
 efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized to reduce bandwidth 
 consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use 
 primitives substantially more efficient than RSA encryption.
@@ -28,9 +28,10 @@ primitives substantially more efficient than RSA encryption.
 Master certificates (certificates that identify masters to outstations), will support a fast expiration scheme in
 addition to  explicit revocation. This works well in an operational environment where the utility has a reliable and 
 isolated IP network between an online authority and multiple master stations. An intermediate authority private key can
-be used to periodically renew master certificates. Using CRLs with outstations may be undesirable as outstations 
-may not be able to reach them on a serial channel, and masters would have to push revocation notifications down to each
-endpoint and ensure that they arrive. Outstations would then have to persist these CRLs in non-volatile memory.
+be used to periodically renew master certificates. Using certificate revocation lists (CRLs) with outstations may be 
+undesirable as outstations may not be able to reach them on a serial channel, and masters would have to push revocation
+notifications down to each endpoint and ensure that they arrive. Outstations would then have to persist these CRLs in
+non-volatile memory.
 
 This scheme requires that outstations have access to an out-of-band time synchronization mechanism such as GPS, local 
 NTP via GPS in a substation, or WWVB. Alternatively, over TCP networks, outstations could check an online CRL.
@@ -106,7 +107,7 @@ succession within a single session.
 
 ## Optional encryption
 
-The secure operation of SCADA system does not require confidentiality of session traffic under all, or even most, 
+The secure operation of SCADA systems does not require confidentiality of session traffic under all, or even most, 
 circumstances. Reasons to prefer unencrypted sessions include the ability to inspect traffic with IDS/IPS and denying a 
 potentially opaque tunnel usable by an attacker.
 
@@ -369,7 +370,7 @@ The polynomials provide the following maximum payload lengths (in bytes) at vari
 | 8    |    0    |    11      |     34     |     16    |
 | 7    |    0    |    21      |     34     |     16    |
 | 6    |    16   |    33      |     4092   |     4092  |
-| 5    |    16   |    371     |     4092   |     4902  |
+| 5    |    16   |    371     |     4092   |     4092  |
 | 4    |    16   |    11450   |     8187   |     8188  |
 
 Four byte polynomials can provide significantly better error detection across longer payload lengths. The Koopman
