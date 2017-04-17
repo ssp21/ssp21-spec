@@ -1057,7 +1057,9 @@ configured response timeout for initiator.
 
 All initiator implementations shall implement a response timeout to the handshake message(s). This timeout shall default
 to 2 seconds. If a timeout occurs before receiving a valid response, the current handshake attempt shall be aborted.
-This ensures that attackers cannot skew the common time base by more than this timeout parameter.
+This ensures that attackers cannot skew the common time base by more than this timeout parameter. Implementations should
+enforce a relatively low maximum value for this parameter to ensure that users do not accidently deploy systems vulnerable
+to large session time manipulations
 
 ### Procedure 
 
