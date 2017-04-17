@@ -1046,7 +1046,19 @@ It's not important to understand the specifics of Noise's notation. The importan
 handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
 pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
 cryptographic community.
- 
+
+### Timing Considerations
+
+In the procedure that follows, the initiator and responder establish a common relative time base so that future session
+messages can be stamped with a time-to-live (TTL) value since the beginning of the session. This TTL value allows either
+side of the connection to detect delays induced by a man-in-the-middle. This TTL is has its limitations. An attacker with
+the ability to delay the handshake messages, can manipulate the common time base calculated by the initiator within the
+configured response timeout for initiator.
+
+All initiator implementations shall implement a response timeout to the handshake message(s). This timeout shall default
+to 2 seconds. If a timeout occurs before receiving a valid response, the current handshake attempt shall be aborted.
+This ensures that attackers cannot skew the common time base by more than this timeout parameter.
+
 ### Procedure 
 
 The following steps are performed during a successful handshake. The various errors that can occur and early handshake
