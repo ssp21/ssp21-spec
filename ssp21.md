@@ -1232,7 +1232,7 @@ message's payload.
         * Signals an error if input or output buffers do not meet required sizes.
     * arguments:
         * **key** - The session key used to perform the cryptographic operations.
-        * **ad** - Additional data to be covered by the payload's authentication tag.
+        * **ad** - Additional data covered by the authentication tag (serialized form of the *SessionData::AuthMetadata* structure).
         * **user_data** - Cleartext user data bytes to be placed that might be encrypted.
   
 * **verify_nonce** - A function used to verify the message nonce.
