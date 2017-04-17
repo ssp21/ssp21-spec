@@ -88,22 +88,17 @@ like DNP3 automatically handle retries at a higher level. The protocol will supp
 enforces packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial
 or UDP. 
 
-## Session message “time of validity”
+## Session message time-to-live (TTL)
 
 Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could 
 occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. 
-To eliminate this mode of attack, both parties record their own relative time-base in milliseconds during session 
-establishment. Session messages shall include a timestamp in milliseconds since this common time point that indicates
-the last possible moment when the packet should be accepted.
+To eliminate this mode of attack, both parties record their own relative time-base during session establishment.
+Session messages then include a timestamp in milliseconds since this common time point that indicates the last possible
+moment when the packet should be accepted.
 
-Implementations will have to make these timing parameters configurable so that they can be tuned for the latency and 
-bandwidth of any particular network. As relative clock drift can occur, sessions may need to be renegotiated more 
-frequently or the configurable validity window of session messages made larger.
-
-This mode of operation is similar to IEEE 1711-2010, but without the complexity of having multiple units of time.
-DNP3 (IEEE 1815-2012) Secure Authentication is an example of a protocol with a one pass authentication
-(aggressive mode) that lacks this protection. Attackers can hold back multiple messages and then replay them in rapid
-succession within a single session.
+Implementations will have to make these timing parameters configurable so that they can be tuned for the latency of
+particular networks. As relative clock drift can occur, sessions may need to be renegotiated more frequently or the
+configurable validity window of session messages increased appropriately.
 
 ## Optional encryption
 
