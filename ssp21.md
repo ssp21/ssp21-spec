@@ -334,7 +334,7 @@ completely different organizational response than occasional randomly corrupted 
 ```
 
 The frames consist of the following fields. All multi-byte integer fields (including the CRCs) are encoded in little 
-endian format.
+little format.
 
 **destination** (2-bytes) - The destination field encodes the address of the intended recipient of the frame. Devices 
 shall always set this field to the address of the intended recipient when transmitting. When receiving a frame, devices 
