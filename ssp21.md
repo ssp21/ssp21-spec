@@ -1404,7 +1404,7 @@ in x.509 related to domains/web is not pertinent here.
 * Extensible in terms of algorithms - The format shall allow for migration to stronger digital signature algorithms (DSA) in the event of 
 deprecation or break of any particular algorithm. 
 
-* Extensible in terms of metadata - It will be desirable in certain applications to sign and include additional metadata in the certificate
+* Extensible in terms of metadata - It is desirable in certain applications to sign and include additional metadata in the certificate
 beyond what was defined in the original specification. An example of such an extension would be role based access control (RBAC) permissions for a
 specific application protocol. The certificate format shall provide the ability to define exensions and define the required behavior when undefined
 extensions are encountered.
