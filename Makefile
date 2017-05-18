@@ -46,7 +46,7 @@ msc/%.png: msc/%.msc Makefile
 	mscgen -T png -i $< -o $@
 
 svg/%.png: svg/%.svg Makefile
-	convert $< $@
+	inkscape -z -e $@ $< 
 
 
 

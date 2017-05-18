@@ -1428,7 +1428,7 @@ message CertificateEnvelope {
 	issuer_id        	    :      Seq8[U16](count = 16)
     algorithm        		:      enum::SIGNATURE_ALGORITHM
 	signature     	 		:      Seq8[U8]
-	certificate_body 	    :      Seq8[U16]
+	certificate_body 	    :      Seq16[U8]
 }
 ```
 
@@ -1480,17 +1480,18 @@ message CertificateBody {
     serial_number          :      U32
     valid_after            :      U64
 	valid_before           :      U64
-    certificate_type       :      enum::CertificateType
+    signing_level          :      U8(max = 6)
 	public_key_type		   :      enum::PUBLIC_KEY_TYPE
 	public_key     	       :      Seq8[U8]
-	extensions             :      Seq8[Seq16[U8]]
+	extensions             :      Seq8[Seq16[U8]](limit = 5)
 }
 ```
 
 * **serial_number** - An incrementing serial number assigned by the issuer
 * **valid_after**  - Number of milliseconds since Unix epoch, before which, the certificate shall be considered invalid.
 * **valid_before** - Number of milliseconds since Unix epoch, after which, the certificate shall be considered invalid.
-* **certificate_type** - The type of certificate which dictates what it is allowed to do.
+* **signing_level** - A signing level of zero indicates that the certificate is for an endpoint. Otherwise the certificate is for
+an authority which may produce any certificate type with *signing_level* less than its own.
 * **public_key_type** - The type of the public key that follows.
 * **public_key** - The public key value defined by the *public_key_type*
 * **extensions** - An optional sequence of extensions that define additional required behaviors like application protocol specific whitelists.
@@ -1500,19 +1501,41 @@ The following certificate types are defined:
 ```
 enum CertificateType {
   authority         : 0
-  endpoint_signing  : 1
-  endpoint          : 2
+  endpoint          : 1
 }
 ```
 
-* **authority** - The holder of the certificate may produce other certificates with any permission.
-* **endpoint_signing** - The holder of the certificate may produce other certificates with the *endpoint* permission.
+* **authority** - The holder of the certificate may produce endpoint certificates or authority certificates
+with a *signing_level* less than its own. They may not directly participate as endpoints.
 * **endpoint** - The holder of the certificate may act as an endpoint within the system, but may not sign other certificates.
 
+#### Extensions
 
+Certificate extensions have their own envelope that shall be readable by all implementations.
 
+```
+message ExtensionEnvelope {
+  identifier      : U32
+  extension_data  : Seq16[U8]
+}
+```
 
+The identifier for each extension shall be unique, and all extensions shall at a minimum be registered
+and approved for completeness and suitability with the body maintaining the SSP21 standard. An unknown
+extension shall always fail verification.
 
+### Certificate/Chain Validation
 
+An endpoint certificate may be presented during the SSP21 handshake by itself or as part of a chain. This section describes the
+validation process for a chain. A standalone certificate is just the special case of a chain where the endpoint certificate is directly
+signed by the trust root.
 
+In PKI mode, trust is fully rooted in the public key of (typically) one authority. This authority may then optionally delegate it's authority
+to an intermediate signing authorities, or it may directly sign endpoint certificates.
 
+![Verification of a certificate chain](svg/certificate_chain_verification.png){#fig:certificate_chain_verification}
+
+![Verification of a single endpoint certificate](svg/certificate_verification.png){#fig:certificate_verification}
+
+End users shall maintain separate signing authorities for masters and outstations so that the compromise of an outstation's private key doesn't enable
+attacker control of other outstations.
