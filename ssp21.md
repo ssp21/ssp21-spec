@@ -918,7 +918,7 @@ impact the version field ---->
 
 * **spec** - Struct that specifies the various abstract algorithms to be used.
 
-* **constraints** - Struct that specifies contraints on the session.
+* **constraints** - Struct that specifies constraints on the session.
 
 * **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
 *PRESHARED_KEYS*, the *certificates* field shall be empty.
@@ -941,7 +941,7 @@ message ReplyHandshakeBegin {
 }
 ```
 
-* **empheral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
+* **ephemeral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
 
 * **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field
  transmitted by the master.
@@ -1473,37 +1473,46 @@ signature value.
 
 #### Certificate Body
 
+The certificate body is defined as follows:
+
+```
+message CertificateBody {
+    serial_number          :      U32
+    valid_after            :      U64
+	valid_before           :      U64
+    certificate_type       :      enum::CertificateType
+	public_key_type		   :      enum::PUBLIC_KEY_TYPE
+	public_key     	       :      Seq8[U8]
+	extensions             :      Seq8[Seq16[U8]]
+}
+```
+
+* **serial_number** - An incrementing serial number assigned by the issuer
+* **valid_after**  - Number of milliseconds since Unix epoch, before which, the certificate shall be considered invalid.
+* **valid_before** - Number of milliseconds since Unix epoch, after which, the certificate shall be considered invalid.
+* **certificate_type** - The type of certificate which dictates what it is allowed to do.
+* **public_key_type** - The type of the public key that follows.
+* **public_key** - The public key value defined by the *public_key_type*
+* **extensions** - An optional sequence of extensions that define additional required behaviors like application protocol specific whitelists.
+
+The following certificate types are defined:
+
+```
+enum CertificateType {
+  authority         : 0
+  endpoint_signing  : 1
+  endpoint          : 2
+}
+```
+
+* **authority** - The holder of the certificate may produce other certificates with any permission.
+* **endpoint_signing** - The holder of the certificate may produce other certificates with the *endpoint* permission.
+* **endpoint** - The holder of the certificate may act as an endpoint within the system, but may not sign other certificates.
 
 
-<!--
-### State Transition Diagrams
 
-#### Master
 
-The master implements the following state machine to change the session keys.
 
-![Master handshake states](dot/master_handshake_states.png){#fig:master_handshake_states}
 
-States:
-
-* **IDLE** - The master is not currently performing the key change and is idle.
-
-* **WAIT_BEGIN** - The master has transmitted *REQUEST_HANDSHAKE_BEGIN* and is waiting to receive
-*REPLY_HANDSHAKE_BEGIN*.
-
-* **WAIT_AUTH** - The master has transmitted *REQUEST_HANDSHAKE_AUTH* and is waiting to receive *REPLY_HANDSHAKE_AUTH*.
-
-Events:
-
-* **begin** - The master begins the process of initializing session.
-* **rx_ok_1** - The master receives a properly formatted *REPLY_HANDSHAKE_BEGIN*.
-* **rx_err_1** - The master receives an improperly formatted *REPLY_HANDSHAKE_BEGIN* message.
-* **rx_err_2** - The master receives an improperly formatted *REPLY_HANDSHAKE_AUTH* or fails to authenticate it.
-
-Actions:
-
-* **a1** - The master transmits a *REQUEST_HANDSHAKE_BEGIN* message, and starts the response timer.
-* **a2** - The master transmits a *REQUEST_HANDSHAKE_AUTH* message, and starts the response timer.
--->
 
 
