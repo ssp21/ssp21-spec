@@ -1392,8 +1392,8 @@ SSP21 defines its own certificate format, the Industrial Certificate Format (ICF
 the definition and serialization rules used for messages within the cryptographic layer. The primary design
 goals of the ICF include:
 
-* Simplicity - The format and its encodings should be easy to understand and implement, where ASN.1 and the BER/DER
-encodings are considered undersirably complex for this application.
+* Simplicity - The format and its encodings should be easy to understand and implement, where ASN.1 and its BER/DER
+encodings are considered undesirably complex for this application.
 
 * Efficiency/Size - The format shall be encodable in the low hundreds of bytes, rather than thousands of bytes to enable usage in 
 bandwidth-limited applications.
@@ -1406,7 +1406,7 @@ deprecation or break of any particular algorithm.
 
 * Extensible in terms of metadata - It is desirable in certain applications to sign and include additional metadata in the certificate
 beyond what was defined in the original specification. An example of such an extension would be role based access control (RBAC) permissions for a
-specific application protocol. The certificate format shall provide the ability to define exensions and define the required behavior when undefined
+specific application protocol. The certificate format shall provide the ability to define extensions and define the required behavior when undefined
 extensions are encountered.
 
 
