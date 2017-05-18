@@ -1409,6 +1409,70 @@ beyond what was defined in the original specification. An example of such an ext
 specific application protocol. The certificate format shall provide the ability to define extensions and define the required behavior when undefined
 extensions are encountered.
 
+### ICF Definition
+
+The certificate format consists of three components:
+
+* An outer envelope that contains unauthenticated metadata about the issuer, algorithm, and the signature value.
+
+* Inner certificate data fully covered by specified the digital signature algorithm.
+
+* Optional extensions contained within the certificate data itself.
+
+#### Certificate Envelope
+
+The certificate envelope is defined as follows:
+
+```
+message CertificateEnvelope {
+	issuer_id        	    :      Seq8[U16](count = 16)
+    algorithm        		:      enum::SIGNATURE_ALGORITHM
+	signature     	 		:      Seq8[U8]
+	certificate_body 	    :      Seq8[U16]
+}
+```
+
+* **issuer_id** - A 16-byte digest of the issuer's public key. This digest shall always be the leftmost 16 bytes
+of the SHA-2 hash of the public key.
+
+* **algorithm** - The DSA that will be used to compute and verify the signature.
+
+* **signature** - The value of the signature.
+
+* **certificate_body** - The certificate body covered by the specified digital signature algorithm. This data shall
+not be parsed until the authenticity is established by verifying the signature.
+
+The following digital signature algorithms (DSA) are defined for usage with the ICF.
+
+```
+enum DigitalSignatureAlgorithm {
+    Ed25519 : 0
+}
+```
+
+* **Ed25519** - Use Edwards-Curve Digital Signature Algorithm (EdDSA) using curve 25519 as specified in [RFC 8032](https://tools.ietf.org/html/rfc8032).
+
+##### Security Discussion
+
+Attackers may freely manipulate the *issuer_id* field with the following impacts:
+
+* The verifying party would be unable to find the corresponding public key in which case the verification would immediately fail.
+
+* The verifying party would apply the wrong public key to the DSA verification, in which case the verification would fail with similar
+probability as attempting to brute force the signature value.
+
+This *issuer_id* digest is not cryptographic in nature. It merely acts as convenient fixed-length digest for public keys of any length. It must
+be well distributed against random inputs (i.e. public key values), but need not be cryptographically secure. A break in the underlying SHA-2
+hash function does not require changing how the issuer_id is calculated.
+
+The truncated hash used in the issuer id is not cryptographic in nature, and merely needs to be collision resistant against the possible
+random public keys deployed in the system. It serves to provide a fixed size id for public keys of any size or length.
+
+Attackers may also manipulate the *algorithm* field. Such a manipulation would fail either due to the length of the signature being incorrect, or an
+signature value.
+
+#### Certificate Body
+
 
 
 <!--
