@@ -1528,14 +1528,36 @@ extension shall always fail verification.
 
 An endpoint certificate may be presented during the SSP21 handshake by itself or as part of a chain. This section describes the
 validation process for a chain. A standalone certificate is just the special case of a chain where the endpoint certificate is directly
-signed by the trust root.
+signed by the trust root. In the descriptions that follow a single certificate is just a chain of length one.
 
 In PKI mode, trust is fully rooted in the public key of (typically) one authority. This authority may then optionally delegate it's authority
-to an intermediate signing authorities, or it may directly sign endpoint certificates.
+to an intermediate signing authorities, or it may directly sign endpoint certificates. End users shall maintain separate signing authorities
+for masters and outstations so that the compromise of an outstation's private key doesn't enable attacker control of other outstations.
 
-![Verification of a certificate chain](svg/certificate_chain_verification.png){#fig:certificate_chain_verification}
+![Verification of a certificate chain (depth == 3)](svg/certificate_chain_verification.png){#fig:certificate_chain_verification}
 
-![Verification of a single endpoint certificate](svg/certificate_verification.png){#fig:certificate_verification}
+#### Device Trust Store
 
-End users shall maintain separate signing authorities for masters and outstations so that the compromise of an outstation's private key doesn't enable
-attacker control of other outstations.
+The device trust store records the long-term public keys of one or more authorities fully trusted by the system. This store could take a number of forms
+and is implementation specific. Some examples include:
+
+* A single public key loaded into memory during program initialization
+* A folder of public keys with file names corresponding to their *issuer_id*, i.e. SHA-2 hash of the public key
+
+The public keys in the trust store are wholly trusted and used to establish the authenticity of other certificates.
+
+#### Self-signed authority certificates
+
+The certificates in the trust store are self-signed, i.e. their signature is computed by the private key corresponding to the public
+key they contain. As such, not external party verifies their authenticity. Being the root of trust, they derive their authority merely
+by their presence on the device.
+
+Even though this could be accomplished with a bare public key, we prefer this approach for a number of reasons:
+
+* Symmetry - It allows for authority, intermediate signing authority, and endpoint certificates to be dealt with more uniformly.
+* Bundled configuration - It allows for the certain configuration parameters to be bundled with the authority public key like the validity times
+and signing depths. For instance, a root authority certificate with signing depth == 1 would not allow for intermediate certificates.
+
+
+
+
