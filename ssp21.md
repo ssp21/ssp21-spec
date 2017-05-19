@@ -1,6 +1,11 @@
 ---
 title:      'SSP21'
-author:     'Adam Crain (jadamcrain@automatak.com)'
+
+author:
+- 'Adam Crain (jadamcrain@automatak.com)'
+- 'Rich Corrigan (RCorrigan@semprautilities.com)'
+- 'Daniel Michaud-Soucy (dmichaud-soucy@semprautilities.com)'
+
 date:       '05/19/17'
 ---
 
