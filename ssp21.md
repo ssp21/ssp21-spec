@@ -1519,7 +1519,7 @@ Certificate extensions have their own envelope that shall be readable by all imp
 ```
 message ExtensionEnvelope {
   identifier      : U32
-  extension_data  : Seq16[U8]
+  extension_body  : Seq16[U8]
 }
 ```
 
