@@ -451,8 +451,8 @@ incorporated into the authentication signatures and makes any tampering of hands
 
 ### Hashed Message Authentication Code (HMAC)
 
-HMAC provides an authentication tag given a shared key and an input message. It is described in [RFC 
-2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this 
+HMAC provides an authentication tag given a shared key and an input message. It is described in
+[RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
 HMAC(key, message) - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
@@ -817,8 +817,9 @@ enum HandshakeError {
     UNSUPPORTED_CERTIFICATE_MODE      : 8
     BAD_CERTIFICATE_FORMAT            : 9
     UNSUPPORTED_CERTIFICATE_FEATURE   : 10
-    AUTHENTICATION_ERROR              : 11
-    NO_PRIOR_HANDSHAKE_BEGIN          : 12
+    BAD_CERTIFICATE_CHAIN             : 11
+    AUTHENTICATION_ERROR              : 12
+    NO_PRIOR_HANDSHAKE_BEGIN          : 13
     INTERNAL                          : 255
 }
 ```
@@ -1419,30 +1420,13 @@ The certificate format consists of three components:
 
 * Optional extensions contained within the certificate data itself.
 
-#### Certificate Envelope
+#### Enumerations
 
-The certificate envelope is defined as follows:
+The following enumerations are used within the various ICF message definitions.
 
-```
-message CertificateEnvelope {
-	issuer_id        	    :      Seq8[U16](count = 16)
-    algorithm        		:      enum::SIGNATURE_ALGORITHM
-	signature     	 		:      Seq8[U8]
-	certificate_body 	    :      Seq16[U8]
-}
-```
+##### DigitalSignatureAlgorithm (DSA)
 
-* **issuer_id** - A 16-byte digest of the issuer's public key. This digest shall always be the leftmost 16 bytes
-of the SHA-2 hash of the public key.
-
-* **algorithm** - The DSA that will be used to compute and verify the signature.
-
-* **signature** - The value of the signature.
-
-* **certificate_body** - The certificate body covered by the specified digital signature algorithm. This data shall
-not be parsed until the authenticity is established by verifying the signature.
-
-The following digital signature algorithms (DSA) are defined for usage with the ICF.
+This enumeration defines the DSA used to sign and verify the certificate body.
 
 ```
 enum DigitalSignatureAlgorithm {
@@ -1451,6 +1435,42 @@ enum DigitalSignatureAlgorithm {
 ```
 
 * **Ed25519** - Use Edwards-Curve Digital Signature Algorithm (EdDSA) using curve 25519 as specified in [RFC 8032](https://tools.ietf.org/html/rfc8032).
+
+##### PublicKeyType
+
+This enumeration defines the type of the public key embedded in the certificate body.
+
+```
+enum PublicKeyType {
+    Ed25519 : 0
+    X25519  : 1
+}
+```
+
+* **Ed25519** - The key is an Ed25519 DSA public key.
+* **X25519** - The key is an x25519 Diffie-Hellman key.
+
+#### Certificate Envelope
+
+The certificate envelope is defined as follows:
+
+```
+message CertificateEnvelope {
+	issuer_id        	    :      Seq8[U16](count = 16)
+	signature     	 		:      Seq8[U8]
+	certificate_body 	    :      Seq16[U8]
+}
+```
+
+* **issuer_id** - A 16-byte digest of the issuer's public key. This digest shall always be the leftmost 16 bytes
+of the SHA-2 hash of the public key.
+
+* **signature** - The value of the signature.
+
+* **certificate_body** - The certificate body covered by the specified digital signature algorithm. This data shall
+not be parsed until the authenticity is established by verifying the signature.
+
+The following digital signature algorithms (DSA) are defined for usage with the ICF.
 
 ##### Security Discussion
 
@@ -1495,16 +1515,6 @@ an authority which may produce any certificate type with *signing_level* less th
 * **public_key_type** - The type of the public key that follows.
 * **public_key** - The public key value defined by the *public_key_type*
 * **extensions** - An optional sequence of extensions that define additional required behaviors like application protocol specific whitelists.
-
-The following certificate types are defined:
-
-```
-enum CertificateType {
-  authority         : 0
-  endpoint          : 1
-}
-```
-
 * **authority** - The holder of the certificate may produce endpoint certificates or authority certificates
 with a *signing_level* less than its own. They may not directly participate as endpoints.
 * **endpoint** - The holder of the certificate may act as an endpoint within the system, but may not sign other certificates.
@@ -1520,9 +1530,9 @@ message ExtensionEnvelope {
 }
 ```
 
-The identifier for each extension shall be unique, and all extensions shall at a minimum be registered
-and approved for completeness and suitability with the body maintaining the SSP21 standard. An unknown
-extension shall always fail verification.
+The identifier for each extension shall be unique, and all extensions shall be registered and approved for
+completeness and suitability with the body maintaining the SSP21 standard. Proprietary extensions are explicitly
+forbidden. An unknown extension shall always fail verification.
 
 ### Certificate/Chain Validation
 
@@ -1536,28 +1546,111 @@ for masters and outstations so that the compromise of an outstation's private ke
 
 ![Verification of a certificate chain (depth == 3)](svg/certificate_chain_verification.png){#fig:certificate_chain_verification}
 
-#### Device Trust Store
+#### Trust Anchors
 
-The device trust store records the long-term public keys of one or more authorities fully trusted by the system. This store could take a number of forms
-and is implementation specific. Some examples include:
+The device/application must store the trust anchors in the system: the long-term public keys of one or more authorities embedded
+in self-signed certificates. How this trust store is implemented is not defined, but some examples include:
 
-* A single public key loaded into memory during program initialization
-* A folder of public keys with file names corresponding to their *issuer_id*, i.e. SHA-2 hash of the public key
+* A single certificate loaded into memory during program initialization
+* A folder of such certificates with file names corresponding to their *issuer_id*, i.e. SHA-2 hash of the public key
 
-The public keys in the trust store are wholly trusted and used to establish the authenticity of other certificates.
+The certificates in the trust store are wholly trusted and used to establish the authenticity of other certificates. Certificates in
+the trust store are selected based on the *issuer_id* of the first certificate in any chain.
 
-#### Self-signed authority certificates
+#### Self-signed Certificates
 
 The certificates in the trust store are self-signed, i.e. their signature is computed by the private key corresponding to the public
-key they contain. As such, not external party verifies their authenticity. Being the root of trust, they derive their authority merely
+key they contain. As such, no external party verifies their authenticity.  Being the trust anchor, they derive their authority merely
 by their presence on the device.
 
-Even though this could be accomplished with a bare public key, we prefer this approach for a number of reasons:
+Even though this could be accomplished with a bare public key, the self-signed certificate approach is preferred for a number of reasons:
 
-* Symmetry - It allows for authority, intermediate signing authority, and endpoint certificates to be dealt with more uniformly.
-* Bundled configuration - It allows for the certain configuration parameters to be bundled with the authority public key like the validity times
-and signing depths. For instance, a root authority certificate with signing depth == 1 would not allow for intermediate certificates.
+* Symmetry - It allows for authority, intermediate signing authority, and endpoint certificates to be dealt with uniformly.
+* Bundled configuration - It allows for configuration parameters to be bundled with the authority public key such as validity times
+and signing depths. For instance, a root authority certificate with signing depth == 1 would not allow for intermediate certificates during
+verification.
 
+#### Verification Procedure
+
+The goal of certificate chain verification is to extract a trusted public DH key from the final certificate in the chain. Any other result
+than ending up with verified and trusted DH key at the end of the chain is considered a failed verification. This verification function has
+the following signature in pseudo code. It will return an error condition if a failure occurs instead of returning a valid public key.
+
+```
+verify(anchors, chain) -> Either<enum::HandshakeError, public_dh_key>
+```
+
+* **anchors** - One or more trusted root certificates.
+* **chain** - A chain of one or more certificates to be validated against one of the anchors.
+* **public_dh_key** - The verified public DH key to be used as the remote static DH key in the handshake.
+
+The following steps are performed to verify the chain:
+
+1) Upon receiving a certificate chain (certificate count >= 1), the receiving party shall first examine the *issuer_id* in the first (possibly only)
+certificate in the chain and identify the requested anchor certificate. If the anchor certificate cannot be found, verification will be halted with an
+error condition.
+
+2) Verification shall then iterate over adjacent certificate pairs using a general purpose function, beginning with the selected
+anchor certificate (A) and the first certificate (C1) in the chain.
+
+```
+
+
+
+
+Parent  Child
+|       |
+V       V
+
+A       C1    C2    ...     C(n-1)   Cn
+```
+
+Verification proceeds rightwards, one certificate at a time, until an error occurs and is returned, or the final pair is validated:
+
+```
+                       Parent  Child
+                       |       |
+                       V       V
+
+A    C1    C2    ... C(n-1)   Cn
+```
+
+This sub-function has the the following signature in pseudo-code.
+
+```
+verify_pair(parent, child) -> Either<enum::HandshakeError, child_body>
+```
+
+* **parent** - The parsed and verified **body** of the parent certificate.
+* **child** - The parsed but unverified **envelope** of the child certificate.
+* **child_body** - The parsed and verified body of the child certificate.
+
+The following sub-steps are performed for each invocation of *verify_pair*:
+
+A) Compare the *issuer_id* in the child envelope to the value calculated over the
+parent's public key. If they do not match, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+B) Examine the *public_key_type* in the parent body. If it is not a DSA public key (e.g. it is a DH key),
+return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+C) Verify that the length of the signature in the child envelope matches the output length of the DSA algorithm
+specified the parent *public_key_type*. If it does not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+D) Verify the DSA signature value in the child envelope using the public key in parent body and the raw bytes of
+*certificate_body* field of the child envelope. If verification fails, return HandshakeError::AUTHENTICATION_ERROR.
+
+E) Fully parse the child certificate body. If parsing fails, return HandshakeError::BAD_CERTIFICATE_FORMAT.
+
+F) Verify that parent.valid_after >= child.valid_after. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+G) Verify that parent.valid_before <= child.valid_before. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+H) Verify that parent.signing_level > child.signing_level. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+
+I) Return the fully verified child body for the next iteration.
+
+3) Upon reaching the final authenticated certificate, verify that the *public_key_type* is a DH key. If it is not
+return HandshakeError::BAD_CERTIFICATE_CHAIN. Otherwise, return the fully verified *public_dh_key*.
 
 
 
