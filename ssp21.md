@@ -1461,9 +1461,9 @@ The certificate envelope is defined as follows:
 
 ```
 message CertificateEnvelope {
-	issuer_id        	    :      Seq8[U16](count = 16)
-	signature     	 		:      Seq8[U8]
-	certificate_body 	    :      Seq16[U8]
+    issuer_id        	:      Seq8[U8](count = 16)
+    signature           :      Seq8[U8]
+    certificate_body    :      Seq16[U8]
 }
 ```
 
@@ -1502,13 +1502,13 @@ The certificate body is defined as follows:
 
 ```
 message CertificateBody {
-    serial_number          :      U32
-    valid_after            :      U64
-	valid_before           :      U64
-    signing_level          :      U8(max = 6)
-	public_key_type		   :      enum::PUBLIC_KEY_TYPE
-	public_key     	       :      Seq8[U8]
-	extensions             :      Seq8[Seq16[U8]](limit = 5)
+    serial_number     :      U32
+    valid_after       :      U64
+    valid_before      :      U64
+    signing_level     :      U8(max = 6)
+    public_key_type   :      enum::PublicKeyType
+    public_key        :      Seq8[U8]
+    extensions        :      Seq8[Seq16[U8]](limit = 5)
 }
 ```
 
