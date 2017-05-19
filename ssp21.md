@@ -1429,18 +1429,6 @@ The certificate format consists of three components:
 
 The following enumerations are used within the various ICF message definitions.
 
-##### DigitalSignatureAlgorithm (DSA)
-
-This enumeration defines the DSA used to sign and verify the certificate body.
-
-```
-enum DigitalSignatureAlgorithm {
-    Ed25519 : 0
-}
-```
-
-* **Ed25519** - Use Edwards-Curve Digital Signature Algorithm (EdDSA) using curve 25519 as specified in [RFC 8032](https://tools.ietf.org/html/rfc8032).
-
 ##### PublicKeyType
 
 This enumeration defines the type of the public key embedded in the certificate body.
