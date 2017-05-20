@@ -1577,17 +1577,18 @@ verification.
 
 #### Verification Procedure
 
-The goal of certificate chain verification is to extract a trusted public DH key from the final certificate in the chain. Any other result
-than ending up with verified and trusted DH key at the end of the chain is considered a failed verification. This verification function has
-the following signature in pseudo code. It will return an error condition if a failure occurs instead of returning a valid public key.
+The goal of certificate chain verification is to ultimately authenticate the final certificate via the chain of trust. Any other result
+than ending up with a verified certificate at the end of the chain is considered a failed verification. This verification function has
+the following signature in pseudo code. It will return an error condition if a failure occurs instead of returning a valid terminal 
+certificate.
 
 ```
-verify(anchors, chain) -> Either<enum::HandshakeError, public_dh_key>
+verify(anchor, chain) -> Either<enum::HandshakeError, terminal_certificate>
 ```
 
 * **anchors** - One or more trusted root certificates.
 * **chain** - A chain of one or more certificates to be validated against one of the anchors.
-* **public_dh_key** - The verified public DH key to be used as the remote static DH key in the handshake.
+* **terminal_certificate** - The verified terminal certificate.
 
 The following steps are performed to verify the chain:
 
@@ -1654,8 +1655,11 @@ H) Verify that parent.signing_level > child.signing_level. If it is not, return 
 
 I) Return the fully verified child body for the next iteration.
 
-3) Upon reaching the final authenticated certificate, verify that the *public_key_type* is a DH key. If it is not
-return HandshakeError::BAD_CERTIFICATE_CHAIN. Otherwise, return the fully verified *public_dh_key*.
+3) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the *signing_level* if the terminal certificate is not zero.
+
+4) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the *public_key_type* of the terminal certificate is not a DH key.
+
+5) Return the fully verified terminal certificate.
 
 
 
