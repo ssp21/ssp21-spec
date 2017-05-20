@@ -613,11 +613,12 @@ The bitfield above with flag1 = true, flag2 = false, and flag3 = true would have
 
 #### Sequences
 
-*Sequences* are variable length lists of particular type that, when serialized, are prefixed  with a *U8* or *U16* 
-count of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is some type id. 
+*Sequences* are variable length lists of a particular type that, when serialized, are prefixed with a *U8* or *U16* 
+count of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is the identifer for some type.
 
-When sequences are typed on primitive values, the length of the sequence in bytes is calculated as the count of elements
-multiplied by the size of primitive plus the size of the count prefix field.
+Sequences may be typed over a *U8* primitive denoting a simple byte string, or any defined *Struct* type.
+
+An example of a struct containing a sequence of bytes:
 
 ```
 struct ByteSequence {
@@ -631,39 +632,44 @@ Given the message definition above, the ByteSequence with value equal to {0xCA, 
 [0x00, 0x02, 0xCA, 0xFE]
 ```
 
-Sequences of sequences are also allowed, but only to this maximum depth of 2. For instance, we could define
-a message containing a sequence of byte sequences as follows:
+An example of a struct containing a sequence of structs:
 
 ```
-struct ByteSequences {
-  values : Seq8[Seq16[U8]]
+struct NumberPair {
+  first : U8
+  second : U8
+}
+
+struct Pairs {
+  values : Seq8[struct::NumberPair](max = 5)
 }
 ```
 
-Suppose that we wish to encode the following sequence of byte sequences in the values field above:
+Note that the count of NumberPair structures limited to 5.
+
+Suppose that we wish to encode the following sequence of number pairs:
 
 ```
-{ {0x07}, {0x08, 0x09}, {0x0A} }
+{ {0x07, 0x08}, {0x08, 0x09}, {0x0A, 0xCC} }
 ```
 
-The serialized ByteSequences message would be encoded as:
+The serialized Pairs message would be encoded as:
 
 ```
-[0x03, 0x00, 0x01, 0x07, 0x00, 0x02, 0x08, 0x09, 0x00, 0x01, 0x0A]
+[0x03, 0x07, 0x08, 0x08, 0x09, 0x0A, 0xCC]
 ```
 
-The first value of `0x03` indicates that there are 3 byte sequences in the outer sequence. Sub-sequences
-are prefixed by their lengths (1, 2, and 1 respectively) encoded as unsigned big endian integers.
-
-Despite the generality of the sequence definition over any type, in practice it is only used to define **Seq*N*[U8]** 
-and **Seq*N*[Seq*N*[U8]]**.
+The first value of `0x03` indicates that there are 3 NumberPair structs in the sequence. The encoded NumberPair structs
+directly follow this count of objects.
 
 #### Constraints
 
 Certain field types may have optional constraints placed on their contents. Constraints on a field are expressed
 with the following notation:
 
+```
 <field-name> : <field-type>(<id-1> = <value-1>, ..., <id-N> = <value-N>)
+```
 
 Any field without the trailing constraint syntax (...) is implicitly defined to have no constraints.
 
@@ -679,11 +685,12 @@ Parsers should always enforce constraints internally and signal errors whenever 
 
 The table defines the allowed constraints and the field types to which they apply.
 
-| Field Type(s)        | Constraint ID | Value semantics             |
-| ---------------------|---------------|-----------------------------|
-| Seq8[U8] / Seq16[U8] | min           | minimum number of elements  |
-| Seq8[U8] / Seq16[U8] | max           | maximum number of elements  |
-| Seq8[U8] / Seq16[U8] | count         | required number of elements |
+| Field Type(s)        | Constraint ID | Value semantics             |   Required      |
+| ---------------------|---------------|-----------------------------|-----------------|
+| Seq8[U8] / Seq16[U8] | min           | minimum number of elements  |     no          |
+| Seq8[U8] / Seq16[U8] | max           | maximum number of elements  |     no          |
+| Seq8[U8] / Seq16[U8] | count         | required number of elements |     no          |
+| Seq8[struct::?]      | max           | maximum number of elements  |     yes         |
 
 
 ### Definitions
@@ -909,7 +916,7 @@ message RequestHandshakeBegin {
    constraints              : struct::Constraints
    certificate_mode         : enum::CertificateMode
    ephemeral_public_key     : Seq8[U8]
-   certificates             : Seq8[Seq16[U8]](max = 6)
+   certificates             : Seq8[struct::CertificateEnvelope](max = 6)
 }
 ```
 
@@ -943,7 +950,7 @@ case it responds with *Reply Handshake Error*.
 message ReplyHandshakeBegin {
    function : enum::Function::REPLY_HANDSHAKE_BEGIN
    ephemeral_public_key: Seq8[U8]
-   certificates: Seq8[Seq16[U8]](max = 6)
+   certificates: Seq8[struct::CertificateEnvelope](max = 6)
 }
 ```
 
@@ -1429,18 +1436,6 @@ The certificate format consists of three components:
 
 The following enumerations are used within the various ICF message definitions.
 
-##### DigitalSignatureAlgorithm (DSA)
-
-This enumeration defines the DSA used to sign and verify the certificate body.
-
-```
-enum DigitalSignatureAlgorithm {
-    Ed25519 : 0
-}
-```
-
-* **Ed25519** - Use Edwards-Curve Digital Signature Algorithm (EdDSA) using curve 25519 as specified in [RFC 8032](https://tools.ietf.org/html/rfc8032).
-
 ##### PublicKeyType
 
 This enumeration defines the type of the public key embedded in the certificate body.
@@ -1461,9 +1456,9 @@ The certificate envelope is defined as follows:
 
 ```
 message CertificateEnvelope {
-	issuer_id        	    :      Seq8[U16](count = 16)
-	signature     	 		:      Seq8[U8]
-	certificate_body 	    :      Seq16[U8]
+    issuer_id        	:      Seq8[U8](count = 16)
+    signature           :      Seq8[U8]
+    certificate_body    :      Seq16[U8]
 }
 ```
 
@@ -1502,13 +1497,13 @@ The certificate body is defined as follows:
 
 ```
 message CertificateBody {
-    serial_number          :      U32
-    valid_after            :      U64
-	valid_before           :      U64
-    signing_level          :      U8(max = 6)
-	public_key_type		   :      enum::PUBLIC_KEY_TYPE
-	public_key     	       :      Seq8[U8]
-	extensions             :      Seq8[Seq16[U8]](limit = 5)
+    serial_number     :      U32
+    valid_after       :      U64
+    valid_before      :      U64
+    signing_level     :      U8(max = 6)
+    public_key_type   :      enum::PublicKeyType
+    public_key        :      Seq8[U8]
+    extensions        :      Seq8[struct::ExtensionEnvelope](max = 5)
 }
 ```
 
@@ -1531,7 +1526,7 @@ Certificate extensions have their own envelope that shall be readable by all imp
 ```
 message ExtensionEnvelope {
   identifier      : U32
-  extension_data  : Seq16[U8]
+  extension_body  : Seq16[U8]
 }
 ```
 
