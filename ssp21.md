@@ -613,23 +613,46 @@ The bitfield above with flag1 = true, flag2 = false, and flag3 = true would have
 
 #### Sequences
 
-*Sequences* are variable length lists of a particular type that, when serialized, are prefixed with a *U8* or *U16* 
-count of elements denoted with the notation **Seq8[x]** or **Seq16[x]** respectively where *x* is the identifer for some type.
+*Sequences* are variable length lists of a particular type. There are two categories of sequences:
 
-Sequences may be typed over a *U8* primitive denoting a simple byte string, or any defined *Struct* type.
+* **SeqOf[Byte]** - Denotes a sequence of bytes, like a key, signature, etc.
+* **SeqOf[struct type]** - Denotes a sequence of a defined structure type.
+
+##### Variable Length Count
+
+When serialized, all sequence types are prefixed with a variable length count of objects up to 
+2^32 - 1 (unsigned 32-bit integer). The number of bytes required to encode various values is summarized in the table below.
+
+| num bytes | # value bits | max value  | encoding of max value             |
+|-----------|--------------|------------|-----------------------------------|
+|    1      |       7      | 127        |  [ 0xFF, 0x7F ]                   |
+|    2      |       14     | 16383      |  [ 0xFF, 0x7F ]                   |
+|    3      |       21     | 2097151    |  [ 0xFF, 0xFF, 0x7F ]             |
+|    4      |       28     | 268435455  |  [ 0xFF, 0xFF, 0xFF, 0x7F ]       |
+|    5      |       32     | 4294967295 |  [ 0xFF, 0xFF, 0xFF, 0xFF, 0x0F ] |
+
+The following rules apply to decoding:
+
+1) The value is read from the least significant bit to the most significant bit.
+2) The top bit (0x80) of the current byte indicates if another byte follows.
+3) The bottom 7 bits are incorporated by shifting the values into the number modulo 7
+4) There is only one valid encoding for any number and that encoding must use the fewest bytes possible.
+5) The value of the 5th byte may not exceed 0x0F.
+
+##### Examples
 
 An example of a struct containing a sequence of bytes:
 
 ```
 struct ByteSequence {
-  value : Seq16[U8]
+  value : SeqOf[Byte]
 }
 ```
 
 Given the message definition above, the ByteSequence with value equal to {0xCA, 0xFE} would be encoded as:
 
 ```
-[0x00, 0x02, 0xCA, 0xFE]
+[0x02, 0xCA, 0xFE]
 ```
 
 An example of a struct containing a sequence of structs:
@@ -641,7 +664,7 @@ struct NumberPair {
 }
 
 struct Pairs {
-  values : Seq8[struct::NumberPair](max = 5)
+  values : SeqOf[struct::NumberPair](max = 5)
 }
 ```
 
@@ -659,12 +682,12 @@ The serialized Pairs message would be encoded as:
 [0x03, 0x07, 0x08, 0x08, 0x09, 0x0A, 0xCC]
 ```
 
-The first value of `0x03` indicates that there are 3 NumberPair structs in the sequence. The encoded NumberPair structs
-directly follow this count of objects.
+The first value of `0x03` is the variable length and indicates that there are 3 NumberPair structs in the sequence. The encoded 
+NumberPair structs directly follow this count of objects.
 
 #### Constraints
 
-Certain field types may have optional constraints placed on their contents. Constraints on a field are expressed
+Certain field types have optional or mandatory constraints placed on their contents. Constraints on a field are expressed
 with the following notation:
 
 ```
@@ -673,11 +696,11 @@ with the following notation:
 
 Any field without the trailing constraint syntax (...) is implicitly defined to have no constraints.
 
-For example, a sequence may have a *count* constraint that defines the required number of elements for the sequence.
+For example, a sequence of bytes may have a *count* constraint that defines the required number of elements for the sequence.
 
 ```
 struct SomeStruct {
-  id : Seq8[U8](count = 16)
+  id : SeqOf[U8](count = 16)
 }
 ```
 
@@ -685,12 +708,12 @@ Parsers should always enforce constraints internally and signal errors whenever 
 
 The table defines the allowed constraints and the field types to which they apply.
 
-| Field Type(s)        | Constraint ID | Value semantics             |   Required      |
+| Field Type(s)        | Constraint ID | Value semantics             |   Mandatory     |
 | ---------------------|---------------|-----------------------------|-----------------|
-| Seq8[U8] / Seq16[U8] | min           | minimum number of elements  |     no          |
-| Seq8[U8] / Seq16[U8] | max           | maximum number of elements  |     no          |
-| Seq8[U8] / Seq16[U8] | count         | required number of elements |     no          |
-| Seq8[struct::?]      | max           | maximum number of elements  |     yes         |
+| SeqOf[U8]            | min           | minimum number of elements  |     no          |
+| SeqOf[U8]            | max           | maximum number of elements  |     no          |
+| SeqOf[U8]            | count         | required number of elements |     no          |
+| SeqOf[struct::?]     | max           | maximum number of elements  |     yes         |
 
 
 ### Definitions
@@ -915,8 +938,8 @@ message RequestHandshakeBegin {
    spec                     : struct::CryptoSpec
    constraints              : struct::Constraints
    certificate_mode         : enum::CertificateMode
-   ephemeral_public_key     : Seq8[U8]
-   certificates             : Seq8[struct::CertificateEnvelope](max = 6)
+   ephemeral_public_key     : SeqOf[U8]
+   certificates             : SeqOf[struct::CertificateEnvelope](max = 6)
 }
 ```
 
@@ -949,8 +972,8 @@ case it responds with *Reply Handshake Error*.
 ```
 message ReplyHandshakeBegin {
    function : enum::Function::REPLY_HANDSHAKE_BEGIN
-   ephemeral_public_key: Seq8[U8]
-   certificates: Seq8[struct::CertificateEnvelope](max = 6)
+   ephemeral_public_key: SeqOf[U8]
+   certificates: SeqOf[struct::CertificateEnvelope](max = 6)
 }
 ```
 
@@ -967,7 +990,7 @@ After receiving a valid *Reply Handshake Begin*, the initiator transmits a *Requ
 ```
 message RequestHandshakeAuth {
    function : enum::Function::REQUEST_HANDSHAKE_AUTH
-   mac: Seq8[U8]
+   mac: SeqOf[U8]
 }
 ```
 
@@ -980,7 +1003,7 @@ After receiving a valid and authenticated *Request Handshake Auth*, the responde
 ```
 message ReplyHandshakeAuth {
    function : enum::function::REPLY_HANDSHAKE_AUTH
-   mac: Seq8[U8]
+   mac: SeqOf[U8]
 }
 ```
 
@@ -1029,8 +1052,8 @@ negotiation.
 message SessionData {
    function : enum::Function::SESSION_DATA
    metadata : struct::AuthMetadata
-   user_data : SEQ16[U8]
-   auth_tag : SEQ8[U8]
+   user_data : SeqOf[U8]
+   auth_tag : SeqOf[U8]
 }
 ```
 
@@ -1456,9 +1479,9 @@ The certificate envelope is defined as follows:
 
 ```
 message CertificateEnvelope {
-    issuer_id        	:      Seq8[U8](count = 16)
-    signature           :      Seq8[U8]
-    certificate_body    :      Seq16[U8]
+    issuer_id        	:      SeqOf[U8](count = 16)
+    signature           :      SeqOf[U8]
+    certificate_body    :      SeqOf[U8]
 }
 ```
 
@@ -1502,8 +1525,8 @@ message CertificateBody {
     valid_before      :      U64
     signing_level     :      U8(max = 6)
     public_key_type   :      enum::PublicKeyType
-    public_key        :      Seq8[U8]
-    extensions        :      Seq8[struct::ExtensionEnvelope](max = 5)
+    public_key        :      SeqOf[U8]
+    extensions        :      SeqOf[struct::ExtensionEnvelope](max = 5)
 }
 ```
 
@@ -1526,7 +1549,7 @@ Certificate extensions have their own envelope that shall be readable by all imp
 ```
 message ExtensionEnvelope {
   identifier      : U32
-  extension_body  : Seq16[U8]
+  extension_body  : SeqOf[U8]
 }
 ```
 
