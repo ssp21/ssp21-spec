@@ -198,7 +198,7 @@ This mode of operation uses symmetric cryptography only, and consequently has a 
 
 * It can be implemented on deeply embedded systems that might not be powerful enough for asymmetric cryptography.
 
-* It remains secure if a practical quantum computer is developed.
+* To the best of current knowledge, it remains secure when a practical quantum computer is developed.
 
 There are, however, considerable challenges:
 
