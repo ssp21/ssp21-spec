@@ -13,7 +13,7 @@ TARGETS = ssp21.html ssp21.pdf
 default: $(TARGETS)
 
 clean:
-	rm $(TARGETS) $(ALL_GEN_FILES)
+	rm -f $(TARGETS) $(ALL_GEN_FILES)
 
 wrap:
 	fold -w 120 -s ssp21.md > ssp21_folded.md
