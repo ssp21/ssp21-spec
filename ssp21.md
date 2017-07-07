@@ -794,19 +794,6 @@ enum HandshakeKDF {
 
 * **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
 
-##### Handshake MAC
-
-The *Handshake MAC* enumeration specifies which MAC algorithm is used to authenticate the handshake
-
-```
-enum HandshakeMAC {
-    HMAC_SHA256 : 0
-}
-```
-
-* **HMAC_SHA256** - Use HMAC-SHA256
-
-
 ##### Session Mode
 
 The *Session Mode* enumeration specifies the complete set of algorithms used to secure the session. 
