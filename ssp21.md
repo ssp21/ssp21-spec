@@ -21,9 +21,25 @@ made for retrofitting masters with a BitW as we assume that masters can be much 
 
 The following requirements guided the design of the specification and the selection of appropriate companion standards.
 
+## Simplicity of implementation
+
+The encodings, state machines, and other technical details of the protocol shall, above all else but without 
+sacrificing security, endeavor to be as simple to implement as possible. Complexity, bells and whistles, and unneeded 
+features inevitably lead to bugs both in specification and implementation.
+
+A reference implementation shall be developed to inform the evolving design, and shall not be an afterthought. Too 
+often standardization efforts spend too much time on paper, only to lead to designs that are difficult to implement 
+correctly.
+
+## Use only strong vetted cryptography
+
+SSP21 shall only use algorithms that have received prolonged and intense scrutiny from the crypto community. This does 
+not mean that all algorithms need to be NIST approved. Algorithms that are simpler to implement and/or have variations 
+with provably constant-time implementations should be preferred.
+
 ## Flexible Basis of trust
 
-SSP21 should allow for trust to be anchored in three primary key management domains:
+SSP21 shall allow for trust to be anchored in three primary key management domains:
 
 * Shared secrets, i.e. symmetric cryptography
 * Shared public keys, i.e. key-server style key managment based on asymmetric cryptography
@@ -47,22 +63,6 @@ NTP via GPS in a substation, or WWVB. Alternatively, over TCP networks, outstati
 Outstation certificates (certificates that identify outstations to masters) will be longer lived, and will be revoked 
 using an online CRL accessible to the masters in the system over a traditional TCP network.
 
-## Simplicity of implementation
-
-The encodings, state machines, and other technical details of the protocol shall, above all else but without 
-sacrificing security, endeavor to be as simple to implement as possible. Complexity, bells and whistles, and unneeded 
-features inevitably lead to bugs both in specification and implementation.
-
-A reference implementation shall be developed to inform the evolving design, and shall not be an afterthought. Too 
-often standardization efforts spend too much time on paper, only to lead to designs that are difficult to implement 
-correctly.
-
-## Use only strong vetted cryptography
-
-SSP21 shall only use algorithms that have received prolonged and intense scrutiny from the crypto community. This does 
-not mean that all algorithms need to be NIST approved. Algorithms that are simpler to implement and/or have variations 
-with provably constant-time implementations should be preferred.
-
 ## Extensible only to the extent necessary
 
 * Endpoints shall be able to identify the protocols version to each other during key exchange.
@@ -85,8 +85,7 @@ etc.) to manage users at the platform level.
 
 Particular BitS implementations could potentially use some metadata in certificates to limit or constrain what is 
 allowed during a particular communication session. How this metadata is used or configured to limit permissions for a 
-particular protocol is outside the scope of SSP21<!-- RLC: This implies that the "lite" certificate format allows for 
-extensions -->.
+particular protocol is outside the scope of SSP21.
 
 ## Protection from replay
 
