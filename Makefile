@@ -23,6 +23,7 @@ wrap:
 
 ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile $(ALL_GEN_FILES)
 	pandoc ssp21.md -s --toc --toc-depth=5 --number-sections \
+                --metadata date="`date +%D`" \
 	        -f markdown+yaml_metadata_block+startnum \
 		--filter pandoc-fignos \
 		--template template_pandoc.html \
@@ -31,6 +32,7 @@ ssp21.html: ssp21.md template_pandoc.html spec_markdown.css Makefile $(ALL_GEN_F
 
 ssp21.pdf: ssp21.md template_pandoc.latex Makefile $(ALL_GEN_FILES)
 	pandoc ssp21.md -s --toc --toc-depth=5 --number-sections \
+                --metadata date="`date +%D`" \
 	        -f markdown+yaml_metadata_block+startnum \
 		--filter pandoc-fignos \
 		--template template_pandoc.latex \
