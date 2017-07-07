@@ -733,9 +733,7 @@ enum Function {
     REQUEST_HANDSHAKE_BEGIN  : 0
     REPLY_HANDSHAKE_BEGIN    : 1
     REQUEST_HANDSHAKE_AUTH   : 2
-    REPLY_HANDSHAKE_AUTH     : 3
-    REPLY_HANDSHAKE_ERROR    : 4
-    SESSION_DATA             : 5
+    SESSION_DATA             : 3
 }
 ```
 
