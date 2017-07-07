@@ -882,7 +882,6 @@ struct CryptoSpec {
    handshake_dh             : enum::DHMode
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
-   handshake_mac            : enum::HandshakeMAC
    session_mode             : enum::SessionMode
 }
 ```
@@ -897,9 +896,7 @@ the expected length of *ephemeral_public_key*.
 
 * **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
 
-* **handshake_mac** - Specifies which MAC algorithm is used to authenticate the handshake.
-  
-* **session_mode** - Specifies the full set of algorithms used to secure the session.
+  * **session_mode** - Specifies the full set of algorithms used to secure the session.
 
 The message also includes some constraints on the session to be established.
 
@@ -963,33 +960,6 @@ message ReplyHandshakeBegin {
 
 * **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field
  transmitted by the master.
-
-
-##### Request Handshake Auth
-
-After receiving a valid *Reply Handshake Begin*, the initiator transmits a *Request Handshake Auth*.
-
-```
-message RequestHandshakeAuth {
-   function : enum::Function::REQUEST_HANDSHAKE_AUTH
-   mac: SeqOf[U8]
-}
-```
-
-* **mac** - A MAC calculated using the specified handshake MAC algorithm.
-
-##### Reply Handshake Auth
-
-After receiving a valid and authenticated *Request Handshake Auth*, the responder transmits a *Reply Handshake Auth*.
-
-```
-message ReplyHandshakeAuth {
-   function : enum::function::REPLY_HANDSHAKE_AUTH
-   mac: SeqOf[U8]
-}
-```
-
-* **mac** - A MAC calculated using the specified handshake MAC algorithm.
 
 ##### Reply Handshake Error
 
