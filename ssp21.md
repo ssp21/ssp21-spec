@@ -42,10 +42,10 @@ with provably constant-time implementations should be preferred.
 SSP21 shall allow for trust to be anchored in three primary key management domains:
 
 * Shared secrets, i.e. symmetric cryptography
-* Shared public keys, i.e. key-server style key managment based on asymmetric cryptography
+* Shared public keys, i.e. key-server style key management based on asymmetric cryptography
 * Public Key Infrastructure (PKI) wholly controlled by the asset owner, with an efficient certificate format.
 
-The tradeoffs associated with each of these domains is discussed in a later section.
+The trade-offs associated with each of these domains is discussed in a later section.
 
 ## Asymmetric Certificate Revocation
 
@@ -167,48 +167,60 @@ BitS integration may be able to remove redundant layers provided by both the SSP
 An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce
 certificate sizes.
 
-# Utility PKI
+# Trust anchor mode
 
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully 
-implemented, it is important to describe the broader system in which the protocol is designed to operate.
+implemented, it is important to describe the tradeoffs for the various modes of operation that are supported in the protocol. This
+non-normative section of the document describes these modes and how they are harmonized at a high level.
 
-![Components of the system relevant to SSP21](svg/network_architecture.png){#fig:networkarchitecture}
+SSP21 sends the same handshake messages, in the same order, regardless of the anchor mode is in use. The messages have roughly the 
+same meaning, but certain fields are interpreted in different ways depending on the active mode. The handshake has two request-response 
+phases that can be roughly summarized as follows:
 
-SSP21 is designed to secure the communication link between one or more SCADA masters and some number of field sites as 
-shown in figure @fig:networkarchitecture. It accomplishes this using a PKI wholly owned and controlled by the utility. 
-Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a public / private key pair locally, 
-never share the private key with another entity (human or machine), and can freely disseminate the public key for the 
-purposes of certificate generation. The primary role of any PKI is to reduce the complexity of key management by 
-requiring parties to only place their trust in a central signing authority. The identity of all other parties is then 
-established via certification from this authority. To understand the attractiveness of such an architecture, it useful 
-to compare it to a few alternatives.
+* A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotia
+* Each party then transmit its first session data message to authenticate (phase 2 - authentication and optional payload)
 
-## Alternative: Shared secrets
+After a cryptographic session has been established with a corresponding set of shared session keys, the protocol behaves
+identically any mode. Session negotiation, however, will use a different trust anchor mechanism to authenticate the remote
+endpoint and perform key derivation. These three modes are described in the following three sections.
 
-In this architecture, each communication link has a shared-secret that both parties possess prior to any 
-communication occurring. Security is achieved in knowing that only the other end of the channel possesses the same key.
-Typically the long-lived shared secret is used to establish and authenticate a session using Password Authenticated Key
-Exchange (PAKE) or session keys are encrypted before transmission using something like AES key wrap.
+## Mode #1: shared secrets
 
-In a typical SCADA point-to-multipoint scenario, best practice dictates that there be a unique symmetric key for each 
-outstation (N), and the master would possess a copy of all N keys for the outstations with which it communicates. The 
-primary advantage of such a system is conceptual simplicity, but the system is difficult to use at scale for several
-reasons:
+In this mode, each pair of parties that wish to communication have a shared-secret that both parties possess prior to
+establishing a communication session. This secret may be installed manually, or distributed securely using emerging
+technologies like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel
+possesses the same key. This shared secret is then used to establish a set of session session keys, which are then used
+to authenticate the remote endpoint and transfer secure data.
+
+This mode of operation uses symmetric cryptography only, and consequently has a number of advantages:
+
+* The entire protocol can be implementing using only a secure hash function if confidentiality is not required.
+
+* It can be implemented on deeply embedded systems that might not be powerful enough for asymmetric cryptography.
+
+* It remains secure if a practical quantum computer is developed.
+
+There are, however, considerable challenges:
+
+* The shared secret must leave the secure location where it is generated to be shared with the other party. This likely
+entrusts secrets to additional staff members or contractors in the absence of something like QKD.
+
+* There is no support for perfect forward secrecy (PFS) since there are no ephemeral keys exchanged. If a shared secret is
+ever disclosed, any saved traffic can be decrypted.
 
 * If multiple masters are needed for redundancy purposes, the keys must be shared with each master increasing the attack 
 surface and the risk of compromise, or the number of keys in the system must be doubled from N to 2N.
 
-* This type of an architecture does a poor job of limiting access to sensitive key data. To commission a new field 
-asset, the key must be entrusted to field personnel, possibly contractors.
-
-* Compromise of a field asset always requires that the channel be rekeyed. Compromise of the master requires that the 
+* Compromise of a field asset always requires that the channel be re-keyed. Full compromise of the master requires that the
 entire system be re-keyed.
 
-## Alternative: Asymmetric keys without an authority
+## Mode #2: asymmetric keys without an authority
 
 In this architecture, each communication node has an asymmetric public / private key pair. It is free to disseminate 
-the public key, and each node must possess the public key for every other node with which it communicates. This 
-architecture better addresses some of the concerns presented with the symmetric key only architecture, namely:
+the public key, and each node must possess the public key for every other node with which it communicates. It might
+be pre-configured with these peer public keys, or it might retrieve them from a key server using a secure out-of-band
+mechanism. This architecture better addresses some of the concerns presented with the symmetric key only architecture,
+namely:
 
 * Multiple masters can be commissioned without doubling the number of keys in the system, however, each outstation must 
 possess the public key of each master with which it must communicate.
@@ -226,17 +238,21 @@ or installing an additional master public key on all outstations.
 
 SSP21 is able to operate without an authority by using the pre-shared key mode.
 
-## Small vs big systems
+## Mode #3: utility PKI
 
-Small systems with a limited number of outstations may function perfectly well with either the symmetric or asymmetric 
-key scenarios described above.
+The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by an authority wholly owned
+and operated by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
+key pair locally, never share the private key with another entity (human or machine), and can freely disseminate
+the public key for the  purposes of certificate generation. The primary role of any PKI is to reduce the complexity
+of key management by requiring parties to only place their trust in a central signing authority. The identity of all
+other parties is then established via digital signatures issued by this authority.
 
-While SSP21 does not support symmetric pre-shared keys, it can operate in an authority-less mode by using what is 
-commonly referred to as "self-signed certificates". This mode is no different than the asymmetric case described above, 
-and requires each party have the public key of party with which it communicates. Larger systems can benefit from a full 
-PKI where the downsides above can be truly problematic.
+![Components of the system relevant to SSP21](svg/network_architecture.png){#fig:networkarchitecture}
 
-## The role of the authority
+The challenges of running a PKI largely revolve around managing enrollment/revocation and keeping the authority secure.
+How this PKI is managed is outside the scope of SSP21, however, the following sub-sections discuss such a PKI notionally.
+
+### The role of the authority
 
 The authority in the system possesses a private asymmetric key that it uses to sign certificates.  Certificates consist 
 of the following elements:
