@@ -216,11 +216,10 @@ entire system be re-keyed.
 
 ## Mode #2: asymmetric keys without an authority
 
-In this architecture, each communication node has an asymmetric public / private key pair. It is free to disseminate 
-the public key, and each node must possess the public key for every other node with which it communicates. It might
-be pre-configured with these peer public keys, or it might retrieve them from a key server using a secure out-of-band
-mechanism. This architecture better addresses some of the concerns presented with the symmetric key only architecture,
-namely:
+In this architecture, each communication node has an asymmetric key pair. It is free to disseminate the public key, and
+each node must possess the public key for every other node with which it communicates. It might be pre-configured with
+these peer public keys, or it might retrieve them from a key server using a secure out-of-band mechanism. This
+architecture better addresses some of the concerns presented with the symmetric key only architecture, namely:
 
 * Multiple masters can be commissioned without doubling the number of keys in the system, however, each outstation must 
 possess the public key of each master with which it must communicate.
