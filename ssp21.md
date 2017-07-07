@@ -978,16 +978,12 @@ message ReplyHandshakeError {
 
 ##### Session Data
 
-After the successful completion of a key negotiation handshake, either party may transmit *Session Data* messages.
-
-The message uses the following sub-fields:
+Both parties transmit authenticated session data messages. The message uses the following sub-struct:
 
 ```
-
 struct AuthMetadata {
     nonce : U16
     valid_until_ms : U32
-    flags : bitfield::SessionFlags
 }
 ```
 
@@ -1005,7 +1001,7 @@ message SessionData {
 }
 ```
 
-* **metadata** - Metadata sub-struct covered by the authentication mechanism of the negotiated *Session Mode*. 
+* **metadata** - The Metadata struct is covered by the authentication mechanism of the negotiated *Session Mode*.
 
 * **user_data** - A blob of (possibly encrypted) user data.
 
