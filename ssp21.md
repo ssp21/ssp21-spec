@@ -984,8 +984,6 @@ The message uses the following sub-fields:
 
 ```
 
-bitfield SessionFlags { "fir", "fin" }
-
 struct AuthMetadata {
     nonce : U16
     valid_until_ms : U32
@@ -998,8 +996,6 @@ struct AuthMetadata {
 * **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in the section on key
 negotiation.
  
-* **flags** - First and final bits used for message reassembly.
-
 ```
 message SessionData {
    function : enum::Function::SESSION_DATA
