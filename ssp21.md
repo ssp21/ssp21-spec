@@ -21,12 +21,15 @@ made for retrofitting masters with a BitW as we assume that masters can be much 
 
 The following requirements guided the design of the specification and the selection of appropriate companion standards.
 
-## Basis of trust - "Utility PKI"
+## Flexible Basis of trust
 
-All trust in the system is based on a Public Key Infrastructure (PKI) wholly controlled by the asset owner. A more 
-efficient certificate format than [x509](https://tools.ietf.org/html/rfc5280) will be utilized to reduce bandwidth 
-consumption for low bit rate serial networks. Asymmetric key algorithms for key derivation and/or signing will use 
-primitives substantially more efficient than RSA encryption.
+SSP21 should allow for trust to be anchored in three primary key management domains:
+
+* Shared secrets, i.e. symmetric cryptography
+* Shared public keys, i.e. key-server style key managment based on asymmetric cryptography
+* Public Key Infrastructure (PKI) wholly controlled by the asset owner, with an efficient certificate format.
+
+The tradeoffs associated with each of these domains is discussed in a later section.
 
 ## Asymmetric Certificate Revocation
 
