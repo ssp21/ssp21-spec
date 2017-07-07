@@ -831,15 +831,14 @@ enum HandshakeError {
     UNSUPPORTED_DH_MODE               : 2
     UNSUPPORTED_HANDSHAKE_HASH        : 3
     UNSUPPORTED_HANDSHAKE_KDF         : 4
-    UNSUPPORTED_HANDSHAKE_MAC         : 5
-    UNSUPPORTED_SESSION_MODE          : 6
-    UNSUPPORTED_NONCE_MODE            : 7
-    UNSUPPORTED_CERTIFICATE_MODE      : 8
-    BAD_CERTIFICATE_FORMAT            : 9
-    UNSUPPORTED_CERTIFICATE_FEATURE   : 10
-    BAD_CERTIFICATE_CHAIN             : 11
-    AUTHENTICATION_ERROR              : 12
-    NO_PRIOR_HANDSHAKE_BEGIN          : 13
+    UNSUPPORTED_SESSION_MODE          : 5
+    UNSUPPORTED_NONCE_MODE            : 6
+    UNSUPPORTED_CERTIFICATE_MODE      : 7
+    BAD_CERTIFICATE_FORMAT            : 8
+    UNSUPPORTED_CERTIFICATE_FEATURE   : 9
+    BAD_CERTIFICATE_CHAIN             : 10
+    AUTHENTICATION_ERROR              : 11
+    NO_PRIOR_HANDSHAKE_BEGIN          : 12
     INTERNAL                          : 255
 }
 ```
@@ -856,8 +855,6 @@ enum HandshakeError {
 
 * **UNSUPPORTED_HANDSHAKE_KDF** - The requested KDF algorithm is not supported.
 
-* **UNSUPPORTED_HANDSHAKE_MAC** - The requested MAC algorithm is not supported.
- 
 * **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
 
 * **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
