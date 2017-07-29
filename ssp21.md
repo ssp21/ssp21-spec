@@ -39,7 +39,7 @@ with provably constant-time implementations should be preferred.
 
 ## Flexible Basis of trust
 
-SSP21 shall allow for trust to be anchored in three primary key management domains:
+SSP21 shall allow for trust to be anchored in multiple ways, including:
 
 * Shared secrets, i.e. symmetric cryptography
 * Shared public keys, i.e. key-server style key management based on asymmetric cryptography
@@ -90,10 +90,9 @@ particular protocol is outside the scope of SSP21.
 ## Protection from replay
 
 Both endpoints of the session shall be able to detect replayed session messages. Although the protocol needs to be 
-secure from replay, it does not necessarily need to ensure that all messages are delivered in order, as SCADA protocols
-like DNP3 automatically handle retries at a higher level. The protocol will support two modes: one that strictly
-enforces packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial
-or UDP. 
+secure from replay, it does not necessarily need to ensure that all messages are delivered. SCADA protocols such as
+DNP3 automatically handle retries at a higher level. The protocol will support two modes: one that strictly enforces
+packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial or UDP. 
 
 ## Session message time-to-live (TTL)
 
