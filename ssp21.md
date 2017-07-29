@@ -158,8 +158,9 @@ squelch a reply from a remote by inappropriately using the channel.
 
 ## Low overhead
 
-Security is not a zero-cost protocol feature. Inevitably adding a security sub-layer will require more bandwidth, 
-increase latency, and put a computational burden on endpoints. SSP21 will endeavor to minimize these overheads.
+Security is not a zero-cost protocol feature. Inevitably adding a security sub-layer will require a few more bytes 
+on the wire, increase latency, and put a computational burden on endpoints. SSP21 will endeavor to minimize these 
+overheads and provide modes with varying requirements on hardware.
 
 * **reduced latency** – BitS implementations have a significant advantage in this regard over BitW. HMAC hold back 
 can double latencies in BitW integrations as the entire packet must be received and verified before the first payload 
@@ -173,30 +174,30 @@ BitS integration may be able to remove redundant layers provided by both the SSP
 An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce
 certificate sizes.
 
-# Trust anchor mode
+# Handshake mode
 
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully 
-implemented, it is important to describe the tradeoffs for the various modes of operation that are supported in the protocol. This
-non-normative section of the document describes these modes and how they are harmonized at a high level.
+implemented, it is important to describe the trade-offs for the various handshake mode that are supported in the 
+protocol. This non-normative section of the document describes these modes at a high level.
 
-SSP21 sends the same handshake messages, in the same order, regardless of the anchor mode is in use. The messages have roughly the 
-same meaning, but certain fields are interpreted in different ways depending on the active mode. The handshake has two request-response 
-phases that can be roughly summarized as follows:
+SSP21 sends the same handshake messages, in the same order, regardless of the handshake mode specified. The messages 
+have roughly the same meaning, but certain fields are interpreted in different ways depending on the mode. The handshake
+has two request-response phases that can be roughly summarized as follows:
 
-* A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotia
+* A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotiation)
 * Each party then transmit its first session data message to authenticate (phase 2 - authentication and optional payload)
 
-After a cryptographic session has been established with a corresponding set of shared session keys, the protocol behaves
-identically any mode. Session negotiation, however, will use a different trust anchor mechanism to authenticate the remote
-endpoint and perform key derivation. These three modes are described in the following three sections.
+Only phase 1 differs depending on the mode. The authentication in phase 2 and the session itself are identical in all
+handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
+the benefits and short-comings of each mode.
 
 ## Mode #1: shared secrets
 
-In this mode, each pair of parties that wish to communication have a shared-secret that both parties possess prior to
-establishing a communication session. This secret may be installed manually, or distributed securely using emerging
-technologies like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel
-possesses the same key. This shared secret is then used to establish a set of session session keys, which are then used
-to authenticate the remote endpoint and transfer secure data.
+In this mode, each pair of parties that wishes to communicate must have a shared-secret that both parties possess prior 
+to establishing a session. This secret may be installed manually, or distributed securely using emerging technologies 
+like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel possesses
+the same key. This shared secret, along with a random nonce from each endpoint, is then used to establish a set of 
+shared session keys.
 
 This mode of operation uses symmetric cryptography only, and consequently has a number of advantages:
 
@@ -204,14 +205,16 @@ This mode of operation uses symmetric cryptography only, and consequently has a 
 
 * It can be implemented on deeply embedded systems that might not be powerful enough for asymmetric cryptography.
 
-* To the best of current knowledge, it remains secure when a practical quantum computer is developed.
+* It remains secure when a practical quantum computer is developed. The effectiveness of 256-bit shared-secrets will be
+reduced to 128-bits by Grover's algorithm. All other modes will be vulnerable until practical quantum-resistant 
+public-key algorithms are available. 
 
-There are, however, considerable challenges:
+Despite these advantages, there are considerable challenges:
 
 * The shared secret must leave the secure location where it is generated to be shared with the other party. This likely
 entrusts secrets to additional staff members or contractors in the absence of something like QKD.
 
-* There is no support for perfect forward secrecy (PFS) since there are no ephemeral keys exchanged. If a shared secret is
+* There is no support for perfect forward secrecy since there are no ephemeral keys exchanged. If a shared secret is
 ever disclosed, any saved traffic can be decrypted.
 
 * If multiple masters are needed for redundancy purposes, the keys must be shared with each master increasing the attack 
