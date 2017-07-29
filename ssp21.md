@@ -97,10 +97,10 @@ packet order over (TCP) and a more tolerant mode that allows any new (non-replay
 ## Session message time-to-live (TTL)
 
 Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could 
-occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. 
-To eliminate this mode of attack, both parties record their own relative time-base during session establishment.
-Session messages then include a timestamp in milliseconds since this common time point that indicates the last possible
-moment when the packet should be accepted.
+occur if an attacker held back one or more authenticated control messages and then replayed them in rapid succession. 
+To reduce the effectiveness of this mode of attack, both parties record their relative time base during session 
+negotiation. Session messages then include a timestamp in milliseconds since the beginning of the session 
+that indicates the last possible moment when the packet should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency of
 particular networks. As relative clock drift can occur, sessions may need to be renegotiated more frequently or the
@@ -110,16 +110,23 @@ configurable validity window of session messages increased appropriately.
 
 The secure operation of SCADA systems does not require confidentiality of session traffic under all, or even most, 
 circumstances. Reasons to prefer unencrypted sessions include the ability to inspect traffic with IDS/IPS and denying a 
-potentially opaque tunnel usable by an attacker.
+potentially opaque tunnel to an adversary.
 
 Certain systems may exchange sensitive information and require session confidentiality. SSP21 shall use a security 
 suite specification and encodings that allow for encrypted sessions in the future. The session key exchange mechanism 
 shall support forward secrecy.
 
-## Support bump in the wire retrofits
+## Perfect Forward Secrecy
 
-The outstation implementations of the protocol shall be capable of being deployed as a bump in the wire (BitW) or 
-integrated into endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW 
+The protocol shall provide a mode that provides perfect forward secrecy. Namely, if an adversary compromises the 
+long-term private key of an endpoint, they shall not be able to decrypt past sessions.
+ 
+This mode is only useful for encrypted session modes, and does not offer any benefit to authentication-only modes.
+
+## Support bump-in-the-wire retrofits
+
+Outstation implementations of the protocol shall be capable of being deployed as a bump-in-the-wire (BitW) or 
+integrated into endpoints as a bump-in-the-stack (BitS).  BitS integration is preferred, but it is understood that BitW 
 implementations are necessary to retrofit legacy components during transitions.
 
 Requiring a BitW implementation only for outstations and not masters simplifies requirements as the BitW needn’t be 
