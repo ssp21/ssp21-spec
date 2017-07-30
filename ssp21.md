@@ -186,7 +186,7 @@ have roughly the same meaning, but certain fields are interpreted in different w
 has two request-response phases that can be roughly summarized as follows:
 
 * A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotiation)
-* Each party then transmit its first session data message to authenticate (phase 2 - authentication and optional payload)
+* Each party then transmits its first session data message to authenticate (phase 2 - authentication and optional payload)
 
 Only phase 1 differs depending on the mode. The authentication in phase 2 and the session itself are identical in all
 handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
