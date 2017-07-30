@@ -504,6 +504,9 @@ All KDFs take *salt* and *input_key_material* parameters and return two keys, ea
   KDF(salt, input_key_material) -> (key1, key2)
 ```
 
+The *salt* shall always be a publicly known, yet randomized value not controlled by either party independently. The
+*input_key_material* shall always be a private value known only to the two parties.
+
 #### HKDF
 
 The default KDF is HKDF defined in [RFC 5869](https://www.ietf.org/rfc/rfc5869.txt).
