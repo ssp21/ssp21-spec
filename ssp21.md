@@ -527,9 +527,14 @@ The pseudo code here offers the following simplifications from the generic const
   
 ### CSPRNG
 
-A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral 
-private keys. Any secure RNG will do, put implementers should err on the side of caution and prefer one from a proven 
-library.
+A cryptographically secure pseudorandom number generator (CSPRNG) is required for different functions, depending on the
+handshake mode:
+
+* the generation of ephemeral DH keys in all public-key modes that provide forward secrecy
+* the generation of random nonces in symmetric key modes and in public key modes that do not provide forward secrecy.
+
+Any secure RNG will do, put implementers should err on the side of caution and prefer one provided by the operating system, or a
+wrapper provided by a trusted library.
 
 ## Messages
 
