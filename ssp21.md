@@ -177,8 +177,9 @@ certificate sizes.
 # Handshake mode
 
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully 
-implemented, it is important to describe the trade-offs for the various handshake mode that are supported in the 
-protocol. This non-normative section of the document describes these modes at a high level.
+implemented, it is important to describe the trade-offs for the various handshake modes that are supported in the 
+protocol. Handshake modes may differ in either the way trust is anchored or in the security properties they provide. 
+This non-normative section of the document describes the relative pros and cons of each mode.
 
 SSP21 sends the same handshake messages, in the same order, regardless of the handshake mode specified. The messages 
 have roughly the same meaning, but certain fields are interpreted in different ways depending on the mode. The handshake
@@ -191,7 +192,7 @@ Only phase 1 differs depending on the mode. The authentication in phase 2 and th
 handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
 the benefits and short-comings of each mode.
 
-## Mode #1: shared secrets
+## Shared secrets
 
 In this mode, each pair of parties that wishes to communicate must have a shared-secret that both parties possess prior 
 to establishing a session. This secret may be installed manually, or distributed securely using emerging technologies 
@@ -223,7 +224,7 @@ surface and the risk of compromise, or the number of keys in the system must be 
 * Compromise of a field asset always requires that the channel be re-keyed. Full compromise of the master requires that the
 entire system be re-keyed.
 
-## Mode #2: asymmetric keys without an authority
+## Pre-shared public keys
 
 In this architecture, each communication node has an asymmetric public / private key pair. It is free to disseminate 
 the public key, and each node must possess the public key for every other node with which it communicates. It might
@@ -247,10 +248,10 @@ or installing an additional master public key on all outstations.
 
 SSP21 is able to operate without an authority by using the pre-shared key mode.
 
-## Mode #3: utility PKI
+## Public keys authenticated from a root certficate
 
-The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by an authority wholly owned
-and operated by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
+The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by a private authority controlled 
+by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
 key pair locally, never share the private key with another entity (human or machine), and can freely disseminate
 the public key for the  purposes of certificate generation. The primary role of any PKI is to reduce the complexity
 of key management by requiring parties to only place their trust in a central signing authority. The identity of all
