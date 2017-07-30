@@ -188,8 +188,8 @@ has two request-response phases that can be roughly summarized as follows:
 * A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotiation)
 * Each party then transmits its first session data message to authenticate (phase 2 - authentication and optional payload)
 
-Only phase 1 differs depending on the mode. The authentication in phase 2 and the session itself are identical in all
-handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
+Only phase 1 differs depending on the handshake mode. The authentication in phase 2 and the session itself are identical 
+in all handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
 the benefits and short-comings of each mode.
 
 ## Shared secrets
@@ -342,14 +342,18 @@ do the necessary encryption (which should normally be the case). -->
 
 # The Link Layer
 
-SSP21 specifies a two layer architecture for delivering secure data to the user layer. The link layer provides three
-features: 
+SSP21 specifies a two layer architecture for delivering secure data to the application layer. The link layer provides three
+services to the layers above it:
 
 * **Framing** - A procedure is defined to identify a frame from a stream of bytes.
 * **Addressing** - The frame contains source and destination addresses for the transmitter and receiver.
-* **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC). 
+* **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC).
 
-Since this functionality does not  have any cryptographic protections, it is designed with simplicity in mind and is
+The link-layer defined in this document should only be considered a default that can be deployed when useful. The core of
+SSP21 is the message-oriented cryptographic layer. Other layers, such as UDP, could provide all the required services
+provided by the link-layer.
+
+Since the link-layer does not  have any cryptographic protections, it is designed with simplicity in mind and is
 completely stateless.  The CRC is important at this layer to detect data corruption from random sources 
 (EMF, cosmic rays, etc).  This check is intended to prevent randomly corrupted payloads from  reaching the cryptographic
 layer. This prevents "tampering" false positives from occurring at the cryptographic layer which would require a 
