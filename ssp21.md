@@ -552,11 +552,11 @@ SSP21 uses a formal syntax to define the contents of messages. Using such a synt
 The SSP21 message syntax is similar to other message definition schemes such as ASN.1, but is specifically designed 
 for security-oriented applications instead of generic application layer messaging, namely:
 
-* The syntax is simple, limited, and only accomodates the requirements of this specification
-* Any given message has one and only one valid serialziation, similar to ASN.1 DER
-* String types are intentionally not provided as they tend to lead to abuse and vulnerabilties
-* The amount of memory a message will require to deserialize shall always be a static constant known at compile-time
-* Self-describing serialization is not an objective like the tag, length, value (TLV) serialization in ASN.1 BER or DER
+* The syntax is simple, limited, and only accomodates the requirements of this specification.
+* Any given message has one and only one valid serialziation, similar to ASN.1 DER.
+* String types are intentionally not provided as they tend to lead to abuse and vulnerabilties.
+* Self-describing serialization is not an objective like the tag, length, value (TLV) serialization in ASN.1 BER or DER.
+* The amount of memory a message will require to deserialize is always a constant known at compile-time.
 
 #### Structs
 
