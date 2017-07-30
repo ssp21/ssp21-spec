@@ -538,15 +538,27 @@ wrapper provided by a trusted library.
 
 ## Messages
 
-Every message at the cryptographic layer begins with a one octet message type identifier. The remaining octets are 
-interpreted according the defined structure of that type.
+Every message at the cryptographic layer begins with a one octet message type identifier called the *Function* enumeration. The
+remaining octets are interpreted according the defined structure of that type.
 
 ### Syntax
 
-SSP21 uses a lightweight structural syntax to define the contents of messages
-and to specify how the message shall be serialized. These definitions
-are meant to precisely define the contents of a message, and allow implementations
-to use code generation.
+SSP21 uses a formal syntax to define the contents of messages. Using such a syntax has a number of advantages:
+
+* The syntax separates the contents of messages from how they are serialized on the wire
+* It ensures that messages are always defined in a consistent way and composed from the same primitives
+* Code generation can be more easily leveraged to create encoders and decoders
+
+The SSP21 message syntax is similar to other message definition schemes such as ASN.1, but is specifically designed 
+for security-oriented applications instead of generic application layer messaging, namely:
+
+* The syntax is simple, limited, and only accomodates the requirements of this specification
+* Any given message has one and only one valid serialziation, similar to ASN.1 DER
+* String types are intentionally not provided as they tend to lead to abuse and vulnerabilties
+* The amount of memory a message will require to deserialize shall always be a static constant known at compile-time
+* Self-describing serialization is not an objective like the tag, length, value (TLV) serialization in ASN.1 BER or DER
+
+#### Structs
 
 Groupings of fields are called Structs. Structs use the following syntax:
 
