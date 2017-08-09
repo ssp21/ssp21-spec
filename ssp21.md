@@ -1072,18 +1072,18 @@ message SessionData {
 
 SSP21 exchanges the same handshake messages in the same order regardless of what *handshake security mode* is in use.
 This handshake always has two phases. Only the interpretation of certain fields and the cryptographic operations used to
-derive sessions keys differ between modes.  
+derive sessions keys differs between modes.
 
 * Key Negotiation (1-RTT) 
-  * The initiator sends a *RequestHandshakeBegin* message
-  * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
-  * If no error occurs, both parties derive a pair of session keys in accordance with the modes and algorithms specified. 
+    * The initiator sends a *RequestHandshakeBegin* message
+    * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
+    * If no error occurs, both parties derive a pair of session keys in accordance with the modes and algorithms specified. 
 * Authentication (1-RTT)
-  * The initiator sends the first user message with nonce == 0. The payload may be empty.
-  * The responder authenticates the user data message. If authentication succeeds, the responder replies with a user
-  data message with nonce == 0. The payload may be empty.                
-  * The initiator authenticates the user data message.
-  * Both sides replace any existing session with the newly authenticated session.
+    * The initiator sends the first *UserData* message with nonce == 0. The payload may be empty.
+    * The responder authenticates the *UserData* message. If authentication succeeds, the responder replies with a user
+data message with nonce == 0. The payload may be empty.
+    * The initiator authenticates the *UserData* message.
+    * Both parties replace any existing session with the newly authenticated session.
                   
 A success handshake involves the exchange of the following four messages:
 
