@@ -248,7 +248,7 @@ or installing an additional master public key on all outstations.
 
 SSP21 is able to operate without an authority by using the pre-shared key mode.
 
-## Public keys authenticated from a root certficate
+## Public keys authenticated from a root certificate
 
 The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by a private authority controlled 
 by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
