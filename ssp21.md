@@ -859,19 +859,25 @@ enum SessionMode {
 
 * **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
-##### Certificate Mode
+##### Handshake Security Mode
 
-The *Certificate Mode* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
-each other during the handshake.
+The *Handshake Security Mode* enumeration specifies how the initiator and responder authenticate each other. Each mode
+shall interpret certain fields in the handshake messages in different ways.
 
 ```
-enum CertificateMode {
-    PRESHARED_KEYS : 0
+enum HandshakeSecurityMode {
+    SHARED_SECRET : 0
+    PRESHARED_DH_KEYS : 1
+    ICF_CHAIN : 2
 }
 ```
 
-* **PRESHARED_KEYS** - No certificates are exchanged. Parties use each others preshared public static DH keys to
-authenticate. The *certificates* field in handshake messages will be left empty.
+<!-- TODO: link the handshake section -->
+**Note: Refer to the handshake section for how each mode shall interpret handshake message fields.**
+
+* **SHARED_SECRET** - Both parties possess a shared-secret.
+* **PRESHARED_DH_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
+* **ICF_CHAIN** - Both parties use an authority certificate to authenticate each other's public DH key contained in a certificate.
 
 ##### Handshake Error
 
