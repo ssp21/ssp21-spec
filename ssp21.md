@@ -1070,18 +1070,28 @@ message SessionData {
 
 ## Key Agreement Handshake
 
-Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
-the handshake and both parities. The SSP21 handshake most closely resembles the following message pattern from Noise:
+SSP21 exchanges the same handshake messages in the same order regardless of what *handshake security mode* is in use.
+This handshake always has two phases. Only the interpretation of certain fields and the cryptographic operations used to
+derive sessions keys differ between modes.  
 
-```
--> e, s
-<- e, s, dhee, dhes, dhse
-```
+* Key Negotiation (1-RTT) 
+  * The initiator sends a *RequestHandshakeBegin* message
+  * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
+  * If no error occurs, both parties derive a pair of session keys in accordance with the modes and algorithms specified. 
+* Authentication (1-RTT)
+  * The initiator sends the first user message with nonce == 0. The payload may be empty.
+  * The responder authenticates the user data message. If authentication succeeds, the responder replies with a user
+  data message with nonce == 0. The payload may be empty.                
+  * The initiator authenticates the user data message.
+  * Both sides replace any existing session with the newly authenticated session.
+                  
+A success handshake involves the exchange of the following four messages:
 
-It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
-handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
-pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
-cryptographic community.
+![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
+
+The responder may signal an error after receiving a *Request Handshake Begin*:
+
+![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
 
 ### Timing Considerations
 
@@ -1221,20 +1231,6 @@ in the KDF.
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
  relative time bases, is at least accurate to within this margin when the session is first initialized.
  
-### Message Exchanges
-
-A success handshake involves the exchange of the following four messages:
-
-![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
-
-The responder may signal an error after receiving a *Request Hanshake Begin*:
-
-![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
-
-The responder could also indicate an error in *Request Hanshake Auth*:
-
-![Error in Request Handshake Auth](msc/handshake_error2.png){#fig:handshake_error2}
-
 ## Sessions
 
 ### Initialization
