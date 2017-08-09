@@ -786,13 +786,13 @@ enum Function {
 }
 ```
 
-##### Nonce Mode
+##### Session Nonce Mode
 
-The *Nonce Mode* enumeration specifies how the nonce (message counter) is verified to protect
+The *Session Nonce Mode* enumeration specifies how the nonce (aka message counter) is verified to protect
 packets from replay.
 
 ```
-enum NonceMode {
+enum SessionNonceMode {
     INCREMENT_LAST_RX : 0
     GREATER_THAN_LAST_RX : 1
 }
@@ -807,16 +807,20 @@ valid nonce. This mode is intended to be used in session-less environments like 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
 
-##### DH Mode
+##### Handshake Ephemeral Mode
 
-The *DH Mode* enumeration specifies which Diffie-Hellman function will be used during the handshake to derive key
-material.
+The *HandshakeEphemeralMode* enumeration specifies what the contents of the *ephemeral_data* field of the handshake 
+request/response contain.
 
 ```
-enum DHMode {
+enum HandshakeEphemeralMode {
     X25519 : 0
+    NONCE_16 : 1
 }
 ```
+
+* **X25519** - A x25519 DH public key
+* **NONCE_16** - A 16-byte (128-bit) random nonce
 
 ##### Handshake Hash
 
@@ -927,7 +931,7 @@ message contains a specification of all of the abstract algorithms to be used du
 
 ```
 struct CryptoSpec {
-   nonce_mode               : enum::NonceMode
+   session_nonce_mode       : enum::SessionNonceMode
    handshake_dh             : enum::DHMode
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
@@ -935,11 +939,11 @@ struct CryptoSpec {
 }
 ```
 
-* **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
+* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
  security properties.
 
-* **handshake_dh** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
-the expected length of *ephemeral_public_key*.
+* **handshake_ephemeral** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
+the expected length of *ephemeral_data*.
 
 * **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
 
