@@ -807,13 +807,13 @@ valid nonce. This mode is intended to be used in session-less environments like 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
 
-##### Handshake Ephemeral Mode
+##### Handshake Ephemeral
 
-The *HandshakeEphemeralMode* enumeration specifies what the contents of the *ephemeral_data* field of the handshake 
+The *HandshakeEphemeral* enumeration specifies what the contents of the *ephemeral_data* field of the handshake 
 request/response contain.
 
 ```
-enum HandshakeEphemeralMode {
+enum HandshakeEphemeral {
     X25519 : 0
     NONCE_16 : 1
 }
@@ -938,7 +938,7 @@ message contains a specification of all of the abstract algorithms to be used du
 ```
 struct CryptoSpec {
    session_nonce_mode       : enum::SessionNonceMode
-   handshake_dh             : enum::DHMode
+   handshake_ephemeral      : enum::HandshakeEphemeral
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
    session_mode             : enum::SessionMode
@@ -975,9 +975,9 @@ message RequestHandshakeBegin {
    version                  : U16
    spec                     : struct::CryptoSpec
    constraints              : struct::Constraints
-   certificate_mode         : enum::CertificateMode
-   ephemeral_public_key     : SeqOf[U8]
-   certificates             : SeqOf[struct::CertificateEnvelope](max = 6)
+   security_mode            : enum::HandshakeSecurityMode
+   ephemeral_data           : SeqOf[U8]
+   mode_data                : SeqOf[U8]
 }
 ```
 
@@ -994,13 +994,14 @@ impact the version field ---->
 
 * **constraints** - Struct that specifies constraints on the session.
 
-* **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
-*PRESHARED_KEYS*, the *certificates* field shall be empty.
+* **security_mode** - Determines how the *ephemeral_data* and *mode_data* fields are interpreted. Determines how session
+keys are derived, and thus how authentication occurs.
 
-* **ephemeral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
-*handshake_dh_mode*.
+* **ephemeral_data** - An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
+and possibly constrained by the *security_mode*. This field is never empty.
 
-* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field.
+* **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
+depends on the mode.
 
 ##### Reply Handshake Begin
 
@@ -1010,15 +1011,16 @@ case it responds with *Reply Handshake Error*.
 ```
 message ReplyHandshakeBegin {
    function : enum::Function::REPLY_HANDSHAKE_BEGIN
-   ephemeral_public_key: SeqOf[U8]
-   certificates: SeqOf[struct::CertificateEnvelope](max = 6)
+   ephemeral_data: SeqOf[U8]
+   mode_data: SeqOf[U8]
 }
 ```
 
-* **ephemeral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
+* **ephemeral_data** -  An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
+and possibly constrained by the *security_mode*. This field is never empty.
 
-* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field
- transmitted by the master.
+* **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
+depends on the mode.
 
 ##### Reply Handshake Error
 
