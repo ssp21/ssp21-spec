@@ -524,7 +524,7 @@ The pseudo code here offers the following simplifications from the generic const
   
 ### CSPRNG
 
-A cryptographically secure pseudorandom number generator (CSPRNG) is required for different functions, depending on the
+A cryptographically secure pseudo-random number generator (CSPRNG) is required for different functions, depending on the
 handshake mode:
 
 * the generation of ephemeral DH keys in all public-key modes that provide forward secrecy
@@ -549,9 +549,9 @@ SSP21 uses a formal syntax to define the contents of messages. Using such a synt
 The SSP21 message syntax is similar to other message definition schemes such as ASN.1, but is specifically designed 
 for security-oriented applications instead of generic application layer messaging, namely:
 
-* The syntax is simple, limited, and only accomodates the requirements of this specification.
-* Any given message has one and only one valid serialziation, similar to ASN.1 DER.
-* String types are intentionally not provided as they tend to lead to abuse and vulnerabilties.
+* The syntax is simple, limited, and only accommodates the requirements of this specification.
+* Any given message has one and only one valid serialization, similar to ASN.1 DER.
+* String types are intentionally not provided as they tend to lead to abuse and vulnerabilities.
 * Self-describing serialization is not an objective like the tag, length, value (TLV) serialization in ASN.1 BER or DER.
 * The amount of memory a message will require to deserialize is always a constant known at compile-time.
 
@@ -639,16 +639,16 @@ struct Intensity {
 }
 ```
 
-#### Bitfields
+#### Bit fields
 
-Bitfields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each
+Bit fields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each
 bit using the following syntax:
 
 ```
 bitfield <bitfield-name> { "name top bit", "name top bit - 1",  ... "name bottom bit" }
 ```
 
-Bitfields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
+Bit fields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
 names. Unspecified bits shall always be encoded as zero.  Parsers shall fail parsing if any unspecified bit is set in
 the input.
 
@@ -656,8 +656,8 @@ the input.
 bitfield Flags { "flag1", "flag2", "flag3" }
 ```
 
-The bitfield above with flag1 = true, flag2 = false, and flag3 = true would have a serialized representation of
-0b10100000 (0xA0). An example of input that would fail a parsing for this bitfield is 0b10100010 (0XA2).
+The bit-field above with flag1 = true, flag2 = false, and flag3 = true would have a serialized representation of
+0b10100000 (0xA0). An example of input that would fail a parsing for this bit field is 0b10100010 (0XA2).
 
 
 #### Sequences
