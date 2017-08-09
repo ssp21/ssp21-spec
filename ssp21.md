@@ -847,12 +847,12 @@ enum HandshakeKDF {
 
 * **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
 
-##### Session Mode
+##### Session Security Mode
 
-The *Session Mode* enumeration specifies the complete set of algorithms used to secure the session. 
+The *Session Mode* enumeration specifies the complete set of algorithms used to authenticate (and optionally encrypt) the session.
 
 ```
-enum SessionMode {
+enum SessionSecurityMode {
     HMAC-SHA256-16 : 0
 }
 ```
@@ -937,16 +937,13 @@ message contains a specification of all of the abstract algorithms to be used du
 
 ```
 struct CryptoSpec {
-   session_nonce_mode       : enum::SessionNonceMode
    handshake_ephemeral      : enum::HandshakeEphemeral
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
-   session_mode             : enum::SessionMode
+   session_nonce_mode       : enum::SessionNonceMode
+   session_security_mode    : enum::SessionSecurityMode
 }
 ```
-
-* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
- security properties.
 
 * **handshake_ephemeral** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
 the expected length of *ephemeral_data*.
@@ -955,7 +952,10 @@ the expected length of *ephemeral_data*.
 
 * **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
 
-  * **session_mode** - Specifies the full set of algorithms used to secure the session.
+* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
+ security properties.
+
+* **session_security_mode** - Specifies the full set of algorithms used to authenticate (and optionally encrypt) the session
 
 The message also includes some constraints on the session to be established.
 
