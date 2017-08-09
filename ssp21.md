@@ -425,13 +425,10 @@ specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
-* A single handshake pattern is used, therefore the concept of handshake patterns have been removed entirely.
-* Modifying Noise to support authentication only (handshake and session)
-* Message identifiers to make session renegotiation possible on serial networks
+* SSP21 has no concept of handshake patterns. A single handshake is used that provides the desired security properties.
+* SSP21 has support for authentication-only modes
 * Masters can specify sets of cryptographic algorithms
-* Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
-* Static public keys are always transmitted as part of a certificate
 
 ## Terminology
 
