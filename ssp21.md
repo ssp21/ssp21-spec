@@ -781,7 +781,7 @@ layer. The correct message-specific parser can then be invoked.
 enum Function {
     REQUEST_HANDSHAKE_BEGIN  : 0
     REPLY_HANDSHAKE_BEGIN    : 1
-    REQUEST_HANDSHAKE_AUTH   : 2
+    REPLY_HANDSHAKE_ERROR    : 2
     SESSION_DATA             : 3
 }
 ```
