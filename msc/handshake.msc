@@ -1,0 +1,23 @@
+# MSC for successful handshakes
+msc {
+
+  a [label="initiator"], b [label="responder"];
+
+  a=>b [ label = "Request Handshake Begin" ];
+  b=>a [ label = "Reply Handshake Begin" ];
+  |||;
+  a note b [ label = "initiator and responder derive session keys" ];
+  |||;
+  a=>b [ label = "Session Data (nonce == 0)" ];
+  b=>a [ label = "Session Data (nonce == 0)" ];
+  |||;
+  a note b [ label = "initiator and responder authenticate (user data optional)"];
+  |||;
+  |||;
+  a=>b [ label = "Session Data (nonce == 1)" ];
+  a=>b [ label = "Session Data (nonce == 2)" ];
+  b=>a [ label = "Session Data (nonce == 1)" ];
+  ...;
+  |||;
+  a note b [ label = "initiator and responder exchange user data asynchronously"];
+}

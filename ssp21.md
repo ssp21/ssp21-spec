@@ -1,11 +1,9 @@
 ---
 title:      'SSP21'
-
 author:
 - 'Adam Crain (jadamcrain@automatak.com)'
 - 'Rich Corrigan (RCorrigan@semprautilities.com)'
 - 'Daniel Michaud-Soucy (dmichaud-soucy@semprautilities.com)'
-
 date:       '05/19/17'
 ---
 
@@ -865,8 +863,6 @@ enum HandshakeError {
  
 * **UNSUPPORTED_CERTIFICATE_FEATURE** - The feature or specified algorithm in one of the certificates is not supported.
 
-* **AUTHENTICATION_ERROR** - The responder was unable to authenticate the initiator.
- 
 * **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
 
 #### Handshake Messages
@@ -896,7 +892,7 @@ the expected length of *ephemeral_public_key*.
 
 * **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
 
-  * **session_mode** - Specifies the full set of algorithms used to secure the session.
+* **session_mode** - Specifies the full set of algorithms used to secure the session.
 
 The message also includes some constraints on the session to be established.
 
@@ -963,9 +959,8 @@ message ReplyHandshakeBegin {
 
 ##### Reply Handshake Error
 
-The outstation can reply to a *Request Handshake Begin* or a *RequestHandshakeAuth* message with a 
-*Reply Handshake Error* message. This message is for debugging purposes only during commissioning and cannot be
-authenticated.
+The outstation shall reply to a *Request Handshake Begin* with a *Reply Handshake Error* message if an error occurs.
+This message is for debugging purposes only during commissioning and cannot be authenticated.
 
 ```
 message ReplyHandshakeError {
@@ -978,7 +973,14 @@ message ReplyHandshakeError {
 
 ##### Session Data
 
-Both parties transmit authenticated session data messages. The message uses the following sub-struct:
+Session data messages perform two functions:
+
+* They authenticate the initial handshake when transmitted with nonce == 0.
+
+* Any session message (including the initial authentication message) may also transfer authenticated (and possibly encrypted)
+user data to the other party.
+
+The message uses the following sub-fields:
 
 ```
 struct AuthMetadata {
@@ -1009,18 +1011,28 @@ message SessionData {
 
 ## Key Agreement Handshake
 
-Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
-the handshake and both parities. The SSP21 handshake most closely resembles the following message pattern from Noise:
+Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session, and authenticates
+both parties based on their long-term static DH keys. A successful handshake involves the exchange of the four messages
+depicted in figure @fig:handshake.
 
-```
--> e, s
-<- e, s, dhee, dhes, dhse
-```
+![Successful session establishment](msc/handshake.png){#fig:handshake}
 
-It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
-handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
-pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
-cryptographic community.
+The *Request Handshake Begin* and *Reply Handshake Begin* messages establish a new pair of session keys, but do not
+authenticate the parties to each other. Any previously existing session remains valid until each party receives a
+*Session Data* with nonce equal to zero and authenticated with the new session keys.
+
+Initiators and responders may optionally transfer user data in these initial *SessionData* messages. This mechanism
+effectively makes the handshake process a single round trip (1-RTT) request and response.  Certain implementations may
+not wish to transfer user data until fully authenticated. Such implementations may send zero-payload *SessionData* messages
+and remain wire-level compatible.
+
+Initiators and responders shall differentiate between *SessionData* messages for an established session and initial 
+authentication messages using the nonce. A *SessionData* for a previously authenticated session shall always use a nonce
+greater than zero, whereas the handshake *SessionData* message shall always use a nonce equal to zero.
+
+A previously valid session (keys, nonce values, start time, etc) shall remain active until a *SessionData* message 
+is received and authenticated using the new session keys. Implementations may wish to implement this behavior using
+two data structures, one for an *active* session and one for a *pending* session.
 
 ### Timing Considerations
 
@@ -1038,13 +1050,12 @@ to large session time manipulations
 
 ### Procedure 
 
-The following steps are performed during a successful handshake. The various errors that can occur and early handshake
-terminations are described in the state transition diagrams.
+The following steps are performed during a successful handshake.
 
 Notation:
 
-* Both parties maintain a *chaining key* denoted by the variable *ck* which is HASH_LEN in length.
-* The HASH() and HMAC() functions always refer to the hash function requested by the master.
+* Both parties maintain a *handshake hash* denoted by the variable *h* which is HASH_LEN in length.
+* The HASH() and HMAC() functions always refer to the hash function requested by the master in the *Request Handshake Begin* message
 * NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds. 
 
 DH keys in this section use the following abbreviations:
@@ -1060,101 +1071,85 @@ DH keys in this section use the following abbreviations:
 
 Symmetric keys in this this section use the following abbreviations:
 
-* ak - an *authentication key* used to authenticate both parties prior to final session key derivation
 * tx_sk - transmit session key
 * rx_sk - receive session key
 
 1. The initiator sends the *Request Handshake Begin* message to the responder containing an ephemeral public key, some
-additional metadata, and optional certificate data.
+additional metadata, and an optional certificate chain.
 
-    * The initiator sets the *chaining key* value to the hash of the entire transmitted message:
-        * *set ck = HASH(message)*
+    * The initiator sets *h* to the hash of the entire transmitted message:
+
+        * *set h = HASH(message)*
+
+    * The initiator records the time this request was transmitted for future use.
+        
+        * set *time_tx = NOW()*
 
 2. The responder receives the *Request Handshake Begin* message.
 
-    * If using certificates, the responder validates that it trusts the public key via the certificate data.
+    * The responder records the time this request was received for possible future use.
 
-    * The responder sets the *chaining key* value equal to the hash of the entire received message:
-        * *set ck = HASH(message)*
+        * set *session_start_time = NOW()*
+
+    * If using certificates, the responder validates that it trusts the initiator public key presented in the certificate chain.
+
+    * The responder sets *h* equal to the hash of the entire received message:
+
+        * *set h = HASH(message)*
 
     * The responder transmits a *Reply Handshake Begin* message containing its own ephemeral public DH key and
-certificate data as requested by the initiators's requested certificate mode.
+certificate chain as requested by the initiators's requested certificate mode.
  
-    * The responder mixes the entire transmitted message into the *chaining key*.
-        * *set ck = HASH(ck || message)*
+    * The responder mixes the entire transmitted message into *h*.
+        * *set h = HASH(ck || message)*
  
-    * The responder then derives a new *chaining key* and the *authentication key*:
+    * The responder then derives a pair of session keys and save saves them with the pending session.
         * *set dh1* = *DH(re_vk, ie_pk)*
         * *set dh2* = *DH(re_vk, is_pk)*
         * *set dh3* = *DH(rs_vk, ie_pk)*
-        * *set (ck, ak) = KDF(ck, dh1 || dh2 || dh3)* 
+        * *set (rx_sk, tx_sk) = KDF(ck, dh1 || dh2 || dh3)* 
  
 3. The initiator receives the *Reply Handshake Begin* message.
 
-    * If using certificates, the initiator validates that it trusts the public key via the certificate data.
+    * The initiator then transmits a *Session Data* message using the specified *Session Mode*, the staged tx_sk key, 
+any available user data, and nonce equal to 0. User data may be optionally included in the message.
 
-    * The initiator mixes the entire received message into the *chaining key*.
-        * set ck = HASH(ck || message)
-    
-    * The initiator then derives a new *chaining key* and the *authentication key*:
-        * *set dh1* = *DH(ie_vk, re_pk)*
-        * *set dh2* = *DH(is_vk, re_pk)*
-        * *set dh3* = *DH(ie_vk, rs_pk)*
-        * *set (ck, ak) = KDF(ck, dh1 || dh2 || dh3)*
-        
-    * The initiator transmits a *Request Handshake Auth* message setting *hmac = HMAC(ak, [0x01])*.
+    * The initiator starts the response timer.
 
-    * The initiator mixes the entire transmitted message into the chaining key.
-        * set ck = HASH(ck || message)
-    
-    * The initiator records the time this request was transmitted for future use.
-        
-        * set *time_tx = NOW()* 
-    
-4. The responder receives the *Request Handshake Auth* message, and verifies the HMAC.
-    
-    * The responder mixes the entire received message into the chaining key.
-        * set ck = HASH(ck || message)
+4. The responder receives the *SessionData* message with n == 0.
 
-    * The responder records the session initialization time:
-        * *time_session_init = NOW()*               
-    
-    * The responder transmits a *Reply Handshake Auth* message setting *hmac = HMAC(AK, [0x02])*.
-    
-    * The responder mixes the entire transmitted message into the chaining key.
-        * set ck = HASH(ck || message)
+    * The responder authenticates the message following the exact same procedure as normal session data, but uses
+the session keys, session initialization time, and session mode for the pending session. The nonce verification is skipped.
+
+    * The responder then transmits a *Session Data* message using the specified *Session Mode*, the staged tx_sk key, 
+and nonce equal to 0. User data may be optionally included in the message.
         
-    * The responder performs the final session key derivation by expanding the chaining key:
-        * set (rx_sk, tx_sk) = KDF(ck, [])
+    * The responder initializes the active session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce), replacing
+any existing session.
+
+
+5. The initiator receives the *Session Data* message with the nonce == 0.
+
+    * Note: User data messages for any previous session (nonce > 0) shall still be processed normally from this state.
+
+    * The initiator authenticates the Session Data message following the exact same procedure as normal session data, but uses
+the session keys, session initialization time, and session mode for the pending session. The nonce verification is skipped.
+
+    * The initiator initializes the active session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce), replacing
+any existing session.
         
-    * The responder initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce).
-    
-5.  The initiator receives the *Reply Handshake Auth*, and verifies the HMAC.
-    
-    * The initiator mixes the entire received message into the chaining key.
-        * set ck = HASH(ck || message)
- 
-    * The initiator estimates the session initialization time: 
-        * set *time_session_init = time_tx + (NOW() - time_tx)/2*
-    
-    * The initiator performs the final session key derivation by expanding the chaining key:
-        * set *(tx_sk, rx_sk) = KDF(ck, [])*
-    
-    * The initiator initializes the session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce). 
-    
 **Note:** See the section on session initialization for definitions of read, write, and verify_nonce functions.
         
 ### Security Properties
 
-If any of the following properties do not hold, then initiator and responder will not agree on the same *chaining_key* and
-*authentication_key*.
+If any of the following properties do not hold, then initiator and responder will not agree on the same pair of session keys.
 
 * If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
-the two parties will have differing handshake hashes which will produce different keys when feed into the KDF.
+the two parties will have different *h& values which will produce different keys when feed into the KDF.
 
 * If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
 transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
-in the KDF.
+using the KDF.
 
 * A MitM cannot tamper with the common *time_session_init* by delaying messages by more than whatever timeout setting
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
@@ -1162,17 +1157,9 @@ in the KDF.
  
 ### Message Exchanges
 
-A success handshake involves the exchange of the following four messages:
+The responder may signal an error after receiving a *Request Handshake Begin*:
 
-![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
-
-The responder may signal an error after receiving a *Request Hanshake Begin*:
-
-![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
-
-The responder could also indicate an error in *Request Hanshake Auth*:
-
-![Error in Request Handshake Auth](msc/handshake_error2.png){#fig:handshake_error2}
+![Error in Request Handshake Begin](msc/handshake_error.png){#fig:handshake_error}
 
 ## Sessions
 
@@ -1622,6 +1609,3 @@ I) Return the fully verified child body for the next iteration.
 4) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the *public_key_type* of the terminal certificate is not a DH key.
 
 5) Return the fully verified terminal certificate.
-
-
-
