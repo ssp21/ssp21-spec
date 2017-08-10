@@ -1071,47 +1071,40 @@ message SessionData {
 
 ## Key Agreement Handshake
 
-Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session, and authenticates
-both parties based on their long-term static DH keys. A successful handshake involves the exchange of the four messages
-depicted in figure @fig:handshake.
+Key agreement in SSP21 is a single request/response message exchange whereby both parties derive a common set of session
+keys using a procedure determined by the *handshake security mode* specified by the initiator. This initial message
+exchange does not authenticate the parties to each other. The parties must then prove to each-other that they derived
+the same keys by then transmitting an initial *SessionData* message in each direction. A successful handshake involves
+the exchange of the four messages depicted in figure @fig:handshake.
 
-<!--
-
-SSP21 exchanges the same handshake messages in the same order regardless of what *handshake security mode* is in use.
-This handshake always has two phases. Only the interpretation of certain fields and the cryptographic operations used to
-derive sessions keys differs between modes.
+The same messages are exchanged in the same order, regardless of which *handshake security mode* is in use. Only the
+interpretation of certain fields and the procedure for deriving sessions keys differs between modes. The authentication
+step is always identical for every mode. The steps for a successful handshake are summarized below.
 
 * Key Negotiation (1-RTT)
     * The initiator sends a *RequestHandshakeBegin* message
     * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
-    * If no error occurs, both parties derive a pair of session keys in accordance with the modes and algorithms specified.
+    * Both parties derive session keys according to the procedure specified by the initiator
+
 * Authentication (1-RTT)
-    * The initiator sends the first *UserData* message with nonce == 0. The payload may be empty.
-    * The responder authenticates the *UserData* message. If authentication succeeds, the responder replies with a user
-data message with nonce == 0. The payload may be empty.
-    * The initiator authenticates the *UserData* message.
-    * Both parties replace any existing session with the newly authenticated session.
+    * The initiator sends a *UserData* message with nonce == 0.
+    * The responder authenticates the *UserData* message, and replies with a *UserData* data message with nonce == 0.
 
--->
-
-![Successful session establishment](msc/handshake.png){#fig:handshake}
-
-The *Request Handshake Begin* and *Reply Handshake Begin* messages establish a new pair of session keys, but do not
-authenticate the parties to each other. Any previously existing session remains valid until each party receives a
-*Session Data* with nonce equal to zero and authenticated with the new session keys.
-
-Initiators and responders may optionally transfer user data in these initial *SessionData* messages. This mechanism
-effectively makes the handshake process a single round trip (1-RTT) request and response.  Certain implementations may
-not wish to transfer user data until fully authenticated. Such implementations may send zero-payload *SessionData* messages
-and remain wire-level compatible.
+Any previously existing session remains valid until each party receives a *Session Data* with nonce equal to zero and
+authenticated with the new session key. Initiators and responders may optionally transfer user data in these initial
+*SessionData* messages. This mechanism effectively makes the handshake process a single round trip (1-RTT) request and
+response.  Certain implementations may not wish to transfer user data until fully authenticated. Such implementations
+may send zero-payload *SessionData* messages and remain wire-level compatible.
 
 Initiators and responders shall differentiate between *SessionData* messages for an established session and initial 
-authentication messages using the nonce. A *SessionData* for a previously authenticated session shall always use a nonce
-greater than zero, whereas the handshake *SessionData* message shall always use a nonce equal to zero.
+authentication messages using the nonce. A *SessionData* message for a previously authenticated session shall always
+use a nonce greater than zero, whereas the handshake *SessionData* message shall always use a nonce equal to zero.
 
-A previously valid session (keys, nonce values, start time, etc) shall remain active until a *SessionData* message 
+A previously valid session (keys, nonce values, start time, etc) shall remain active until a *SessionData* message
 is received and authenticated using the new session keys. Implementations may wish to implement this behavior using
 two data structures, one for an *active* session and one for a *pending* session.
+
+![Successful session establishment](msc/handshake.png){#fig:handshake}
 
 ### Timing Considerations
 
@@ -1124,8 +1117,8 @@ configured response timeout for initiator.
 All initiator implementations shall implement a response timeout to the handshake message(s). This timeout shall default
 to 2 seconds. If a timeout occurs before receiving a valid response, the current handshake attempt shall be aborted.
 This ensures that attackers cannot skew the common time base by more than this timeout parameter. Implementations should
-enforce a relatively low maximum value for this parameter to ensure that users do not accidently deploy systems vulnerable
-to large session time manipulations
+enforce a relatively low maximum value for this parameter to ensure that users do not accidentally deploy systems
+vulnerable to large session time manipulations
 
 ### Procedure 
 
