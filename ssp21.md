@@ -39,7 +39,7 @@ with provably constant-time implementations should be preferred.
 
 ## Flexible Basis of trust
 
-SSP21 shall allow for trust to be anchored in three primary key management domains:
+SSP21 shall allow for trust to be anchored in multiple ways, including:
 
 * Shared secrets, i.e. symmetric cryptography
 * Shared public keys, i.e. key-server style key management based on asymmetric cryptography
@@ -90,18 +90,17 @@ particular protocol is outside the scope of SSP21.
 ## Protection from replay
 
 Both endpoints of the session shall be able to detect replayed session messages. Although the protocol needs to be 
-secure from replay, it does not necessarily need to ensure that all messages are delivered in order, as SCADA protocols
-like DNP3 automatically handle retries at a higher level. The protocol will support two modes: one that strictly
-enforces packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial
-or UDP. 
+secure from replay, it does not necessarily need to ensure that all messages are delivered. SCADA protocols such as
+DNP3 automatically handle retries at a higher level. The protocol will support two modes: one that strictly enforces
+packet order over (TCP) and a more tolerant mode that allows any new (non-replayed) packet to pass over serial or UDP. 
 
 ## Session message time-to-live (TTL)
 
 Since SSP21 is designed to protect control protocols with particular timing constraints, undesirable behavior could 
-occur if an attacker held back a series of authenticated control messages and then replayed them in rapid succession. 
-To eliminate this mode of attack, both parties record their own relative time-base during session establishment.
-Session messages then include a timestamp in milliseconds since this common time point that indicates the last possible
-moment when the packet should be accepted.
+occur if an attacker held back one or more authenticated control messages and then replayed them in rapid succession. 
+To reduce the effectiveness of this mode of attack, both parties record their relative time base during session 
+negotiation. Session messages then include a timestamp in milliseconds since the beginning of the session 
+that indicates the last possible moment when the packet should be accepted.
 
 Implementations will have to make these timing parameters configurable so that they can be tuned for the latency of
 particular networks. As relative clock drift can occur, sessions may need to be renegotiated more frequently or the
@@ -111,16 +110,23 @@ configurable validity window of session messages increased appropriately.
 
 The secure operation of SCADA systems does not require confidentiality of session traffic under all, or even most, 
 circumstances. Reasons to prefer unencrypted sessions include the ability to inspect traffic with IDS/IPS and denying a 
-potentially opaque tunnel usable by an attacker.
+potentially opaque tunnel to an adversary.
 
 Certain systems may exchange sensitive information and require session confidentiality. SSP21 shall use a security 
 suite specification and encodings that allow for encrypted sessions in the future. The session key exchange mechanism 
 shall support forward secrecy.
 
-## Support bump in the wire retrofits
+## Perfect Forward Secrecy
 
-The outstation implementations of the protocol shall be capable of being deployed as a bump in the wire (BitW) or 
-integrated into endpoints as a bump in the stack (BitS).  BitS integration is preferred, but it is understood that BitW 
+The protocol shall provide a mode that provides perfect forward secrecy. Namely, if an adversary compromises the 
+long-term private key of an endpoint, they shall not be able to decrypt past sessions.
+ 
+This mode is only useful for encrypted session modes, and does not offer any benefit to authentication-only modes.
+
+## Support bump-in-the-wire retrofits
+
+Outstation implementations of the protocol shall be capable of being deployed as a bump-in-the-wire (BitW) or 
+integrated into endpoints as a bump-in-the-stack (BitS).  BitS integration is preferred, but it is understood that BitW 
 implementations are necessary to retrofit legacy components during transitions.
 
 Requiring a BitW implementation only for outstations and not masters simplifies requirements as the BitW needn’t be 
@@ -152,8 +158,9 @@ squelch a reply from a remote by inappropriately using the channel.
 
 ## Low overhead
 
-Security is not a zero-cost protocol feature. Inevitably adding a security sub-layer will require more bandwidth, 
-increase latency, and put a computational burden on endpoints. SSP21 will endeavor to minimize these overheads.
+Security is not a zero-cost protocol feature. Inevitably adding a security sub-layer will require a few more bytes 
+on the wire, increase latency, and put a computational burden on endpoints. SSP21 will endeavor to minimize these 
+overheads and provide modes with varying requirements on hardware.
 
 * **reduced latency** – BitS implementations have a significant advantage in this regard over BitW. HMAC hold back 
 can double latencies in BitW integrations as the entire packet must be received and verified before the first payload 
@@ -167,30 +174,31 @@ BitS integration may be able to remove redundant layers provided by both the SSP
 An efficient certificate format that utilizes Elliptic Curve Cryptography (ECC) public keys will be used to reduce
 certificate sizes.
 
-# Trust anchor mode
+# Handshake mode
 
 While the primary aim of this specification is describe the protocol in sufficient detail that it can be faithfully 
-implemented, it is important to describe the tradeoffs for the various modes of operation that are supported in the protocol. This
-non-normative section of the document describes these modes and how they are harmonized at a high level.
+implemented, it is important to describe the trade-offs for the various handshake modes that are supported in the 
+protocol. Handshake modes may differ in either the way trust is anchored or in the security properties they provide. 
+This non-normative section of the document describes the relative pros and cons of each mode.
 
-SSP21 sends the same handshake messages, in the same order, regardless of the anchor mode is in use. The messages have roughly the 
-same meaning, but certain fields are interpreted in different ways depending on the active mode. The handshake has two request-response 
-phases that can be roughly summarized as follows:
+SSP21 sends the same handshake messages, in the same order, regardless of the handshake mode specified. The messages 
+have roughly the same meaning, but certain fields are interpreted in different ways depending on the mode. The handshake
+has two request-response phases that can be roughly summarized as follows:
 
-* A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotia
-* Each party then transmit its first session data message to authenticate (phase 2 - authentication and optional payload)
+* A single round-trip request/response (1-RTT) to perform key negotiation (phase 1 - key negotiation)
+* Each party then transmits its first session data message to authenticate (phase 2 - authentication and optional payload)
 
-After a cryptographic session has been established with a corresponding set of shared session keys, the protocol behaves
-identically any mode. Session negotiation, however, will use a different trust anchor mechanism to authenticate the remote
-endpoint and perform key derivation. These three modes are described in the following three sections.
+Only phase 1 differs depending on the handshake mode. The authentication in phase 2 and the session itself are identical 
+in all handshake modes. The modes are described informally in the following sections, mostly for the purposes of analyzing 
+the benefits and short-comings of each mode.
 
-## Mode #1: shared secrets
+## Shared secrets
 
-In this mode, each pair of parties that wish to communication have a shared-secret that both parties possess prior to
-establishing a communication session. This secret may be installed manually, or distributed securely using emerging
-technologies like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel
-possesses the same key. This shared secret is then used to establish a set of session session keys, which are then used
-to authenticate the remote endpoint and transfer secure data.
+In this mode, each pair of parties that wishes to communicate must have a shared-secret that both parties possess prior 
+to establishing a session. This secret may be installed manually, or distributed securely using emerging technologies 
+like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel possesses
+the same key. This shared secret, along with a random nonce from each endpoint, is then used to establish a set of 
+shared session keys.
 
 This mode of operation uses symmetric cryptography only, and consequently has a number of advantages:
 
@@ -198,14 +206,16 @@ This mode of operation uses symmetric cryptography only, and consequently has a 
 
 * It can be implemented on deeply embedded systems that might not be powerful enough for asymmetric cryptography.
 
-* To the best of current knowledge, it remains secure when a practical quantum computer is developed.
+* It remains secure when a practical quantum computer is developed. The effectiveness of 256-bit shared-secrets will be
+reduced to 128-bits by Grover's algorithm. All other modes will be vulnerable until practical quantum-resistant 
+public-key algorithms are available. 
 
-There are, however, considerable challenges:
+Despite these advantages, there are considerable challenges:
 
 * The shared secret must leave the secure location where it is generated to be shared with the other party. This likely
 entrusts secrets to additional staff members or contractors in the absence of something like QKD.
 
-* There is no support for perfect forward secrecy (PFS) since there are no ephemeral keys exchanged. If a shared secret is
+* There is no support for perfect forward secrecy since there are no ephemeral keys exchanged. If a shared secret is
 ever disclosed, any saved traffic can be decrypted.
 
 * If multiple masters are needed for redundancy purposes, the keys must be shared with each master increasing the attack 
@@ -214,7 +224,7 @@ surface and the risk of compromise, or the number of keys in the system must be 
 * Compromise of a field asset always requires that the channel be re-keyed. Full compromise of the master requires that the
 entire system be re-keyed.
 
-## Mode #2: asymmetric keys without an authority
+## Pre-shared public keys
 
 In this architecture, each communication node has an asymmetric key pair. It is free to disseminate the public key, and
 each node must possess the public key for every other node with which it communicates. It might be pre-configured with
@@ -237,10 +247,10 @@ or installing an additional master public key on all outstations.
 
 SSP21 is able to operate without an authority by using the pre-shared key mode.
 
-## Mode #3: utility PKI
+## Public keys authenticated from a root certificate
 
-The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by an authority wholly owned
-and operated by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
+The recommended mode for managing trust is the PKI mode. In this mode, trust is anchored by a private authority controlled 
+by the utility.  Ideally, SCADA masters and field assets (RTUs, gateways, IEDs, etc.) generate a
 key pair locally, never share the private key with another entity (human or machine), and can freely disseminate
 the public key for the  purposes of certificate generation. The primary role of any PKI is to reduce the complexity
 of key management by requiring parties to only place their trust in a central signing authority. The identity of all
@@ -331,14 +341,18 @@ do the necessary encryption (which should normally be the case). -->
 
 # The Link Layer
 
-SSP21 specifies a two layer architecture for delivering secure data to the user layer. The link layer provides three
-features: 
+SSP21 specifies a two layer architecture for delivering secure data to the application layer. The link layer provides three
+services to the layers above it:
 
 * **Framing** - A procedure is defined to identify a frame from a stream of bytes.
 * **Addressing** - The frame contains source and destination addresses for the transmitter and receiver.
-* **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC). 
+* **Error detection** - All of the header fields and payload are covered by a cyclic redundancy check (CRC).
 
-Since this functionality does not  have any cryptographic protections, it is designed with simplicity in mind and is
+The link-layer defined in this document should only be considered a default that can be deployed when useful. The core of
+SSP21 is the message-oriented cryptographic layer. Other layers, such as UDP, could provide all the required services
+provided by the link-layer.
+
+Since the link-layer does not  have any cryptographic protections, it is designed with simplicity in mind and is
 completely stateless.  The CRC is important at this layer to detect data corruption from random sources 
 (EMF, cosmic rays, etc).  This check is intended to prevent randomly corrupted payloads from  reaching the cryptographic
 layer. This prevents "tampering" false positives from occurring at the cryptographic layer which would require a 
@@ -410,13 +424,10 @@ specification is not required to understand or implement SSP21.
 
 Modifications to Noise include:
 
-* A single handshake pattern is used, therefore the concept of handshake patterns have been removed entirely.
-* Modifying Noise to support authentication only (handshake and session)
-* Message identifiers to make session renegotiation possible on serial networks
+* SSP21 has no concept of handshake patterns. A single handshake is used that provides the desired security properties.
+* SSP21 has support for authentication-only modes
 * Masters can specify sets of cryptographic algorithms
-* Selecting a specific handshake mode that will be used in all applications
 * Definitions for handshake payload data including relative time bases and certificate formats
-* Static public keys are always transmitted as part of a certificate
 
 ## Terminology
 
@@ -489,6 +500,9 @@ All KDFs take *salt* and *input_key_material* parameters and return two keys, ea
   KDF(salt, input_key_material) -> (key1, key2)
 ```
 
+The *salt* shall always be a publicly known, yet randomized value not controlled by either party independently. The
+*input_key_material* shall always be a private value known only to the two parties.
+
 #### HKDF
 
 The default KDF is HKDF defined in [RFC 5869](https://www.ietf.org/rfc/rfc5869.txt).
@@ -509,21 +523,38 @@ The pseudo code here offers the following simplifications from the generic const
   
 ### CSPRNG
 
-A cryptographically secure pseudorandom number generator (CSPRNG) is required for the selection of static and ephemeral 
-private keys. Any secure RNG will do, put implementers should err on the side of caution and prefer one from a proven 
-library.
+A cryptographically secure pseudo-random number generator (CSPRNG) is required for different functions, depending on the
+handshake mode:
+
+* the generation of ephemeral DH keys in all public-key modes that provide forward secrecy
+* the generation of random nonces in symmetric key modes and in public key modes that do not provide forward secrecy.
+
+Any secure RNG will do, put implementers should err on the side of caution and prefer one provided by the operating system, or a
+wrapper provided by a trusted library.
 
 ## Messages
 
-Every message at the cryptographic layer begins with a one octet message type identifier. The remaining octets are 
-interpreted according the defined structure of that type.
+Every message at the cryptographic layer begins with a one octet message type identifier called the *Function* enumeration. The
+remaining octets are interpreted according the defined structure of that type.
 
 ### Syntax
 
-SSP21 uses a lightweight structural syntax to define the contents of messages
-and to specify how the message shall be serialized. These definitions
-are meant to precisely define the contents of a message, and allow implementations
-to use code generation.
+SSP21 uses a formal syntax to define the contents of messages. Using such a syntax has a number of advantages:
+
+* The syntax separates the contents of messages from how they are serialized on the wire
+* It ensures that messages are always defined in a consistent way and composed from the same primitives
+* Code generation can be more easily leveraged to create encoders and decoders
+
+The SSP21 message syntax is similar to other message definition schemes such as ASN.1, but is specifically designed 
+for security-oriented applications instead of generic application layer messaging, namely:
+
+* The syntax is simple, limited, and only accommodates the requirements of this specification.
+* Any given message has one and only one valid serialization, similar to ASN.1 DER.
+* String types are intentionally not provided as they tend to lead to abuse and vulnerabilities.
+* Self-describing serialization is not an objective like the tag, length, value (TLV) serialization in ASN.1 BER or DER.
+* The amount of memory a message will require to deserialize is always a constant known at compile-time.
+
+#### Structs
 
 Groupings of fields are called Structs. Structs use the following syntax:
 
@@ -607,16 +638,16 @@ struct Intensity {
 }
 ```
 
-#### Bitfields
+#### Bit fields
 
-Bitfields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each
+Bit fields are single-byte members of *Structs* or *Messages* that encode up to eight boolean values, one value for each
 bit using the following syntax:
 
 ```
 bitfield <bitfield-name> { "name top bit", "name top bit - 1",  ... "name bottom bit" }
 ```
 
-Bitfields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
+Bit fields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
 names. Unspecified bits shall always be encoded as zero.  Parsers shall fail parsing if any unspecified bit is set in
 the input.
 
@@ -624,8 +655,8 @@ the input.
 bitfield Flags { "flag1", "flag2", "flag3" }
 ```
 
-The bitfield above with flag1 = true, flag2 = false, and flag3 = true would have a serialized representation of
-0b10100000 (0xA0). An example of input that would fail a parsing for this bitfield is 0b10100010 (0XA2).
+The bit-field above with flag1 = true, flag2 = false, and flag3 = true would have a serialized representation of
+0b10100000 (0xA0). An example of input that would fail a parsing for this bit field is 0b10100010 (0XA2).
 
 
 #### Sequences
@@ -749,18 +780,18 @@ layer. The correct message-specific parser can then be invoked.
 enum Function {
     REQUEST_HANDSHAKE_BEGIN  : 0
     REPLY_HANDSHAKE_BEGIN    : 1
-    REQUEST_HANDSHAKE_AUTH   : 2
+    REPLY_HANDSHAKE_ERROR    : 2
     SESSION_DATA             : 3
 }
 ```
 
-##### Nonce Mode
+##### Session Nonce Mode
 
-The *Nonce Mode* enumeration specifies how the nonce (message counter) is verified to protect
+The *Session Nonce Mode* enumeration specifies how the nonce (aka message counter) is verified to protect
 packets from replay.
 
 ```
-enum NonceMode {
+enum SessionNonceMode {
     INCREMENT_LAST_RX : 0
     GREATER_THAN_LAST_RX : 1
 }
@@ -775,16 +806,20 @@ valid nonce. This mode is intended to be used in session-less environments like 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
 
-##### DH Mode
+##### Handshake Ephemeral
 
-The *DH Mode* enumeration specifies which Diffie-Hellman function will be used during the handshake to derive key
-material.
+The *HandshakeEphemeral* enumeration specifies what the contents of the *ephemeral_data* field of the handshake 
+request/response contain.
 
 ```
-enum DHMode {
+enum HandshakeEphemeral {
     X25519 : 0
+    NONCE_16 : 1
 }
 ```
+
+* **X25519** - A x25519 DH public key
+* **NONCE_16** - A 16-byte (128-bit) random nonce
 
 ##### Handshake Hash
 
@@ -811,31 +846,37 @@ enum HandshakeKDF {
 
 * **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
 
-##### Session Mode
+##### Session Security Mode
 
-The *Session Mode* enumeration specifies the complete set of algorithms used to secure the session. 
+The *Session Mode* enumeration specifies the complete set of algorithms used to authenticate (and optionally encrypt) the session.
 
 ```
-enum SessionMode {
+enum SessionSecurityMode {
     HMAC-SHA256-16 : 0
 }
 ```
 
 * **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
-##### Certificate Mode
+##### Handshake Security Mode
 
-The *Certificate Mode* enumeration specifies what type of certificate will be exchanged by both parties to authenticate
-each other during the handshake.
+The *Handshake Security Mode* enumeration specifies how the initiator and responder authenticate each other. Each mode
+shall interpret certain fields in the handshake messages in different ways.
 
 ```
-enum CertificateMode {
-    PRESHARED_KEYS : 0
+enum HandshakeSecurityMode {
+    SHARED_SECRET : 0
+    PRESHARED_DH_KEYS : 1
+    ICF_CHAIN : 2
 }
 ```
 
-* **PRESHARED_KEYS** - No certificates are exchanged. Parties use each others preshared public static DH keys to
-authenticate. The *certificates* field in handshake messages will be left empty.
+<!-- TODO: link the handshake section -->
+**Note: Refer to the handshake section for how each mode shall interpret handshake message fields.**
+
+* **SHARED_SECRET** - Both parties possess a shared-secret.
+* **PRESHARED_DH_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
+* **ICF_CHAIN** - Both parties use an authority certificate to authenticate each other's public DH key contained in a certificate.
 
 ##### Handshake Error
 
@@ -895,25 +936,25 @@ message contains a specification of all of the abstract algorithms to be used du
 
 ```
 struct CryptoSpec {
-   nonce_mode               : enum::NonceMode
-   handshake_dh             : enum::DHMode
+   handshake_ephemeral      : enum::HandshakeEphemeral
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
-   session_mode             : enum::SessionMode
+   session_nonce_mode       : enum::SessionNonceMode
+   session_security_mode    : enum::SessionSecurityMode
 }
 ```
 
-* **nonce_mode** - Identifies one of two modes for verifying messages against replay with differing
- security properties.
-
-* **handshake_dh** - Specifies the DH algorithm to be used during the handshake, and implicitly determines 
-the expected length of *ephemeral_public_key*.
+* **handshake_ephemeral** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
+the expected length of *ephemeral_data*.
 
 * **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
 
 * **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
 
-  * **session_mode** - Specifies the full set of algorithms used to secure the session.
+* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
+ security properties.
+
+* **session_security_mode** - Specifies the full set of algorithms used to authenticate (and optionally encrypt) the session
 
 The message also includes some constraints on the session to be established.
 
@@ -933,9 +974,9 @@ message RequestHandshakeBegin {
    version                  : U16
    spec                     : struct::CryptoSpec
    constraints              : struct::Constraints
-   certificate_mode         : enum::CertificateMode
-   ephemeral_public_key     : SeqOf[U8]
-   certificates             : SeqOf[struct::CertificateEnvelope](max = 6)
+   security_mode            : enum::HandshakeSecurityMode
+   ephemeral_data           : SeqOf[U8]
+   mode_data                : SeqOf[U8]
 }
 ```
 
@@ -952,13 +993,14 @@ impact the version field ---->
 
 * **constraints** - Struct that specifies constraints on the session.
 
-* **certificate_mode** - Specifies what type of certificates are being exchanged. If certificate_mode is equal to 
-*PRESHARED_KEYS*, the *certificates* field shall be empty.
+* **security_mode** - Determines how the *ephemeral_data* and *mode_data* fields are interpreted. Determines how session
+keys are derived, and thus how authentication occurs.
 
-* **ephemeral_public_key** - An ephemeral public DH key with length corresponding to the associated length defined by
-*handshake_dh_mode*.
+* **ephemeral_data** - An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
+and possibly constrained by the *security_mode*. This field is never empty.
 
-* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field.
+* **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
+depends on the mode.
 
 ##### Reply Handshake Begin
 
@@ -968,15 +1010,16 @@ case it responds with *Reply Handshake Error*.
 ```
 message ReplyHandshakeBegin {
    function : enum::Function::REPLY_HANDSHAKE_BEGIN
-   ephemeral_public_key: SeqOf[U8]
-   certificates: SeqOf[struct::CertificateEnvelope](max = 6)
+   ephemeral_data: SeqOf[U8]
+   mode_data: SeqOf[U8]
 }
 ```
 
-* **ephemeral_public_key** - An ephemeral public DH key corresponding to the key type requested by the master.
+* **ephemeral_data** -  An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
+and possibly constrained by the *security_mode*. This field is never empty.
 
-* **certificates** - A possibly empty certificate chain that is interpreted according to the *certificate_mode* field
- transmitted by the master.
+* **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
+depends on the mode.
 
 ##### Reply Handshake Error
 
@@ -1026,18 +1069,28 @@ message SessionData {
 
 ## Key Agreement Handshake
 
-Key agreement in SSP21 derives a common pair of symmetric keys that can be used to secure a session and authenticates
-the handshake and both parities. The SSP21 handshake most closely resembles the following message pattern from Noise:
+SSP21 exchanges the same handshake messages in the same order regardless of what *handshake security mode* is in use.
+This handshake always has two phases. Only the interpretation of certain fields and the cryptographic operations used to
+derive sessions keys differs between modes.
 
-```
--> e, s
-<- e, s, dhee, dhes, dhse
-```
+* Key Negotiation (1-RTT) 
+    * The initiator sends a *RequestHandshakeBegin* message
+    * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
+    * If no error occurs, both parties derive a pair of session keys in accordance with the modes and algorithms specified. 
+* Authentication (1-RTT)
+    * The initiator sends the first *UserData* message with nonce == 0. The payload may be empty.
+    * The responder authenticates the *UserData* message. If authentication succeeds, the responder replies with a user
+data message with nonce == 0. The payload may be empty.
+    * The initiator authenticates the *UserData* message.
+    * Both parties replace any existing session with the newly authenticated session.
+                  
+A success handshake involves the exchange of the following four messages:
 
-It's not important to understand the specifics of Noise's notation. The important point here is that SSP21 uses a
-handshake pattern where all DH operations are deferred until after first two messages are exchanged. This 
-pattern of performing three DH operations combined with a KDF is sometimes referred to as TripleDH key agreement in the 
-cryptographic community.
+![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
+
+The responder may signal an error after receiving a *Request Handshake Begin*:
+
+![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
 
 ### Timing Considerations
 
@@ -1177,20 +1230,6 @@ in the KDF.
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
  relative time bases, is at least accurate to within this margin when the session is first initialized.
  
-### Message Exchanges
-
-A success handshake involves the exchange of the following four messages:
-
-![Successful handshake](msc/handshake_success.png){#fig:handshake_success}
-
-The responder may signal an error after receiving a *Request Hanshake Begin*:
-
-![Error in Request Handshake Begin](msc/handshake_error1.png){#fig:handshake_error1}
-
-The responder could also indicate an error in *Request Hanshake Auth*:
-
-![Error in Request Handshake Auth](msc/handshake_error2.png){#fig:handshake_error2}
-
 ## Sessions
 
 ### Initialization
