@@ -1297,7 +1297,14 @@ The responder performs the additional mode-specification validations upon receiv
         * Otherwise, terminate the handshake and reply with HandshakeError::BAD_MESSAGE_FORMAT
         
 The *input_key_material* parameter to the KDF is just the shared secret. The uniqueness of the session keys relies
-solely on the uniqueness of the handshake hash.
+solely on the uniqueness of the handshake hash, which in turn depends on the uniqueness of both nonces.
+
+#### Pre-shared public key mode
+
+In pre-shared public key mode, each party has out-of-band prior knowledge of each other's static public DH key. The
+ephemeral data in this mode may be either an ephemeral public DH key, or a random nonce. 
+
+
 
 ## Sessions
 
