@@ -856,13 +856,13 @@ enum SessionSecurityMode {
 
 * **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
-##### Handshake Security Mode
+##### Trust Mode
 
-The *Handshake Security Mode* enumeration specifies how the initiator and responder authenticate each other. Each mode
-shall interpret certain fields in the handshake messages in different ways.
+The *Trust Mode* enumeration specifies how the initiator and responder derive session keys. Each mode interprets certain
+fields in the handshake messages in different ways.
 
 ```
-enum HandshakeSecurityMode {
+enum Trust Mode {
     SHARED_SECRET : 0
     PRESHARED_DH_KEYS : 1
     ICF_CHAIN : 2
@@ -968,9 +968,9 @@ struct SessionConstraints {
 message RequestHandshakeBegin {
    function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
    version                  : U16
-   spec                     : struct::CryptoSpec
-   constraints              : struct::Constraints
-   security_mode            : enum::HandshakeSecurityMode
+   trust_mode               : enum::TrustMode
+   crypto_spec              : struct::CryptoSpec
+   constraints              : struct::Constraints   
    ephemeral_data           : SeqOf[U8]
    mode_data                : SeqOf[U8]
 }
@@ -985,12 +985,11 @@ indicating it - e.g. a libtool-like versioning scheme -->
 <!--- JAC: Yes, definitely. Will look into this. Will also make it explicit that adding new cipher suite modes won't
 impact the version field ---->
 
-* **spec** - Struct that specifies the various abstract algorithms to be used.
+* **trust_mode** - Determines how session keys are derived by interpreting *ephemeral_data* and *mode_data*.
+
+* **crypto_spec** - Struct that specifies the various abstract algorithms to be used.
 
 * **constraints** - Struct that specifies constraints on the session.
-
-* **security_mode** - Determines how the *ephemeral_data* and *mode_data* fields are interpreted. Determines how session
-keys are derived, and thus how authentication occurs.
 
 * **ephemeral_data** - An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
 and possibly constrained by the *security_mode*. This field is never empty.
@@ -1072,21 +1071,21 @@ message SessionData {
 ## Key Agreement Handshake
 
 Key agreement in SSP21 is a single request/response message exchange whereby both parties derive a common set of session
-keys using a procedure determined by the *handshake security mode* specified by the initiator. This initial message
+keys using a procedure determined by the *trust mode* specified by the initiator. This initial message
 exchange does not authenticate the parties to each other. The parties must then prove to each-other that they derived
 the same keys by then transmitting an initial *SessionData* message in each direction. A successful handshake involves
 the exchange of the four messages depicted in figure @fig:handshake.
 
-The same messages are exchanged in the same order, regardless of which *handshake security mode* is in use. Only the
+The same messages are exchanged in the same order, regardless of which *trust mode* is in use. Only the
 interpretation of certain fields and the procedure for deriving sessions keys differs between modes. The authentication
 step is always identical for every mode. The steps for a successful handshake are summarized below.
 
-* Key Negotiation (1-RTT)
-    * The initiator sends a *RequestHandshakeBegin* message
+* Mode specification and key derivation (1-RTT)
+    * The initiator sends a *RequestHandshakeBegin* message specifying the the *TrustMode* and *CryptoSpec*.
     * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
     * Both parties derive session keys according to the procedure specified by the initiator
 
-* Authentication (1-RTT)
+* Authentication and optional data transfer (1-RTT)
     * The initiator sends a *UserData* message with nonce == 0.
     * The responder authenticates the *UserData* message, and replies with a *UserData* data message with nonce == 0.
 
