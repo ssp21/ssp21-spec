@@ -858,8 +858,9 @@ enum SessionSecurityMode {
  
 ##### Trust Mode
 
-The *Trust Mode* enumeration specifies how the initiator and responder derive session keys. Each mode interprets certain
-fields in the handshake messages in different ways.
+The *Trust Mode* enumeration specifies the procedure both parties use to derive session keys. Each mode interprets certain
+fields in the handshake messages in different ways. It is called the *Trust Mode* because at a high level it describes
+what information the two parties use to trust each-other.
 
 ```
 enum Trust Mode {
