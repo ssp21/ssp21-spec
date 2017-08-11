@@ -1250,6 +1250,20 @@ This field can be an ephemeral DH key or a random nonce. This means that *h* is 
 responder attempting to control the final value of *h* would have to make a successful pre-image attack on the handshake
 hash function.
 
+### Trust Modes
+
+This section describes the various trust modes that can be used to perform key derivation. The table below summarizes
+the modes, how they interpret fields in the handshake messages, and whether session modes that encrypt have forward
+secrecy (FS) if the long-term keys are later compromised.
+
+| Trust Mode            |  ephemeral data   |   mode data         |  FS  | key material   |
+|-----------------------|-------------------|---------------------|------|-----------------
+| shared secret         |  random nonce     |   not used          |  no  | shared secret  |
+| pre-shared public key |  random nonce     |   not used          |  no  | single DH      |
+| pre-shared public key |  DH key           |   not used          |  yes | triple DH      |
+| ICF chain             |  random nonce     |   certificate chain |  no  | single DH      |
+| ICF chain             |  DH key           |   certificate chain |  yes | triple DH      |
+
 
 ### Message Exchanges
 
