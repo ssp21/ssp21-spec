@@ -812,12 +812,12 @@ request/response contain.
 ```
 enum HandshakeEphemeral {
     X25519 : 0
-    NONCE_16 : 1
+    NONCE : 1
 }
 ```
 
 * **X25519** - A x25519 DH public key
-* **NONCE_16** - A 16-byte (128-bit) random nonce
+* **NONCE_32** - A 32-byte (256-bit) random nonce
 
 ##### Handshake Hash
 
@@ -885,12 +885,12 @@ The *Handshake Error* enumeration denotes an error condition that occurred durin
 enum HandshakeError {
     BAD_MESSAGE_FORMAT                : 0
     UNSUPPORTED_VERSION               : 1
-    UNSUPPORTED_DH_MODE               : 2
-    UNSUPPORTED_HANDSHAKE_HASH        : 3
-    UNSUPPORTED_HANDSHAKE_KDF         : 4
-    UNSUPPORTED_SESSION_MODE          : 5
-    UNSUPPORTED_NONCE_MODE            : 6
-    UNSUPPORTED_CERTIFICATE_MODE      : 7
+    UNSUPPORTED_TRUST_MODE            : 2
+    UNSUPPORTED_EPHEMERAL_MODE        : 3
+    UNSUPPORTED_HANDSHAKE_HASH        : 4
+    UNSUPPORTED_HANDSHAKE_KDF         : 5
+    UNSUPPORTED_SESSION_MODE          : 6
+    UNSUPPORTED_NONCE_MODE            : 7    
     BAD_CERTIFICATE_FORMAT            : 8
     UNSUPPORTED_CERTIFICATE_FEATURE   : 9
     BAD_CERTIFICATE_CHAIN             : 10
@@ -906,7 +906,9 @@ enum HandshakeError {
 
 * **UNSUPPORTED_VERSION** - The specified protocol version is not supported.
 
-* **UNSUPPORTED_DH_MODE** - The requested Diffie-Hellman mode is not supported.
+* **UNSUPPORTED_TRUST_MODE** - The requested trust mode is not supported.
+
+* **UNSUPPORTED_EPHEMERAL_MODE** - The requested ephemeral mode is not supported.
  
 * **UNSUPPORTED_HANDSHAKE_HASH** - The requested hash algorithm is not supported.
 
@@ -915,8 +917,6 @@ enum HandshakeError {
 * **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
 
 * **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
- 
-* **UNSUPPORTED_CERTIFICATE_MODE** - The requested certificate mode is not supported.
  
 * **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
  
@@ -1250,6 +1250,14 @@ This field can be an ephemeral DH key or a random nonce. This means that *h* is 
 responder attempting to control the final value of *h* would have to make a successful pre-image attack on the handshake
 hash function.
 
+### Message Exchanges
+
+The responder may signal an error after receiving a *Request Handshake Begin*:
+
+![Error in Request Handshake Begin](msc/handshake_error.png){#fig:handshake_error}
+
+**TODO:** Formalize errors that can occur in handshake with state transition diagrams. 
+
 ### Trust Modes
 
 This section describes the various trust modes that can be used to perform key derivation. The table below summarizes
@@ -1277,11 +1285,19 @@ Some patterns are apparent in the table:
 whether the mode provides forward secrecy for encrypted session data.
 * Certificate and pre-shared public key modes calculate the input key material in the same manner.
 
-### Message Exchanges
+#### Shared secret mode
 
-The responder may signal an error after receiving a *Request Handshake Begin*:
+In shared secret mode, each party possesses a common 256-bit key. This key might be static or refreshed periodically
+using some out-of-band mechanism.
 
-![Error in Request Handshake Begin](msc/handshake_error.png){#fig:handshake_error}
+The responder performs the additional mode-specification validations upon receiving a *RequestHandshakeBegin* message: 
+    * Validate that *crypto_spec::handshake_ephemeral* equals *EphemeralData::NONCE_32*
+        * Otherwise, terminate the handshake and reply with HandshakeError::UNSUPPORTED_EPHEMERAL_MODE         
+    * Validate that the length of *ephemeral_data* is 32 bytes.
+        * Otherwise, terminate the handshake and reply with HandshakeError::BAD_MESSAGE_FORMAT
+        
+The *input_key_material* parameter to the KDF is just the shared secret. The uniqueness of the session keys relies
+solely on the uniqueness of the handshake hash.
 
 ## Sessions
 
