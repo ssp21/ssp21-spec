@@ -1100,7 +1100,7 @@ Initiators and responders shall differentiate between *SessionData* messages for
 authentication messages using the nonce. A *SessionData* message for a previously authenticated session shall always
 use a nonce greater than zero, whereas the handshake *SessionData* message shall always use a nonce equal to zero.
 
-A previously valid session (keys, nonce values, start time, etc) shall remain active until a *SessionData* message
+A previously valid session (keys, nonce values, start time, etc) shall not be invalidated until a *SessionData* message
 is received and authenticated using the new session keys. Implementations may wish to implement this behavior using
 two data structures, one for an *active* session and one for a *pending* session.
 
@@ -1185,7 +1185,8 @@ The contents of *ephemeral_data* and *mode_data* fields are mode dependent.
     * The responder mixes the entire transmitted message into *h*.
         * *set h = HASH(h || message)*
         
-    * The responder calculates the *input_key_material* according to the mode specified by the initiator.
+    * The responder calculates the *input_key_material* according to the mode specified by the initiator. The responder 
+performs session key derivation using the KDF specified in the *CryptoSpec* sent by the initiator. 
         * set (rx_sk, tx_sk) = KDF(h, input_key_material)
  
 3. The initiator receives the *Reply Handshake Begin* message.
@@ -1195,13 +1196,12 @@ The contents of *ephemeral_data* and *mode_data* fields are mode dependent.
                 
     * The initiator performs mode-specific validation of *ephemeral_data* and *mode_data*.
     
-    * The initiator calculates the *input_key_material* according to the mode requested in 1). 
+    * The initiator calculates the *input_key_material* according to the mode requested in 1). The initiator performs
+session key derivation using the KDF originally requested in 1).
         * set (tx_sk, rx_sk) = KDF(h, input_key_material)          
     
     * The initiator then transmits a *Session Data* message using the specified *Session Mode*, the staged tx_sk key, 
-any available user data, and nonce equal to 0.
-
-    * The initiator starts the response timer.
+any available user data, and nonce equal to 0.    
 
 4. The responder receives the *SessionData* message with n == 0.
 
@@ -1237,14 +1237,20 @@ If any of the following properties do not hold, then initiator and responder wil
 * If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
 the two parties will have different *h* values which will produce different keys when feed into the KDF.
 
-* If either party does not possess the private DH keys corresponding to the ephemeral or static public keys 
+* If either party is unable to calculate the *input_key_data* 
 transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
 using the KDF.
 
 * A MitM cannot tamper with the common *time_session_init* by delaying messages by more than whatever timeout setting
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
- relative time bases, is at least accurate to within this margin when the session is first initialized.
+relative time bases, is at least accurate to within this margin when the session is first initialized.
  
+**Note:** All trust modes utilize an *ephemeral data* field that contains no less than 128-bits of unpredictable data.
+This field can be an ephemeral DH key or a random nonce. This means that *h* is never controlled by the initiator, and a 
+responder attempting to control the final value of *h* would have to make a successful pre-image attack on the handshake
+hash function.
+
+
 ### Message Exchanges
 
 The responder may signal an error after receiving a *Request Handshake Begin*:
