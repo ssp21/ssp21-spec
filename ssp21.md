@@ -1260,30 +1260,27 @@ The responder may signal an error after receiving a *Request Handshake Begin*:
 
 ### Trust Modes
 
-This section describes the various trust modes that can be used to perform key derivation. The table below summarizes
+This section defines the various trust modes that can be used to perform key derivation. The table below summarizes
 the modes, how they interpret fields in the handshake messages, and whether session modes that encrypt have forward
 secrecy (FS) if the long-term keys are later compromised.
 
 | Trust Mode            |  ephemeral data   |   mode data         | key material  | FS  |
 |-----------------------|-------------------|---------------------|---------------|-----| 
 | shared secret         |  random nonce     |   not used          | shared secret | no  |
-| pre-shared public key |  random nonce     |   not used          | single DH     | no  |
 | pre-shared public key |  DH key           |   not used          | triple DH     | yes |
-| ICF chain             |  random nonce     |   certificate chain | single DH     | no  |
 | ICF chain             |  DH key           |   certificate chain | triple DH     | yes |
-
-A "single DH" operation uses the long-term static DH keys for key party to dynamically calculate a shared secret for the
-two parties. This shared secret is always the same for any two party's DH keys.
 
 A "triple DH" operation performs three DH calculations using both the static and ephemeral DH keys to calculate a shared
 secret for the two parties. This shared secret is different for every session since the ephemeral keys are different. 
 
 Some patterns are apparent in the table:
 
-* Shared-secret mode may only use a random nonce and never provides forward secrecy.
-* The ephemeral data in public-key modes can use either a random nonce, or a public DH key. The only difference is 
-whether the mode provides forward secrecy for encrypted session data.
-* Certificate and pre-shared public key modes calculate the input key material in the same manner.
+* Shared-secret mode may only use a random nonce for ephemeral data and never provides forward secrecy.
+* The ephemeral data in public-key modes is an ephemeral DH public key. These modes always provide forward secrecy 
+when paired with an encrypting session mode.
+* Certificate and pre-shared public key modes calculate the input key material in the same manner. The only difference
+is that the remote party's public is dynamically authenticated from a certificate instead of being statically 
+pre-configured.
 
 #### Shared secret mode
 
