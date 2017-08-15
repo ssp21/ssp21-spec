@@ -1278,9 +1278,8 @@ Some patterns are apparent in the table:
 * Shared-secret mode may only use a random nonce for ephemeral data and never provides forward secrecy.
 * The ephemeral data in public-key modes is an ephemeral DH public key. These modes always provide forward secrecy 
 when paired with an encrypting session mode.
-* Certificate and pre-shared public key modes calculate the input key material in the same manner. The only difference
-is that the remote party's public is dynamically authenticated from a certificate instead of being statically 
-pre-configured.
+* Both public-key modes calculate the input key material in the same manner. The only difference how the trust is 
+established for the remote parties static public key (pre-shared vs certificate).
 
 #### Shared secret mode
 
