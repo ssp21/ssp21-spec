@@ -1072,10 +1072,10 @@ message SessionData {
 ## Key Agreement Handshake
 
 Key agreement in SSP21 is a single request/response message exchange whereby both parties derive a common set of session
-keys using a procedure determined by the *trust mode* specified by the initiator. This initial message
-exchange does not authenticate the parties to each other. The parties must then prove to each-other that they derived
-the same keys by then transmitting an initial *SessionData* message in each direction. A successful handshake involves
-the exchange of the four messages depicted in figure @fig:handshake.
+keys using a procedure determined by the *trust mode* specified by the initiator. This initial message exchange does not
+authenticate the parties to each other. The parties must then prove to each-other that they derived the same keys by 
+then transmitting an initial *SessionData* message in each direction. A successful handshake involves the exchange of
+the four messages depicted in figure @fig:handshake.
 
 The same messages are exchanged in the same order, regardless of which *trust mode* is in use. Only the
 interpretation of certain fields and the procedure for deriving sessions keys differs between modes. The authentication
@@ -1087,22 +1087,36 @@ step is always identical for every mode. The steps for a successful handshake ar
     * Both parties derive session keys according to the procedure specified by the initiator
 
 * Authentication and optional data transfer (1-RTT)
-    * The initiator sends a *UserData* message with nonce == 0.
-    * The responder authenticates the *UserData* message, and replies with a *UserData* data message with nonce == 0.
+    * The initiator sends a *SessionData* message with nonce equal to zero.
+    * The responder authenticates the message and replies with a *SessionData* message with nonce equal to zero.
+    
+These initial *SessionData* messages with nonce equal to zero are syntactically identical to other *SessionData*
+messages, however, the following differences apply:
 
-Any previously existing session remains valid until each party receives a *Session Data* with nonce equal to zero and
-authenticated with the new session key. Initiators and responders may optionally transfer user data in these initial
-*SessionData* messages. This mechanism effectively makes the handshake process a single round trip (1-RTT) request and
-response.  Certain implementations may not wish to transfer user data until fully authenticated. Such implementations
-may send zero-payload *SessionData* messages and remain wire-level compatible.
+* The nonce of zero identifies that they are a special case, and are processed according to special rules.
+* A responder may reply to an initiator's initial *SessionData* message with a *ReplyHandshakeError*.
 
-Initiators and responders shall differentiate between *SessionData* messages for an established session and initial 
-authentication messages using the nonce. A *SessionData* message for a previously authenticated session shall always
-use a nonce greater than zero, whereas the handshake *SessionData* message shall always use a nonce equal to zero.
+Because of their special status and processing rules, we define aliases for these messages:
 
-A previously valid session (keys, nonce values, start time, etc) shall not be invalidated until a *SessionData* message
-is received and authenticated using the new session keys. Implementations may wish to implement this behavior using
-two data structures, one for an *active* session and one for a *pending* session.
+* A *SessionData* message with a nonce equal to zero sent by an initiator is called a *SessionAuthRequest* 
+  message.
+   
+* A *SessionData* message with a nonce equal to zero sent by a responder is called a *SessionAuthReply* 
+  message.
+  
+These aliases do not define new wire-level message types. That are purely used as a shorthand for the purpose of 
+specification. Implementations will want to direct parsed *SessionData* messages to the correct handler if the nonce is 
+zero or greater than zero. A *SessionData* message for a previously authenticated session shall always use a nonce 
+greater than zero, whereas the session authentication messages shall always use a nonce equal to zero.
+
+Initiators and responders may optionally transfer user data in these messages. This mechanism effectively makes the
+handshake process a single round trip (1-RTT) request and response. Certain implementations may not wish to transfer
+user data until fully authenticated. Such implementations may send zero-payload session authentication messages and
+remain wire-level compatible.
+
+A previously valid session (keys, nonce values, start time, etc) shall not be invalidated until a session authentication
+message is received and authenticated using the new session keys. Implementations may wish to implement this behavior
+using two data structures, one for an *active* session and one for a *pending* session.
 
 ![Successful session establishment](msc/handshake.png){#fig:handshake}
 
@@ -1194,15 +1208,14 @@ message is not received before the timeout occurs.
     * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
       start time.
 
-6. The initiator uses the *pending session* to transmit a *Session Data* message with nonce equal to zero. The
-   initiator may optionally transfer user data in this message. If no user data is available, then the user data shall be
-   empty. All of the fields are calculated in the same manner as an active session, with the exception that the nonce is 
-   fixed to zero.
+6. The initiator uses the *pending session* to transmit a *Session Auth Request* message. The initiator may optionally
+   transfer user data in this message. If no user data is available, then the user data shall be empty. All of the
+   fields are calculated in the same manner as an active session, with the exception that the nonce is fixed to zero.
 
-7. The initiator starts a *response timer* that will be used to terminate the handshake if a *Session Data*
-   message (with n == 0) is not received before the timeout occurs.
+7. The initiator starts a *response timer* that will be used to terminate the handshake if a *Session Auth Reply*
+   message is not received before the timeout occurs.
 
-8. Upon receiving the expected *Session Data* reply message (with n == 0):
+8. Upon receiving the expected *Session Auth Reply* reply message:
 
    * The initiator uses the *pending session* to validate the message. The validation procedure is identical to an
      active session, with the exception that the nonce is required to be zero.
@@ -1211,9 +1224,14 @@ message is not received before the timeout occurs.
       
 #### Responder Handshake Procedure
 
-Upon receiving a *Request Handshake Begin* message:
+The responder is mostly stateless. It does not require the use of a timer or a formal state machine to implement the
+handshake. A single flag can be used to track whether the *pending session* is initialized.
 
-1. The responder records the time this request was received:
+##### Handling Request Handshake Begin
+
+The responder always handles the *RequestHandshakeBegin* message in the same way.
+
+1. The responder records the time the request was received:
 
     * set *session_start_time = NOW()*
 
@@ -1242,14 +1260,14 @@ Upon receiving a *Request Handshake Begin* message:
 
     * The responder transmits the previously prepared *Reply Handshake Begin*
 
-Upon receiving a *Session Data* message (with n == 0):
+##### Handling Session Auth Request
 
-1. The responder verifies that the *pending session* has been initialized.
+1. The responder verifies that the *pending session* is initialized and valid.
 
 2. The responder uses the *pending session* to validate the message. The validation procedure is identical to an active
    session, with the exception that the nonce is required to be zero.
 
-3. The responder uses the *pending session* to transmit a *Session Data* message with nonce equal to zero. The
+3. The responder uses the *pending session* to transmit a *Session Auth Reply* message with nonce equal to zero. The
    responder may optionally transfer user data in this message. If no user data is available, then the user data
    shall be empty. All of the fields are calculated in the same manner as an active session, with the exception that
    the nonce is fixed to zero.
