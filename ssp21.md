@@ -776,9 +776,9 @@ layer. The correct message-specific parser can then be invoked.
       
 ```
 enum Function {
-    REQUEST_HANDSHAKE_BEGIN  : 0
-    REPLY_HANDSHAKE_BEGIN    : 1
-    REPLY_HANDSHAKE_ERROR    : 2
+    HANDSHAKE_BEGIN_REQUEST  : 0
+    HANDSHAKE_BEGIN_REPLY    : 1
+    HANDSHAKE_ERROR_REPLY    : 2
     SESSION_DATA             : 3
 }
 ```
@@ -926,9 +926,9 @@ enum HandshakeError {
 
 #### Handshake Messages
 
-##### Request Handshake Begin
+##### Handshake Begin Request
 
-The initiator starts the process of establishing a new session by sending the *Request Handshake Begin* message. This
+The initiator starts the process of establishing a new session by sending the *Handshake Begin Request* message. This
 message contains a specification of all of the abstract algorithms to be used during the handshake and the session.
 
 ```
@@ -966,8 +966,8 @@ struct SessionConstraints {
 * **max_session_time** - The maximum allowed session time after which messages are no longer considered valid.
 
 ```
-message RequestHandshakeBegin {
-   function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
+message HandshakeBeginRequest {
+   function                 : enum::Function::HANDSHAKE_BEGIN_REQUEST
    version                  : U16
    trust_mode               : enum::TrustMode
    crypto_spec              : struct::CryptoSpec
@@ -998,14 +998,14 @@ and possibly constrained by the *security_mode*. This field is never empty.
 * **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
 depends on the mode.
 
-##### Reply Handshake Begin
+##### Handshake Begin Reply
 
-The responder replies to *Request Handshake Begin* by sending *Reply Handshake Begin*, unless an error occurs in which 
+The responder replies to *Handshake Begin Request* by sending *Handshake Begin Reply*, unless an error occurs in which 
 case it responds with *Reply Handshake Error*.
 
 ```
-message ReplyHandshakeBegin {
-   function : enum::Function::REPLY_HANDSHAKE_BEGIN
+message HandshakeBeginReply {
+   function : enum::Function::HANDSHAKE_BEGIN_REPLY
    ephemeral_data: SeqOf[U8]
    mode_data: SeqOf[U8]
 }
@@ -1019,12 +1019,12 @@ depends on the mode.
 
 ##### Reply Handshake Error
 
-The outstation shall reply to a *Request Handshake Begin* with a *Reply Handshake Error* message if an error occurs.
+The outstation shall reply to a *Handshake Begin Request* with a *Reply Handshake Error* message if an error occurs.
 This message is for debugging purposes only during commissioning and cannot be authenticated.
 
 ```
-message ReplyHandshakeError {
-   function : enum::Function::REPLY_HANDSHAKE_ERROR
+message HandshakeErrorReply {
+   function : enum::Function::HANDSHAKE_ERROR_REPLY
    error : enum::HandshakeError
 }
 ```
@@ -1082,8 +1082,8 @@ interpretation of certain fields and the procedure for deriving sessions keys di
 step is always identical for every mode. The steps for a successful handshake are summarized below.
 
 * Mode specification and key derivation (1-RTT)
-    * The initiator sends a *RequestHandshakeBegin* message specifying the the *TrustMode* and *CryptoSpec*.
-    * The responder replies with a *ReplyHandshakeBegin* message or a *ReplyHandshakeError*
+    * The initiator sends a *Handshake Begin Request* message specifying the the *TrustMode* and *CryptoSpec*.
+    * The responder replies with a *Handshake Begin Reply* message or a *HandshakeErrorReply*
     * Both parties derive session keys according to the procedure specified by the initiator
 
 * Authentication and optional data transfer (1-RTT)
@@ -1094,7 +1094,7 @@ These initial *SessionData* messages with nonce equal to zero are syntactically 
 messages, however, the following differences apply:
 
 * The nonce of zero identifies that they are a special case, and are processed according to special rules.
-* A responder may reply to an initiator's initial *SessionData* message with a *ReplyHandshakeError*.
+* A responder may reply to an initiator's initial *SessionData* message with a *HandshakeErrorReply*.
 
 Because of their special status and processing rules, we define aliases for these messages:
 
@@ -1148,7 +1148,7 @@ in the same manner.
 Sub-procedures are formally named below.
 
 *Handshake-data Procedure (HD procedure)* - Defines how the *ephemeral data* and the *mode data* are obtained
-for the *Request Handshake Begin* and *Reply Handshake Begin* messages.
+for the *Handshake Begin Request* and *Handshake Begin Reply* messages.
 
 *Input Key Material Procedure (IKM procedure)* - Defines how the *ephemeral data* and *mode_data* are validated and 
 then used to calculate the *input_key_material*
@@ -1157,7 +1157,7 @@ then used to calculate the *input_key_material*
 
 * Both parties maintain a *handshake hash* denoted by the variable *h* which is *HASH_LEN* in length.
 
-* The HASH() function always refer to the hash function requested by the master in the *Request Handshake Begin*
+* The HASH() function always refer to the hash function requested by the master in the *Handshake Begin Request*
   message.
 
 * NOW() is a function that returns the current value of a relative monotonic clock as a 64-bit unsigned count of
@@ -1171,7 +1171,7 @@ Symmetric session keys in this this section use the following abbreviations:
 
 #### Initiator Handshake Procedure
  
-1. The initiator prepares a *Request Handshake Begin* message to send to the responder.
+1. The initiator prepares a *Handshake Begin Request* message to send to the responder.
 
     * The *HD* procedure is invoked to set the *ephemeral data* and the *mode data* fields.
 
@@ -1185,10 +1185,10 @@ Symmetric session keys in this this section use the following abbreviations:
 
     * set *time_tx = NOW()*
 
-4. The initiator starts a *response timer* that will be used to terminate the handshake if a *Reply Handshake Begin*
+4. The initiator starts a *response timer* that will be used to terminate the handshake if a *Handshake Begin Reply*
 message is not received before the timeout occurs.
      
-5. Upon receiving the expected *Reply Handshake Begin* message:
+5. Upon receiving the expected *Handshake Begin Reply* message:
 
     * The initiator cancels the *response timer*.
 
@@ -1202,7 +1202,7 @@ message is not received before the timeout occurs.
 
     * The initiator invokes the mode's *IKM* procedure to validate the message and calculate the *input_key_material*.
 
-    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
+    * The initiator performs session key derivation using the KDF requested in the *Handshake Begin Request* message.
         * set (tx_sk, rx_sk) = KDF(h, input_key_material)
 
     * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
@@ -1227,9 +1227,9 @@ message is not received before the timeout occurs.
 The responder is mostly stateless. It does not require the use of a timer or a formal state machine to implement the
 handshake. A single flag can be used to track whether the *pending session* is initialized.
 
-##### Handling Request Handshake Begin
+##### Handling Handshake Begin Request
 
-The responder always handles the *RequestHandshakeBegin* message in the same way.
+The responder always handles the *HandshakeBeginRequest* message in the same way.
 
 1. The responder records the time the request was received:
 
@@ -1239,7 +1239,7 @@ The responder always handles the *RequestHandshakeBegin* message in the same way
 
     * *set h = HASH(request)*
 
-3. The responder prepares and transmits a *Reply Handshake Begin* message to send to the initiator.
+3. The responder prepares and transmits a *Handshake Begin Reply* message to send to the initiator.
 
     * The responder invokes the *HD* procedure to set the *ephemeral data* and the *mode data* fields of the reply.
 
@@ -1249,7 +1249,7 @@ The responder always handles the *RequestHandshakeBegin* message in the same way
 
     * The responder invokes the mode's *IKM* procedure to validate the request and calculate the *input_key_material*.    
 
-    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
+    * The initiator performs session key derivation using the KDF requested in the *Handshake Begin Request* message.
 
         * set (rx_sk, tx_sk) = KDF(h, input_key_material)
 
@@ -1258,7 +1258,7 @@ The responder always handles the *RequestHandshakeBegin* message in the same way
     * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
       start time.
 
-    * The responder transmits the previously prepared *Reply Handshake Begin*
+    * The responder transmits the previously prepared *Handshake Begin Reply*
 
 ##### Handling Session Auth Request
 
@@ -1279,7 +1279,7 @@ The responder always handles the *RequestHandshakeBegin* message in the same way
 
 If any of the following properties do not hold, then initiator and responder will not agree on the same pair of session keys.
 
-* If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
+* If a MitM tampers with the contents of either the *Handshake Begin Request* message or the *Handshake Begin Reply*, 
 the two parties will have different *h* values which will produce different keys when feed into the KDF.
 
 * If either party is unable to calculate the *input_key_data* 
@@ -1297,9 +1297,9 @@ hash function.
 
 ### Message Exchanges
 
-The responder may signal an error after receiving a *Request Handshake Begin*:
+The responder may signal an error after receiving a *Handshake Begin Request*:
 
-![Error in Request Handshake Begin](msc/handshake_error.png){#fig:handshake_error}
+![Error in Handshake Begin Request](msc/handshake_error.png){#fig:handshake_error}
 
 **TODO:** Formalize errors that can occur in handshake with state transition diagrams. 
 
