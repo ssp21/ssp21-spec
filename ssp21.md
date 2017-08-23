@@ -1297,7 +1297,7 @@ solely on the uniqueness of the handshake hash, which in turn depends on the uni
 
 #### Pre-shared public key mode
 
-In pre-shared public key mode, each party has out-of-band prior knowledge of each other's static public DH key. The
+In pre-shared public key mode, each party has out-of-band prior knowledge of the other party's static public DH key. The
 ephemeral data in this mode may be either an ephemeral public DH key, or a random nonce. 
 
 
