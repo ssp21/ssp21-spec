@@ -1419,7 +1419,17 @@ Derive a key pair using the DH algorithm:
 
     * return (dh1 || dh2 || dh3) as the IKM.
     
-**Note:** The dh2 and dh3 calculations are reversed for the initiator and responder.  
+**Note:** The dh2 and dh3 calculations are reversed for the initiator and responder.
+
+#### ICF Certificate Mode
+
+Certificate mode is very similar to the pre-shared public key mode. Instead of having prior knowledge of the remote
+party's public static DH key, it is embedded in a certificate that is authenticated by a trusted authority. The
+*input_key_material* procedures are mostly identical with exception that the *mode_data* field must contain a 
+certificate, and the remote static public key (rs_pk) is obtained from that certificate. 
+ 
+**TODO:** Decide whether to mostly duplicate the produce or find a way define common points with pre-shared public key
+mode.
 
 ## Sessions
 
