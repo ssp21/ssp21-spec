@@ -1335,21 +1335,31 @@ The *input_key_material* parameter to the KDF is just the shared secret for both
 uniqueness of the session keys relies solely on the uniqueness of the handshake hash, which in turn depends on the
 uniqueness of both nonces.
 
-##### Responder Procedure
+##### Handshake Data (HD) Procedure
 
-Upon receiving a *RequestHandshakeBegin* message, the responder performs the following additional validation:
+* Generate a random nonce 32 bytes in length and set the *handshake ephemeral* field equal to this value.
+* Set the *mode_data* field to empty.
 
-1. Validate that *crypto_spec::handshake_ephemeral* equals *EphemeralData::NONCE*. Otherwise, terminate the 
-handshake and reply with HandshakeError::UNSUPPORTED_EPHEMERAL_MODE
+**Note:** There is no need to persist the nonce. It will be hashed into *h* and is not needed on its own to calculate
+the input key material.
 
-2. Validate that the length of *ephemeral_data* is 32 bytes. Otherwise, terminate the handshake and reply with
-HandshakeError::BAD_MESSAGE_FORMAT.
-        
-##### Initiator Procedure
+##### Input Key Material (IKM) Procedure (Initiator)
 
-Upon receiving an expected *ReplyHandshakeBegin* message, the initiator performs the following additional validation:
+1. Validate that the length of *ephemeral_data* is 32 bytes.
+   
+2. Validate that the *mode_data* field is empty.
 
-1. Validate that the length of *ephemeral_data* is 32 bytes. Otherwise, terminate the handshake.
+3. Return the *shared_secret* as the IKM. 
+
+##### Input Key Material (IKM) Procedure (Responder)
+
+1. Validate the *crypto_spec::handshake_ephemeral* is *EphemeralData::NONCE*.
+
+2. Validate that the length of *ephemeral_data* is 32 bytes.
+
+3. Validate that the *mode_data* field is empty.
+
+4. Return the *shared_secret* as the IKM.
 
 #### Pre-shared public key mode
 
@@ -1358,30 +1368,58 @@ ephemeral data in this mode is an ephemeral public DH key.
 
 DH keys in this section use the following abbreviations:
 
-* re_vk - responder ephemeral private key
-* re_pk - responder ephemeral public key
-* rs_vk - responder static private key
-* rs_pk - responder static public key
-* ie_vk - initiator ephemeral private key
-* ie_pv - initiator ephemeral public key
-* is_vk - initiator static private key
-* is_pk - initiator static public key
+* ls_pk - local static public key
+* ls_vk - local static private key
+* le_vk - local ephemeral public key
+* le_vk - local ephemeral private key
+* rs_pk - remote static public key
+* re_pk - remote ephemeral public key
 
+*Local* and *remote* refer to the party that holds the private key as a secret.
 
+##### Handshake Data (HD) Procedure
 
-Upon receiving a *RequestHandshakeBegin* message, the responder performs the following additional validation:
+Derive a key pair using the DH algorithm:
 
-1. Validate that *crypto_spec::handshake_ephemeral* is a DH public key type, e.g. *X25519*.
+* set (le_vk, le_pk) = GenerateKeyPair().
+* set the *ephemeral_data* field equal to the public part of the key.
+* set the *mode_data* field to empty.
 
-2. Validate that the length of *ephemeral_data* matches the specified key type.
+##### Input Key Material (IKM) Procedure (Initiator)
 
-To derive 
+1. Verify that the length of the *ephemeral_data* field matches the length of the requested DH type.
 
-* The responder then derives a pair of session keys and save saves them with the pending session.
-    * *set dh1* = *DH(re_vk, ie_pk)*
-    * *set dh2* = *DH(re_vk, is_pk)*
-    * *set dh3* = *DH(rs_vk, ie_pk)*
-    * *set (rx_sk, tx_sk) = KDF(ck, dh1 || dh2 || dh3)*
+2. Verify that the *mode data* field is empty.
+
+3. Calculate the *input_key_material*:
+   
+    * set dh1 = DH(le_vk, re_pk)
+
+    * set dh2 = DH(ls_vk, re_pk)
+
+    * set dh3 = DH(le_vk, rs_pk)
+
+    * return (dh1 || dh2 || dh3) as the IKM.
+
+##### Input Key Material (IKM) Procedure (Responder)
+
+1. Verify that the *handshake ephemeral* is a DH key type.
+
+2. Verify that the length of the *ephemeral_data* field matches the length of the requested DH type.
+
+3. Verify that the *mode data* field is empty.
+
+4. Calculate the *input_key_material*:
+
+    * set dh1 = DH(le_vk, re_pk)
+
+    * set dh2 = DH(le_vk, rs_pk)
+
+    * set dh3 = DH(ls_vk, re_pk)
+
+    * return (dh1 || dh2 || dh3) as the IKM.
+    
+**Note:** The dh2 and dh3 calculations are reversed for the initiator and responder.  
 
 ## Sessions
 
