@@ -817,7 +817,7 @@ enum HandshakeEphemeral {
 ```
 
 * **X25519** - A x25519 DH public key
-* **NONCE_32** - A 32-byte (256-bit) random nonce
+* **NONCE** - A 32-byte random nonce
 
 ##### Handshake Hash
 
@@ -1131,27 +1131,6 @@ Notation:
 * The HASH() and HMAC() functions always refer to the hash function requested by the master in the *Request Handshake Begin* message
 * NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds.
 
-<!--
-DH keys in this section use the following abbreviations:
-
-* re_vk - responder ephemeral private key
-* re_pk - responder ephemeral public key
-* rs_vk - responder static private key
-* rs_pk - responder static public key
-* ie_vk - initiator ephemeral private key
-* ie_pv - initiator ephemeral public key
-* is_vk - initiator static private key
-* is_pk - initiator static public key
-
-
-
-* The responder then derives a pair of session keys and save saves them with the pending session.
-    * *set dh1* = *DH(re_vk, ie_pk)*
-    * *set dh2* = *DH(re_vk, is_pk)*
-    * *set dh3* = *DH(rs_vk, ie_pk)*
-    * *set (rx_sk, tx_sk) = KDF(ck, dh1 || dh2 || dh3)*
--->
-
 Symmetric keys in this this section use the following abbreviations:
 
 * tx_sk - transmit session key
@@ -1286,11 +1265,13 @@ established for the remote parties static public key (pre-shared vs certificate)
 In shared secret mode, each party possesses a common 256-bit key. This key might be static or refreshed periodically
 using some out-of-band mechanism.
 
-The responder performs the additional mode-specification validations upon receiving a *RequestHandshakeBegin* message: 
-    * Validate that *crypto_spec::handshake_ephemeral* equals *EphemeralData::NONCE_32*
-        * Otherwise, terminate the handshake and reply with HandshakeError::UNSUPPORTED_EPHEMERAL_MODE         
-    * Validate that the length of *ephemeral_data* is 32 bytes.
-        * Otherwise, terminate the handshake and reply with HandshakeError::BAD_MESSAGE_FORMAT
+The responder performs the additional mode-specification validation upon receiving a *RequestHandshakeBegin* message:
+
+1. Validate that *crypto_spec::handshake_ephemeral* equals *EphemeralData::NONCE*. Otherwise, terminate the 
+handshake and reply with HandshakeError::UNSUPPORTED_EPHEMERAL_MODE
+
+2. Validate that the length of *ephemeral_data* is 32 bytes. Otherwise, terminate the handshake and reply with
+HandshakeError::BAD_MESSAGE_FORMAT
         
 The *input_key_material* parameter to the KDF is just the shared secret. The uniqueness of the session keys relies
 solely on the uniqueness of the handshake hash, which in turn depends on the uniqueness of both nonces.
@@ -1300,7 +1281,26 @@ solely on the uniqueness of the handshake hash, which in turn depends on the uni
 In pre-shared public key mode, each party has out-of-band prior knowledge of the other party's static public DH key. The
 ephemeral data in this mode may be either an ephemeral public DH key, or a random nonce. 
 
+<!--
+DH keys in this section use the following abbreviations:
 
+* re_vk - responder ephemeral private key
+* re_pk - responder ephemeral public key
+* rs_vk - responder static private key
+* rs_pk - responder static public key
+* ie_vk - initiator ephemeral private key
+* ie_pv - initiator ephemeral public key
+* is_vk - initiator static private key
+* is_pk - initiator static public key
+
+
+
+* The responder then derives a pair of session keys and save saves them with the pending session.
+    * *set dh1* = *DH(re_vk, ie_pk)*
+    * *set dh2* = *DH(re_vk, is_pk)*
+    * *set dh3* = *DH(rs_vk, ie_pk)*
+    * *set (rx_sk, tx_sk) = KDF(ck, dh1 || dh2 || dh3)*
+-->
 
 ## Sessions
 
