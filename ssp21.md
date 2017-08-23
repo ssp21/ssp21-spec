@@ -1120,95 +1120,143 @@ This ensures that attackers cannot skew the common time base by more than this t
 enforce a relatively low maximum value for this parameter to ensure that users do not accidentally deploy systems
 vulnerable to large session time manipulations
 
-### Generic Handshake Procedure 
+### Generic Handshake Procedures
 
-The following steps are performed during a successful handshake, regardless of which *handshake_security_mode* is used.
-Refer to the subsequent sections for specific procedures for key derivation in each mode. 
+The steps in this section are always performed during a successful handshake, regardless of which *trust_mode* is
+requested by the initiator. The generic procedure references mode-specific sub-procedures. It is important to understand
+that while the specifics of the mode sub-procedures vary, the following properties always hold for any given mode:
 
-Notation:
+* *Ephemeral data* is always generated dynamically and validated in the same manner.
 
-* Both parties maintain a *handshake hash* denoted by the variable *h* which is HASH_LEN in length.
-* The HASH() and HMAC() functions always refer to the hash function requested by the master in the *Request Handshake Begin* message
-* NOW() returns the current value of a relative monotonic clock as a 64-bit unsigned count of milliseconds.
+* *Mode data* is always a deterministic value (possibly empty) that does not require randomness. It is always validated
+in the same manner.
 
-Symmetric keys in this this section use the following abbreviations:
+Sub-procedures are formally named below.
+
+*Handshake-data Procedure (HD procedure)* - Defines how the *ephemeral data* and the *mode data* are obtained
+for the *Request Handshake Begin* and *Reply Handshake Begin* messages.
+
+*Input Key Material Procedure (IKM procedure)* - Defines how the *ephemeral data* and *mode_data* are validated and 
+then used to calculate the *input_key_material*
+
+**Notation:**
+
+* Both parties maintain a *handshake hash* denoted by the variable *h* which is *HASH_LEN* in length.
+
+* The HASH() function always refer to the hash function requested by the master in the *Request Handshake Begin*
+  message.
+
+* NOW() is a function that returns the current value of a relative monotonic clock as a 64-bit unsigned count of
+  milliseconds.
+
+Symmetric session keys in this this section use the following abbreviations:
 
 * tx_sk - transmit session key
+
 * rx_sk - receive session key
 
-1. The initiator sends the *Request Handshake Begin* message to the responder, requesting a specific *HandshakeSecurityMode*. 
-The contents of *ephemeral_data* and *mode_data* fields are mode dependent. 
-
-    * The initiator sets *h* to the hash of the entire transmitted message:
-
-        * *set h = HASH(message)*
-
-    * The initiator records the time this request was transmitted for future use.
-        
-        * set *time_tx = NOW()*
-
-2. The responder receives the *Request Handshake Begin* message.
-
-    * The responder records the time this request was received for possible future use.
-
-        * set *session_start_time = NOW()*
-
-    * The responder sets *h* equal to the hash of the entire received message:
-
-        * *set h = HASH(message)*                      
-                        
-    * The responder performs mode-specific validation of *ephemeral_data* and *mode_data*.                        
-
-    * The responder transmits a *Reply Handshake Begin* message containing its own *ephemeral_data* and *mode_data*. 
+#### Initiator Handshake Procedure
  
-    * The responder mixes the entire transmitted message into *h*.
-        * *set h = HASH(h || message)*
-        
-    * The responder calculates the *input_key_material* according to the mode specified by the initiator. The responder 
-performs session key derivation using the KDF specified in the *CryptoSpec* sent by the initiator. 
+1. The initiator prepares a *Request Handshake Begin* message to send to the responder.
+
+    * The *HD* procedure is invoked to set the *ephemeral data* and the *mode data* fields.
+
+    * All remaining fields are set in accordance with the pre-configured values on the initiator.
+
+2. The initiator sets *h* to the hash of the entire fully-prepared request:
+
+    * set *h = HASH(request)*
+
+3. The initiator transmits the message and records the time of transmission for future use:
+
+    * set *time_tx = NOW()*
+
+4. The initiator starts a *response timer* that will be used to terminate the handshake if a *Reply Handshake Begin*
+message is not received before the timeout occurs.
+     
+5. Upon receiving the expected *Reply Handshake Begin* message:
+
+    * The initiator cancels the *response timer*.
+
+    * The initiator estimates the session start time:
+
+        * set session_start_time = time_tx + ((NOW() - time_tx) / 2)
+
+    * The initiator mixes the entire received response into *h*.
+
+        * set h = HASH(h || response)           
+
+    * The initiator invokes the mode's *IKM* procedure to validate the message and calculate the *input_key_material*.
+
+    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
+        * set (tx_sk, rx_sk) = KDF(h, input_key_material)
+
+    * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
+      start time.
+
+6. The initiator uses the *pending session* to transmit a *Session Data* message with nonce equal to zero. The
+   initiator may optionally transfer user data in this message. If no user data is available, then the user data shall be
+   empty. All of the fields are calculated in the same manner as an active session, with the exception that the nonce is 
+   fixed to zero.
+
+7. The initiator starts a *response timer* that will be used to terminate the handshake if a *Session Data*
+   message (with n == 0) is not received before the timeout occurs.
+
+8. Upon receiving the expected *Session Data* reply message (with n == 0):
+
+   * The initiator uses the *pending session* to validate the message. The validation procedure is identical to an
+     active session, with the exception that the nonce is required to be zero.
+   
+9. The initiator replaces any *active session* with the *pending session*. Any previously active session is invalidated.
+      
+#### Responder Handshake Procedure
+
+Upon receiving a *Request Handshake Begin* message:
+
+1. The responder records the time this request was received:
+
+    * set *session_start_time = NOW()*
+
+2. The responder sets *h* equal to the hash of the entire received request:
+
+    * *set h = HASH(request)*
+
+3. The responder prepares and transmits a *Reply Handshake Begin* message to send to the initiator.
+
+    * The responder invokes the *HD* procedure to set the *ephemeral data* and the *mode data* fields of the reply.
+
+    * The responder mixes the fully prepared response into *h*.
+
+       * set h = HASH(h || response)
+
+    * The responder invokes the mode's *IKM* procedure to validate the request and calculate the *input_key_material*.    
+
+    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
+
         * set (rx_sk, tx_sk) = KDF(h, input_key_material)
- 
-3. The initiator receives the *Reply Handshake Begin* message.
- 
-    * The initiator mixes the entire received message into *h*.
-        * *set h = HASH(h || message)*
-                
-    * The initiator performs mode-specific validation of *ephemeral_data* and *mode_data*.
-    
-    * The initiator calculates the *input_key_material* according to the mode requested in 1). The initiator performs
-session key derivation using the KDF originally requested in 1).
-        * set (tx_sk, rx_sk) = KDF(h, input_key_material)          
-    
-    * The initiator then transmits a *Session Data* message using the specified *Session Mode*, the staged tx_sk key, 
-any available user data, and nonce equal to 0.    
 
-4. The responder receives the *SessionData* message with n == 0.
+        * **Note:** The receive and transmit keys are reversed for the initiator and responder.
 
-    * The responder authenticates the message following the exact same procedure as normal session data, but uses
-the session keys, session initialization time, and session mode for the pending session. The nonce verification is skipped.
+    * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
+      start time.
 
-    * The responder then transmits a *Session Data* message using the specified *Session Mode*, the staged tx_sk key, 
-and nonce equal to 0. User data may be optionally included in the message.
-        
-    * The responder initializes the active session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce), replacing
-any existing session.
+    * The responder transmits the previously prepared *Reply Handshake Begin*
 
+Upon receiving a *Session Data* message (with n == 0):
 
-5. The initiator receives the *Session Data* message with the nonce == 0.
+1. The responder verifies that the *pending session* has been initialized.
 
-    * Note: User data messages for any previous session (nonce > 0) shall still be processed normally from this state.
+2. The responder uses the *pending session* to validate the message. The validation procedure is identical to an active
+   session, with the exception that the nonce is required to be zero.
 
-    * The initiator authenticates the Session Data message following the exact same procedure as normal session data, but uses
-the session keys, session initialization time, and session mode for the pending session. The nonce verification is skipped.
+3. The responder uses the *pending session* to transmit a *Session Data* message with nonce equal to zero. The
+   responder may optionally transfer user data in this message. If no user data is available, then the user data
+   shall be empty. All of the fields are calculated in the same manner as an active session, with the exception that
+   the nonce is fixed to zero.
 
-    * The initiator initializes the active session with (rx_sk, tx_sk, time_session_init, read, write, verify_nonce), replacing
-any existing session.
+4. The responder replaces any *active session* with the *pending session*. Any previously active session is
+   invalidated.
 
-**Note:** The naming of the session keys are reversed for the initiator and responder, i.e. the transmit session key (tx_sk)
-for the initiator is the receive session key (rx_sk) for responder.
- 
-**Note:** See the section on session initialization for definitions of read, write, and verify_nonce functions.
-        
 ### Security Properties
 
 If any of the following properties do not hold, then initiator and responder will not agree on the same pair of session keys.
@@ -1265,23 +1313,31 @@ established for the remote parties static public key (pre-shared vs certificate)
 In shared secret mode, each party possesses a common 256-bit key. This key might be static or refreshed periodically
 using some out-of-band mechanism.
 
-The responder performs the additional mode-specification validation upon receiving a *RequestHandshakeBegin* message:
+The *input_key_material* parameter to the KDF is just the shared secret for both the initiator and responder. The
+uniqueness of the session keys relies solely on the uniqueness of the handshake hash, which in turn depends on the
+uniqueness of both nonces.
+
+##### Responder Procedure
+
+Upon receiving a *RequestHandshakeBegin* message, the responder performs the following additional validation:
 
 1. Validate that *crypto_spec::handshake_ephemeral* equals *EphemeralData::NONCE*. Otherwise, terminate the 
 handshake and reply with HandshakeError::UNSUPPORTED_EPHEMERAL_MODE
 
 2. Validate that the length of *ephemeral_data* is 32 bytes. Otherwise, terminate the handshake and reply with
-HandshakeError::BAD_MESSAGE_FORMAT
+HandshakeError::BAD_MESSAGE_FORMAT.
         
-The *input_key_material* parameter to the KDF is just the shared secret. The uniqueness of the session keys relies
-solely on the uniqueness of the handshake hash, which in turn depends on the uniqueness of both nonces.
+##### Initiator Procedure
+
+Upon receiving an expected *ReplyHandshakeBegin* message, the initiator performs the following additional validation:
+
+1. Validate that the length of *ephemeral_data* is 32 bytes. Otherwise, terminate the handshake.
 
 #### Pre-shared public key mode
 
 In pre-shared public key mode, each party has out-of-band prior knowledge of the other party's static public DH key. The
-ephemeral data in this mode may be either an ephemeral public DH key, or a random nonce. 
+ephemeral data in this mode is an ephemeral public DH key. 
 
-<!--
 DH keys in this section use the following abbreviations:
 
 * re_vk - responder ephemeral private key
@@ -1295,12 +1351,19 @@ DH keys in this section use the following abbreviations:
 
 
 
+Upon receiving a *RequestHandshakeBegin* message, the responder performs the following additional validation:
+
+1. Validate that *crypto_spec::handshake_ephemeral* is a DH public key type, e.g. *X25519*.
+
+2. Validate that the length of *ephemeral_data* matches the specified key type.
+
+To derive 
+
 * The responder then derives a pair of session keys and save saves them with the pending session.
     * *set dh1* = *DH(re_vk, ie_pk)*
     * *set dh2* = *DH(re_vk, is_pk)*
     * *set dh3* = *DH(rs_vk, ie_pk)*
     * *set (rx_sk, tx_sk) = KDF(ck, dh1 || dh2 || dh3)*
--->
 
 ## Sessions
 
