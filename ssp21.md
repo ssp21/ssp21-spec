@@ -1001,7 +1001,7 @@ depends on the mode.
 ##### Handshake Begin Reply
 
 The responder replies to *Handshake Begin Request* by sending *Handshake Begin Reply*, unless an error occurs in which 
-case it responds with *Reply Handshake Error*.
+case it responds with *Handshake Error Reply*.
 
 ```
 message HandshakeBeginReply {
@@ -1017,9 +1017,9 @@ and possibly constrained by the *security_mode*. This field is never empty.
 * **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
 depends on the mode.
 
-##### Reply Handshake Error
+##### Handshake Error Reply
 
-The outstation shall reply to a *Handshake Begin Request* with a *Reply Handshake Error* message if an error occurs.
+The outstation shall reply to a *Handshake Begin Request* with a *Handshake Error Reply* message if an error occurs.
 This message is for debugging purposes only during commissioning and cannot be authenticated.
 
 ```
@@ -1083,30 +1083,30 @@ step is always identical for every mode. The steps for a successful handshake ar
 
 * Mode specification and key derivation (1-RTT)
     * The initiator sends a *Handshake Begin Request* message specifying the the *TrustMode* and *CryptoSpec*.
-    * The responder replies with a *Handshake Begin Reply* message or a *HandshakeErrorReply*
+    * The responder replies with a *Handshake Begin Reply* message or a *Handshake Error Reply*
     * Both parties derive session keys according to the procedure specified by the initiator
 
 * Authentication and optional data transfer (1-RTT)
-    * The initiator sends a *SessionData* message with nonce equal to zero.
-    * The responder authenticates the message and replies with a *SessionData* message with nonce equal to zero.
+    * The initiator sends a *Session Data* message with nonce equal to zero.
+    * The responder authenticates the message and replies with a *Session Data* message with nonce equal to zero.
     
-These initial *SessionData* messages with nonce equal to zero are syntactically identical to other *SessionData*
+These initial *Session Data* messages with nonce equal to zero are syntactically identical to other *Session Data*
 messages, however, the following differences apply:
 
 * The nonce of zero identifies that they are a special case, and are processed according to special rules.
-* A responder may reply to an initiator's initial *SessionData* message with a *HandshakeErrorReply*.
+* A responder may reply to an initiator's initial *Session Data* message with a *Handshake Error Reply*.
 
 Because of their special status and processing rules, we define aliases for these messages:
 
-* A *SessionData* message with a nonce equal to zero sent by an initiator is called a *SessionAuthRequest* 
+* A *Session Data* message with a nonce equal to zero sent by an initiator is called a *Session Auth Request* 
   message.
    
-* A *SessionData* message with a nonce equal to zero sent by a responder is called a *SessionAuthReply* 
+* A *Session Data* message with a nonce equal to zero sent by a responder is called a *Session Auth Reply* 
   message.
   
 These aliases do not define new wire-level message types. That are purely used as a shorthand for the purpose of 
-specification. Implementations will want to direct parsed *SessionData* messages to the correct handler if the nonce is 
-zero or greater than zero. A *SessionData* message for a previously authenticated session shall always use a nonce 
+specification. Implementations will want to direct parsed *Session Data* messages to the correct handler if the nonce is 
+zero or greater than zero. A *Session Data* message for a previously authenticated session shall always use a nonce 
 greater than zero, whereas the session authentication messages shall always use a nonce equal to zero.
 
 Initiators and responders may optionally transfer user data in these messages. This mechanism effectively makes the
