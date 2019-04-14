@@ -1352,7 +1352,7 @@ the input key material.
    
 2. Validate that the *mode_data* field is empty.
 
-3. Return the *shared_secret* as the IKM. 
+3. Return *shared_secret* | *initiator nonce* | *responder nonce* as the IKM.
 
 ##### Input Key Material (IKM) Procedure (Responder)
 
@@ -1362,7 +1362,38 @@ the input key material.
 
 3. Validate that the *mode_data* field is empty.
 
-4. Return the *shared_secret* as the IKM.
+4. Return *shared_secret* | *initiator nonce* | *responder nonce* as the IKM.
+
+#### Quantum Key Distribution (QKD) mode
+
+In QKD mode, both parties are receiving a stream of 256-bit keys using the laws of physics to prevent eavesdropping. To
+establish an SSP21 session, the initiator sends a unique key identifier to the reponder in the *Request Handshake Begin*
+message to tell it which key will be used as the IKM.
+
+##### Handshake Data (HD) Procedure
+
+* Query a vendor specific "key-store" to obtain a key and a key identifier
+* Set the *mode_data* field equal to the key identifier.
+* Set the *ephemeral_data* field to empty.
+
+**Note: ** - The key identifier shall be a vendor-specific way to identify a which key to use for key agreement. It might be an incrementing
+64-bit number or a secure hash of the key itself (fingerprint).
+
+##### Input Key Material (IKM) Procedure (Initiator)
+
+1. Validate that the *ephemeral_data* and *mode_data* fields are empty.
+
+2. Return the previously selected key as the IKM.
+
+##### Input Key Material (IKM) Procedure (Responder)
+
+1. Validate the *crypto_spec::handshake_ephemeral* is *EphemeralData::NONE*.
+
+2. Validate that the *ephemeral_data* field is empty.
+
+3. Use the *mode_data* field to find the specified key, returning HandshakeError::KEY_NOT_FOUND if unable.
+
+4. Return the key as the IKM if found.
 
 #### Pre-shared public key mode
 
@@ -1426,11 +1457,12 @@ Derive a key pair using the DH algorithm:
 
 #### ICF Certificate Mode
 
-Certificate mode is very similar to the pre-shared public key mode. Instead of having prior knowledge of the remote
-party's public static DH key, it is embedded in a certificate that is authenticated by a trusted authority. The
-*input_key_material* procedures are mostly identical with exception that the *mode_data* field must contain a 
-certificate, and the remote static public key (rs_pk) is obtained from that certificate. 
- 
+Certificate mode is similar to the pre-shared public key mode. Instead of having prior knowledge of the remote
+party's public static DH key, it is embedded in a certificate that is authenticated by using the public key of a trusted authority. 
+The *input_key_material* procedures are mostly identical with exception that the *mode_data* field must contain a 
+certificate, and the remote static public key (rs_pk) is obtained from that certificate.
+
+
 **TODO:** Decide whether to mostly duplicate the produce or find a way define common points with pre-shared public key
 mode.
 
@@ -1616,7 +1648,7 @@ write (key, ad, cleartext) -> (user_data, auth_tag) {
 
 The MAC is calculated over the concatenation of the following parameters:
 
-* The serialized form of the additional data (ad).
+* The serialized form of the AuthMetadata field (ad).
 * The length of the cleartext as an unsigned big endian 16-bit integer
 * The cleartext itself
 
