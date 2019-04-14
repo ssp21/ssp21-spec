@@ -1,9 +1,5 @@
 ---
 title:      'SSP21'
-author:
-- 'Adam Crain (jadamcrain@automatak.com)'
-- 'Rich Corrigan (RCorrigan@semprautilities.com)'
-- 'Daniel Michaud-Soucy (dmichaud-soucy@semprautilities.com)'
 date:       '05/19/17'
 ---
 
@@ -856,17 +852,17 @@ enum SessionSecurityMode {
 
 * **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
-##### Trust Mode
+##### Handshake Mode
 
-The *Trust Mode* enumeration specifies the procedure both parties use to derive session keys. Each mode interprets certain
-fields in the handshake messages in different ways. It is called the *Trust Mode* because at a high level it describes
-what information the two parties use to trust each-other.
+The *Handshake Mode* enumeration specifies which procedure both parties use to derive session keys. Each mode interprets certain
+fields in the handshake messages in different ways.
 
 ```
-enum Trust Mode {
+enum HandshakeMode {
     SHARED_SECRET : 0
-    PRESHARED_DH_KEYS : 1
-    ICF_CHAIN : 2
+    PRESHARED_PUBLIC_KEYS : 1
+    INDUSTRIAL_CERTIFICATES : 2
+    QKD
 }
 ```
 
@@ -874,8 +870,9 @@ enum Trust Mode {
 **Note: Refer to the handshake section for how each mode shall interpret handshake message fields.**
 
 * **SHARED_SECRET** - Both parties possess a shared-secret.
-* **PRESHARED_DH_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
-* **ICF_CHAIN** - Both parties use an authority certificate to authenticate each other's public DH key contained in a certificate.
+* **PRESHARED_PUBLIC_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
+* **INDUSTRIAL_CERTIFICATES** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
+* **QKD** - Each party has access to one of two ends of a Quantum Key Distribution (QKD) system, and use a fresh shared secret for each session.
 
 ##### Handshake Error
 
@@ -884,19 +881,20 @@ The *Handshake Error* enumeration denotes an error condition that occurred durin
 ```
 enum HandshakeError {
     BAD_MESSAGE_FORMAT                : 0
-    UNSUPPORTED_VERSION               : 1
-    UNSUPPORTED_TRUST_MODE            : 2
-    UNSUPPORTED_EPHEMERAL_MODE        : 3
-    UNSUPPORTED_HANDSHAKE_HASH        : 4
-    UNSUPPORTED_HANDSHAKE_KDF         : 5
-    UNSUPPORTED_SESSION_MODE          : 6
-    UNSUPPORTED_NONCE_MODE            : 7    
+    UNSUPPORTED_VERSION               : 1    
+    UNSUPPORTED_HANDSHAKE_EPHEMERAL   : 2
+    UNSUPPORTED_HANDSHAKE_HASH        : 3
+    UNSUPPORTED_HANDSHAKE_KDF         : 4
+    UNSUPPORTED_SESSION_MODE          : 5
+    UNSUPPORTED_NONCE_MODE            : 6    
+	UNSUPPORTED_HANDSHAKE_MODE        : 7
     BAD_CERTIFICATE_FORMAT            : 8
-    UNSUPPORTED_CERTIFICATE_FEATURE   : 9
-    BAD_CERTIFICATE_CHAIN             : 10
+	BAD_CERTIFICATE_CHAIN             : 9
+    UNSUPPORTED_CERTIFICATE_FEATURE   : 10    
     AUTHENTICATION_ERROR              : 11
     NO_PRIOR_HANDSHAKE_BEGIN          : 12
-    INTERNAL                          : 255
+	KEY_NOT_FOUND                     : 13
+    UNKNOWN                          : 255
 }
 ```
 
@@ -906,9 +904,7 @@ enum HandshakeError {
 
 * **UNSUPPORTED_VERSION** - The specified protocol version is not supported.
 
-* **UNSUPPORTED_TRUST_MODE** - The requested trust mode is not supported.
-
-* **UNSUPPORTED_EPHEMERAL_MODE** - The requested ephemeral mode is not supported.
+* **UNSUPPORTED_HANDSHAKE_EPHEMERAL** - The requested handshake ephemeral is not supported or doesn't match the handshake mode.
  
 * **UNSUPPORTED_HANDSHAKE_HASH** - The requested hash algorithm is not supported.
 
@@ -917,12 +913,22 @@ enum HandshakeError {
 * **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
 
 * **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
+
+* **UNSUPPORTED_HANDSHAKE_MODE** - The requested handshake mode is not supported.
  
 * **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
- 
-* **UNSUPPORTED_CERTIFICATE_FEATURE** - The feature or specified algorithm in one of the certificates is not supported.
 
-* **INTERNAL** - A error code for any unforeseen condition or implementation specific error. 
+* **BAD_CERTIFICATE_CHAIN** - The certificate chain contains an authentication or other issue,
+ 
+* **UNSUPPORTED_CERTIFICATE_FEATURE** - One of the received certificates uses a feature not supported by this implementation.
+
+* **AUTHENTICATION_ERROR** - The responder was unable to authenticate the initiator.
+
+* **NO_PRIOR_HANDSHAKE_BEGIN** - The initiator requested handshake auth, but no prior handshake begin was received.
+
+* **KEY_NOT_FOUND** - In QKD mode, the requested key id was not found.
+
+* **UNKNOWN** - A error code for any unforeseen condition or implementation specific error. 
 
 #### Handshake Messages
 
@@ -1072,12 +1078,12 @@ message SessionData {
 ## Key Agreement Handshake
 
 Key agreement in SSP21 is a single request/response message exchange whereby both parties derive a common set of session
-keys using a procedure determined by the *trust mode* specified by the initiator. This initial message exchange does not
+keys using a procedure determined by the *handshake mode* specified by the initiator. This initial message exchange does not
 authenticate the parties to each other. The parties must then prove to each-other that they derived the same keys by 
 then transmitting an initial *SessionData* message in each direction. A successful handshake involves the exchange of
 the four messages depicted in figure @fig:handshake.
 
-The same messages are exchanged in the same order, regardless of which *trust mode* is in use. Only the
+The same messages are exchanged in the same order, regardless of which *handshake mode* is in use. Only the
 interpretation of certain fields and the procedure for deriving sessions keys differs between modes. The authentication
 step is always identical for every mode. The steps for a successful handshake are summarized below.
 
@@ -1290,7 +1296,7 @@ using the KDF.
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
 relative time bases, is at least accurate to within this margin when the session is first initialized.
  
-**Note:** All trust modes utilize an *ephemeral data* field that contains no less than 128-bits of unpredictable data.
+**Note:** All handshake modes utilize an *ephemeral data* field that contains no less than 128-bits of unpredictable data.
 This field can be an ephemeral DH key or a random nonce. This means that *h* is never controlled by the initiator, and a 
 responder attempting to control the final value of *h* would have to make a successful pre-image attack on the handshake
 hash function.
@@ -1303,17 +1309,19 @@ The responder may signal an error after receiving a *Handshake Begin Request*:
 
 **TODO:** Formalize errors that can occur in handshake with state transition diagrams. 
 
-### Trust Modes
+### Handshake Modes
 
-This section defines the various trust modes that can be used to perform key derivation. The table below summarizes
+This section defines the various handshake modes that can be used to perform key derivation. The table below summarizes
 the modes, how they interpret fields in the handshake messages, and whether session modes that encrypt have forward
 secrecy (FS) if the long-term keys are later compromised.
 
-| Trust Mode            |  ephemeral data   |   mode data         | key material  | FS  |
-|-----------------------|-------------------|---------------------|---------------|-----| 
-| shared secret         |  random nonce     |   not used          | shared secret | no  |
-| pre-shared public key |  DH key           |   not used          | triple DH     | yes |
-| ICF chain             |  DH key           |   certificate chain | triple DH     | yes |
+| Handshake Mode            |  ephemeral data   |   mode data         | key material  | FS   |
+|---------------------------|-------------------|---------------------|---------------|------| 
+| shared secret             |  random nonce     |   none              | shared secret | no   |
+| quantum key distribution  |  none             |   key identifier    | qkd key       | yes  |
+| pre-shared public key     |  DH key           |   not used          | triple DH     | yes  |
+| ICF chain                 |  DH key           |   certificate chain | triple DH     | yes  |
+
 
 A "triple DH" operation performs three DH calculations using both the static and ephemeral DH keys to calculate a shared
 secret for the two parties. This shared secret is different for every session since the ephemeral keys are different. 
@@ -1323,8 +1331,8 @@ Some patterns are apparent in the table:
 * Shared-secret mode may only use a random nonce for ephemeral data and never provides forward secrecy.
 * The ephemeral data in public-key modes is an ephemeral DH public key. These modes always provide forward secrecy 
 when paired with an encrypting session mode.
-* Both public-key modes calculate the input key material in the same manner. The only difference how the trust is 
-established for the remote parties static public key (pre-shared vs certificate).
+* Both public-key modes calculate the input key material in the same manner. In ICF  mode, the remote
+public key is obtained by authenticating the certificate chain.
 
 #### Shared secret mode
 
