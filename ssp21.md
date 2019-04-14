@@ -840,17 +840,17 @@ enum HandshakeKDF {
 
 * **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
 
-##### Session Security Mode
+##### Session Mode
 
 The *Session Mode* enumeration specifies the complete set of algorithms used to authenticate (and optionally encrypt) the session.
 
 ```
-enum SessionSecurityMode {
-    HMAC-SHA256-16 : 0
+enum SessionMode {
+    HMAC_SHA256_16 : 0
 }
 ```
 
-* **HMAC-SHA256-16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
+* **HMAC_SHA256_16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
 ##### Handshake Mode
 
@@ -862,17 +862,16 @@ enum HandshakeMode {
     SHARED_SECRET : 0
     PRESHARED_PUBLIC_KEYS : 1
     INDUSTRIAL_CERTIFICATES : 2
-    QKD
+    QUANTUM_KEY_DISTRIBUTION : 3
 }
 ```
-
 <!-- TODO: link the handshake section -->
 **Note: Refer to the handshake section for how each mode shall interpret handshake message fields.**
 
 * **SHARED_SECRET** - Both parties possess a shared-secret.
 * **PRESHARED_PUBLIC_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
 * **INDUSTRIAL_CERTIFICATES** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
-* **QKD** - Each party has access to one of two ends of a Quantum Key Distribution (QKD) system, and use a fresh shared secret for each session.
+* **QUANTUM_KEY_DISTRIBUTION** - Single-use shared secrets delivered via quantum key distribution (QKD).
 
 ##### Handshake Error
 
@@ -910,7 +909,7 @@ enum HandshakeError {
 
 * **UNSUPPORTED_HANDSHAKE_KDF** - The requested KDF algorithm is not supported.
 
-* **UNSUPPORTED_SESSION_MODE** - The requested session security mode is not supported.
+* **UNSUPPORTED_SESSION_MODE** - The requested session mode is not supported.
 
 * **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
 
@@ -943,9 +942,12 @@ struct CryptoSpec {
    handshake_hash           : enum::HandshakeHash
    handshake_kdf            : enum::HandshakeKDF
    session_nonce_mode       : enum::SessionNonceMode
-   session_security_mode    : enum::SessionSecurityMode
+   session_mode             : enum::SessionMode
 }
 ```
+
+* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
+ security properties.
 
 * **handshake_ephemeral** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
 the expected length of *ephemeral_data*.
@@ -953,9 +955,6 @@ the expected length of *ephemeral_data*.
 * **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
 
 * **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
-
-* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
- security properties.
 
 * **session_security_mode** - Specifies the full set of algorithms used to authenticate (and optionally encrypt) the session
 
@@ -1088,7 +1087,7 @@ interpretation of certain fields and the procedure for deriving sessions keys di
 step is always identical for every mode. The steps for a successful handshake are summarized below.
 
 * Mode specification and key derivation (1-RTT)
-    * The initiator sends a *Handshake Begin Request* message specifying the the *TrustMode* and *CryptoSpec*.
+    * The initiator sends a *Handshake Begin Request* message specifying the *HandshakeMode* and *CryptoSpec*.
     * The responder replies with a *Handshake Begin Reply* message or a *Handshake Error Reply*
     * Both parties derive session keys according to the procedure specified by the initiator
 
