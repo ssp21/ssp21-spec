@@ -1135,24 +1135,65 @@ This ensures that attackers cannot skew the common time base by more than this t
 enforce a relatively low maximum value for this parameter to ensure that users do not accidentally deploy systems
 vulnerable to large session time manipulations
 
-### Generic Handshake Procedures
+### Abstract Handshake Interfaces
 
-The steps in this section are always performed during a successful handshake, regardless of which *trust_mode* is
-requested by the initiator. The generic procedure references mode-specific sub-procedures. It is important to understand
+Mode specific interfaces are defined in the next two sections. The term *interface* is used to describe an abstract implemenation
+consisting of both data and functions that operate on the data and inputs. They are described using a pseudo-code. Implementations
+are not required to implement the standard using these abstractions. They are provided as a mechanism to concisely specify 
+the required behaviors and error handling, not to require a particular abstraction in implementation.
+
+#### Initiator Handshake Interface (IHI)
+
+The IHI consists of two abstract methods:
+
+``` c++
+interface InitiatorHandshake
+{
+    /*
+	* Returns the ephemeral_data and mode_data for the this handshake_mode
+	*
+	* Both of the return values are sequences of byte, possibly empty
+	*/
+    abstract initialize() -> (ephemeral_data, mode_data)
+
+	/*
+	* Validate the reply and return the IKM or ABORT
+	*/
+	abstract validate(reply: ReplyHandshakeBegin) -> IKM or ABORT
+}
+```
+
+ABORT means "abort the handshake" and retry later if configured to do so.
+
+#### Responder Handshake Interface (RHI)
+
+The RHI consists of a single method:
+
+``` c++
+interface ResponderHandshake
+{
+    /*
+	* Validate the request and return the pair 
+	* (ReplyHandshakeBegin, IKM) or an error
+	*/
+    abstract validate(request: RequestHandshakeBegin)
+	    -> (ReplyHandshakeBegin, IKM) or HandshakeError	
+}
+```
+
+*HandshakeError* is the enumeration with the same name. Returning this enumeration means that 
+the responder will abort the handshake proceedure and return the *ReplyHandshakeError* message reporting
+the *HandshakeError* that occured.
+
+### Generic Handshake Procedure
+
+The steps in this section are always performed during a successful handshake, regardless of which `HandshakeMode` is
+requested by the initiator. The generic procedure reference the mode-specific interfaces. It is important to understand
 that while the specifics of the mode sub-procedures vary, the following properties always hold for any given mode:
 
-* *Ephemeral data* is always generated dynamically and validated in the same manner.
+* `ephemeral_data` is always generated dynamically or it is empty.
 
-* *Mode data* is always a deterministic value (possibly empty) that does not require randomness. It is always validated
-in the same manner.
-
-Sub-procedures are formally named below.
-
-*Handshake-data Procedure (HD procedure)* - Defines how the *ephemeral data* and the *mode data* are obtained
-for the *Request Handshake Begin* and *Reply Handshake Begin* messages.
-
-*Input Key Material Procedure (IKM procedure)* - Defines how the *ephemeral data* and *mode_data* are validated and 
-then used to calculate the *input_key_material*
+* `mode_data` is always a deterministic value or it is empty.
 
 **Notation:**
 
@@ -1164,6 +1205,12 @@ then used to calculate the *input_key_material*
 * NOW() is a function that returns the current value of a relative monotonic clock as a 64-bit unsigned count of
   milliseconds.
 
+* RANDOM(count) is a function that returns an array of cryptographically random bytes which is *count* in length.
+
+* [] denotes an empty array or sequence
+
+* || denotes the concatenation operator
+
 Symmetric session keys in this this section use the following abbreviations:
 
 * tx_sk - transmit session key
@@ -1172,94 +1219,93 @@ Symmetric session keys in this this section use the following abbreviations:
 
 #### Initiator Handshake Procedure
  
-1. The initiator prepares a *Request Handshake Begin* message to send to the responder.
+1. The initiator prepares a *RequestHandshakeBegin* message to send to the responder.
+    
+	`set request = IHI.initialize()`
 
-    * The *HD* procedure is invoked to set the *ephemeral data* and the *mode data* fields.
+2. The initiator sets *h* to the hash of the fully-initialized serialized request:
 
-    * All remaining fields are set in accordance with the pre-configured values on the initiator.
-
-2. The initiator sets *h* to the hash of the entire fully-prepared request:
-
-    * set *h = HASH(request)*
+    `set h = HASH(request)`
 
 3. The initiator transmits the message and records the time of transmission for future use:
 
-    * set *time_tx = NOW()*
+    `set time_tx = NOW()`
 
-4. The initiator starts a *response timer* that will be used to terminate the handshake if a *Reply Handshake Begin*
-message is not received before the timeout occurs.
+4. The initiator starts a response timer that will be used to abort the handshake if a *ReplyHandshakeBegin*
+   message is not received before the timeout occurs.
      
-5. Upon receiving the expected *Reply Handshake Begin* message:
+5. Upon receiving the *ReplyHandshakeBegin* message before the timeout:
 
-    * The initiator cancels the *response timer*.
+    * The initiator cancels the response timer.
 
     * The initiator estimates the session start time:
 
-        * set session_start_time = time_tx + ((NOW() - time_tx) / 2)
+        `set session_start_time = time_tx + ((NOW() - time_tx)/2)`
 
     * The initiator mixes the entire received response into *h*.
 
-        * set h = HASH(h || response)           
+        `set h = HASH(h || response)`
 
-    * The initiator invokes the mode's *IKM* procedure to validate the message and calculate the *input_key_material*.
+    * The initiator uses the IHI to validate the response and obtain the IKM:
 
-    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
-        * set (tx_sk, rx_sk) = KDF(h, input_key_material)
+	    `set IKM = IHI.validate(response)`
+	   
+	    If an error occurs, the initiator aborts the handshake.
 
-    * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
-      start time.
+		Otherwise, the initiator performs session key derivation using the KDF requested in `RequestHandshakeBegin`:
+
+		`set (tx_sk, rx_sk) = KDF(h, IKM)`
+
+        The initiator then initializes the *pending session* with the session keys, requested algorithms, and session_start_time.
 
 6. The initiator uses the *pending session* to transmit a *Session Auth Request* message. The initiator may optionally
    transfer user data in this message. If no user data is available, then the user data shall be empty. All of the
    fields are calculated in the same manner as an active session, with the exception that the nonce is fixed to zero.
 
-7. The initiator starts a *response timer* that will be used to terminate the handshake if a *Session Auth Reply*
+7. The initiator starts a response timer that will be used to terminate the handshake if a *Session Auth Reply*
    message is not received before the timeout occurs.
 
-8. Upon receiving the expected *Session Auth Reply* reply message:
-
-   * The initiator uses the *pending session* to validate the message. The validation procedure is identical to an
-     active session, with the exception that the nonce is required to be zero.
+8. Upon receiving a *Session Auth Reply* message before the timeout, the initiator uses the *pending session* to validate and 
+   authenticate the message. This procedure is identical to an active session, with the exception that the nonce is required to be zero.
    
-9. The initiator replaces any *active session* with the *pending session*. Any previously active session is invalidated.
+9. If the reply authenticates, the initiator replaces any *active session* with the *pending session*. Any previously active session is invalidated.
       
 #### Responder Handshake Procedure
 
-The responder is mostly stateless. It does not require the use of a timer or a formal state machine to implement the
-handshake. A single flag can be used to track whether the *pending session* is initialized.
+The responder handshake is relatively stateless compared to the initiator. It does not require the use of a timer, and a single flag can
+be used to track whether the *pending session* is initialized or not.
 
-##### Handling Request Handshake Begin
+##### Processing RequestHandshakeBegin
 
-The responder always handles the *RequestHandshakeBegin* message in the same way.
+Upon receiving a *RequestHandshakeBegin* message:
 
 1. The responder records the time the request was received:
 
-    * set *session_start_time = NOW()*
+    `set session_start_time = NOW()`
 
 2. The responder sets *h* equal to the hash of the entire received request:
 
-    * *set h = HASH(request)*
+    `set h = HASH(request)`
 
-3. The responder prepares and transmits a *Reply Handshake Begin* message to send to the initiator.
+3. The responder uses the RHI to validate the request and prepare a response:
 
-    * The responder invokes the *HD* procedure to set the *ephemeral data* and the *mode data* fields of the reply.
+    `set (IKM, ReplyHandshakeBegin) = RHI.validate(request)`
 
-    * The responder mixes the fully prepared response into *h*.
+    If an error is returned instead, the responder replies with ReplyHandshakeBegin(error) and performs no further actions.
 
-       * set h = HASH(h || response)
+    The responder mixes the fully prepared response into *h*:
 
-    * The responder invokes the mode's *IKM* procedure to validate the request and calculate the *input_key_material*.    
+    `set h = HASH(h || response)`
 
-    * The initiator performs session key derivation using the KDF requested in the *Request Handshake Begin* message.
+    The responder performs session key derivation using the KDF requested in the *RequestHandshakeBegin* message.
 
-        * set (rx_sk, tx_sk) = KDF(h, input_key_material)
+    `set (rx_sk, tx_sk) = KDF(h, IKM)`
 
-        * **Note:** The receive and transmit keys are reversed for the initiator and responder.
+    **Note:** The receive and transmit keys are reversed for the initiator and responder.
 
-    * The initiator initializes the *pending session* with the session keys, requested algorithms, and session
-      start time.
+    The initiator initializes the pending session with the session keys, requested algorithms, and session_start_time.
 
-    * The responder transmits the previously prepared *Reply Handshake Begin*
+    The responder transmits the *ReplyHandshakeBegin* obtained from the RHI.
 
 ##### Handling Session Auth Request
 
@@ -1331,20 +1377,43 @@ public key is obtained by authenticating the certificate chain.
 
 #### Shared secret mode
 
-In shared secret mode, each party possesses a common 256-bit key. This key might be static or refreshed periodically
-using some out-of-band mechanism.
+In shared secret mode, each party possesses the same static 256-bit key.
 
-The *input_key_material* parameter to the KDF is just the shared secret for both the initiator and responder. The
-uniqueness of the session keys relies solely on the uniqueness of the handshake hash, which in turn depends on the
-uniqueness of both nonces.
+The *input_key_material* parameter to the KDF is a concatenation of the shared secret and nonces provided by both the initiator
+and the responder.
 
-##### Handshake Data (HD) Procedure
+##### IHI Implementation
 
-* Generate a random nonce 32 bytes in length and set the *handshake ephemeral* field equal to this value.
-* Set the *mode_data* field to empty.
+``` c++
+class SharedSecretInitiatorHandshake implements InitiatorHandshake
+{   
+    // class member variables
+    set nonce = []
+	set shared_secret = <initialized by constructor>
 
-**Note:** There is no need to persist the nonce. It will be hashed into *h* and is not needed on its own to calculate
-the input key material.
+    initialize() -> (ephemeral_data, mode_data) {	
+	    set this.nonce = RANDOM(256) // save the nonce for later
+	    return (this.nonce, []) // the mode_data is empty
+	}
+	
+	validate(reply: ReplyHandshakeBegin) -> IKM or ABORT {
+
+	    if(this.nonce.length == 0) {
+		    return ABORT("nonce not initialized")
+		}
+	    
+		if(reply.ephemeral_data.lengh != 32) {
+		    return ABORT("bad nonce length in reply")
+		}
+
+		if(reply.mode_data.length != 0) {
+		    return ABORT("mode_data must be empty")
+		}
+
+		return (this.shared_secret || this.nonce || reply.ephemeral_data)
+	}
+}
+```
 
 ##### Input Key Material (IKM) Procedure (Initiator)
 
