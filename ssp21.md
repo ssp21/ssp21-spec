@@ -140,12 +140,6 @@ protocols. For example, the DNP3 link-layer and transport function could be comp
 and replaced with the SSP21 crypto and framing layers. SSP21 could also fully wrap the existing protocols, but removing 
 redundancy in certain implementations could provide significant bandwidth savings.
 
-<!--- RLC: While true, I think this may hinder adoption in that market, as it would mean that an SSP21-enhanced
-protocol is no longer interoperable with the  original protocol, but devices will still need to implement the
-original protocol. That means more code (two link layers for the same protocol), more testing, more complex
-procurement, more complex deployment, ...At least in the beginning, I think we should not expect anything other
-than BitW on the outstation end... -->
-
 Out-of-band messages like session key establishment, heartbeats, etc. can only be initiated from the SCADA master side 
 when it attempts to send a normal protocol message. This is because in half-duplex communications the wrapper cannot 
 squelch a reply from a remote by inappropriately using the channel.
@@ -293,9 +287,7 @@ require that a new certificate be installed, so this algorithm should be chosen 
 
 It's important to note that while the authority could be a standalone application with its own complete database of 
 outstations, masters, and users, it might also leverage data available in other systems. For instance, an LDAP server 
-or other enterprise identity system could be used to establish the identity and permissions of users <!--- rlc: This 
-should be the default way of doing things. The alternative above could be proposed as an alternative (i.e. invert 
-places with here) but the default suggestion should be for the authority to only manage devices. -->. The authority 
+or other enterprise identity system could be used to establish the identity and permissions of users. The authority 
 might also be capable of keeping its database of outstations in the system synchronized with a utility EMS.
 
 Allowing system administrators to pre-configure which users can generate certificates for which outstations and 
@@ -327,12 +319,6 @@ Since the number of masters in the system is low, it could even use pairs of sel
 authority has the public key of every master it needs to authorize. This public key would be used to authenticate the 
 certificate sign request for the certificate to be used to authenticate the master to the outstation.
 
-Unlike the web portal link to the authority, this M2M link need only be authenticated since no user credentials or 
-critical information will flow over it. TLS with NULL encryption and a strong authentication mechanism would be 
-sufficient and would allow NSM tools to continuously inspect and monitor this traffic. <!--- rlc: While this is true, I 
-see no reason to mention it if we assume the master has a fast internet connection and sufficient processing power to 
-do the necessary encryption (which should normally be the case). -->
-
 # The Link Layer
 
 SSP21 specifies a two layer architecture for delivering secure data to the application layer. The link layer provides three
@@ -353,9 +339,7 @@ layer. This prevents "tampering" false positives from occurring at the cryptogra
 completely different organizational response than occasional randomly corrupted frames.
 
 ```
-
 [ start ][ destination ][ source ][ length ][ crc-h ][ payload ][ crc-p ]
-
 ```
 
 The frames consist of the following fields. All multi-byte integer fields (including the CRCs) are encoded in little 
@@ -501,19 +485,20 @@ The *salt* shall always be a publicly known, yet randomized value not controlled
 
 The default KDF is HKDF defined in [RFC 5869](https://www.ietf.org/rfc/rfc5869.txt).
 
-* *HKDF(salt, input_key_material)*: Calculates a pair of session keys based on input key material. 
-    * Sets *temp_key* = *HMAC(salt, input_key_material)*.
-    * Sets *key1* = *HMAC(temp_key, [0x01])*.
-    * Sets *key2* = *HMAC(temp_key, key1 || [0x02])*.
-    * Returns the pair of keys *(key1, key2)*.
+HKDF is always be used to derive a pair of 256-bit session keys. This is simple to
+implement when the block size of the hash function is also 32-bytes (e.g. SHA-256):
 
-**Note: ** If the output of the HMAC exceeds 32 bytes, the keys are truncated to left-most 32 bytes.
-    
-The pseudo code here offers the following simplifications from the generic construction in the RFC:
- 
-* Specialized to only two output keys
-* The optional info parameter is a zero byte sequence
-* Extract and expand steps are collapsed into a single function
+``` c++
+HKDF(salt, input_key_material) -> (key1, key2)
+{
+    // extract
+    set temp_key = HMAC(salt, input_key_material)
+	// specialized expand
+    set key1 = HMAC(temp_key, [0x01])
+    set key2 = HMAC(temp_key, key1 || [0x02])
+    return (key1, key2)
+}
+```
   
 ### CSPRNG
 
@@ -1139,8 +1124,9 @@ vulnerable to large session time manipulations
 
 Mode specific interfaces are defined in the next two sections. The term *interface* is used to describe an abstract implemenation
 consisting of both data and functions that operate on the data and inputs. They are described using a pseudo-code. Implementations
-are not required to implement the standard using these abstractions. They are provided as a mechanism to concisely specify 
-the required behaviors and error handling, not to require a particular abstraction in implementation.
+are not required to use these abstractions when implementing the standard. They are provided as a mechanism to concisely specify
+the required behaviors and error handling in a manner that separates the generic handshake proceedure from the specifics of any
+particular mode.
 
 #### Initiator Handshake Interface (IHI)
 
