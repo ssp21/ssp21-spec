@@ -321,8 +321,7 @@ certificate sign request for the certificate to be used to authenticate the mast
 
 # The Link Layer
 
-SSP21 specifies a two layer architecture for delivering secure data to the application layer. The link layer provides three
-services to the layers above it:
+SSP21 specifies a two layer architecture. The non-cryptographic link-layer provides three services to the layers above it:
 
 * **Framing** - A procedure is defined to identify a frame from a stream of bytes.
 * **Addressing** - The frame contains source and destination addresses for the transmitter and receiver.
@@ -339,7 +338,10 @@ layer. This prevents "tampering" false positives from occurring at the cryptogra
 completely different organizational response than occasional randomly corrupted frames.
 
 ```
-[ start ][ destination ][ source ][ length ][ crc-h ][ payload ][ crc-p ]
+
+[start][destination][source][length][crc-h][payload][crc-p]
+
+
 ```
 
 The frames consist of the following fields. All multi-byte integer fields (including the CRCs) are encoded in little 
@@ -395,17 +397,9 @@ standard.
 
 # Cryptographic Layer
 
-The cryptographic layer is inspired by [Noise](http://noiseprotocol.org), a self-described framework for building 
-cryptographic protocols. This specification picks from all the available options and modes within Noise to create a 
-subset appropriate for wrapping ICS serial protocols. This specification is self-contained. Reading the Noise 
-specification is not required to understand or implement SSP21.
-
-Modifications to Noise include:
-
-* SSP21 has no concept of handshake patterns. A single handshake is used that provides the desired security properties.
-* SSP21 has support for authentication-only modes
-* Masters can specify sets of cryptographic algorithms
-* Definitions for handshake payload data including relative time bases and certificate formats
+The cryptographic layer is messaged-oriented, meaning that framing of the message is accomplished by the layer(s) beneath it.
+SSP21 uses a handful of message types to establish secure associations, and then transport user data securely from one party
+to the other.
 
 ## Terminology
 
