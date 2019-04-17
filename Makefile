@@ -37,7 +37,7 @@ ssp21.pdf: ssp21.md template_pandoc.latex Makefile $(ALL_GEN_FILES)
 		--filter pandoc-fignos \
 		--template template_pandoc.latex \
 		-V colorlinks \
-		--highlight-style=tango \
+		--highlight-style=monochrome \
 		-o ssp21.pdf
 
 #### Wildcard rules for generating PNGs from source formats ####

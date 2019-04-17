@@ -403,10 +403,10 @@ to the other.
 
 ## Terminology
 
-The key agreement handshake in SSP21 is a request-reply protocol, thus are two parties: an *initiator* and a 
-*responder*. Normally, the initiator is expected to be the SCADA master, and the responder is expected to be an
+The key agreement handshake in SSP21 is a request-reply protocol, thus are two parties: an `initiator` and a 
+`responder`. Normally, the initiator is expected to be the SCADA master, and the responder is expected to be an
 outstation. It's perfectly possible, however, to flip this relationship in certain circumstances, and have the 
-outstation initiate the key agreement. To preserve the generality of the specification the terms initiator and responder
+outstation initiate the key agreement. To preserve the generality of the specification the terms `initiator` and `responder`
 are used in place of master and outstation.
 
 ## Algorithms
@@ -417,8 +417,8 @@ extension.
 
 The following notation will be used in algorithm pseudo-code:
 
-* The **||** operator denotes the concatenation of two byte sequences.
-* The **[b1, b2, .. bn]** syntax denotes a, possibly empty, byte sequence.
+* The `||` operator denotes the concatenation of two byte sequences.
+* The `[b1, b2, .. bn]` syntax denotes a, possibly empty, byte sequence.
 
 ### Diffie-Hellman (DH) functions
 
@@ -431,9 +431,9 @@ SSP21 currently only supports Curve25519 for session key agreement. It is descri
 
 All DH curves will support the following two algorithms with the key lengths specified above.
 
-* GenerateKeyPair() - Generate a random public/private key pair.
+* `generate_key_pair() -> (private_key, public_key)` - Generate a random public/private key pair.
 
-* DH(private_key, public_key) - Given a local private key and remotely supplied public key, calculate bytes of 
+* `dh(private_key, public_key) -> (result_bytes)` - Given a local private key and remotely supplied public key, calculate bytes of 
 length _DHLEN_.
 
 <!--- RLC: Should perhaps mention, as in the RFC, to check for all zeroes. -->
@@ -460,20 +460,20 @@ HMAC provides an authentication tag given a shared key and an input message. It 
 [RFC 2104](https://www.ietf.org/rfc/rfc2104.txt). Any hash algorithm described above can be used in conjunction with this
 construct, and the corresponding HMAC function will produce a tag with the same length as the underlying hash function.
 
-HMAC(key, message) - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
+`HMAC(key, message) -> AuthTag` - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
 
 ### Key Derivation Function (KDF)
 
 SSP21 has extensible support for an abstract KDF used during the handshake process.
 
-All KDFs take *salt* and *input_key_material* parameters and return two keys, each 32-bytes in length.
+All KDFs take `salt` and `input_key_material` parameters and return two keys, each 32-bytes in length.
 
 ```
   KDF(salt, input_key_material) -> (key1, key2)
 ```
 
-The *salt* shall always be a publicly known, yet randomized value not controlled by either party independently. The
-*input_key_material* shall always be a private value known only to the two parties.
+The `salt` shall always be a publicly known, yet randomized value not controlled by either party independently. The
+`input_key_material` shall always be, at least partially, a high entropy secret value known only to the two parties.
 
 #### HKDF
 
@@ -500,14 +500,14 @@ A cryptographically secure pseudo-random number generator (CSPRNG) is required f
 handshake mode:
 
 * the generation of ephemeral DH keys in all public-key modes that provide forward secrecy
-* the generation of random nonces in symmetric key modes and in public key modes that do not provide forward secrecy.
+* the generation of random nonces in symmetric key modes.
 
 Any secure RNG will do, put implementers should err on the side of caution and prefer one provided by the operating system, or a
 wrapper provided by a trusted library.
 
 ## Messages
 
-Every message at the cryptographic layer begins with a one octet message type identifier called the *Function* enumeration. The
+Every message at the cryptographic layer begins with a one octet message type identifier called the `Function` enumeration. The
 remaining octets are interpreted according the defined structure of that type.
 
 ### Syntax
@@ -540,7 +540,7 @@ struct <struct-name> {
 }
 ```
 
-*Messages* are special *Structs* whose first field is always a constant value of the *Function* enumeration.
+`Messages` are special `Structs` whose first field is always a constant value of the `Function` enumeration.
 
 ```
 message <message-name> {
@@ -554,9 +554,9 @@ message <message-name> {
 
 The following primitive types are defined. All multi-byte integers are serialized in network byte order.
 
-* **U8** - 8-bit (1-byte) unsigned integer.
-* **U16** - 16-bit (2 byte) unsigned integer.
-* **U32** - 32-bit (4 byte) unsigned integer.
+* **`U8`** - 8-bit unsigned integer.
+* **`U16`** - 16-bit unsigned integer.
+* **`U32`** - 32-bit unsigned integer.
 
 The following example defines a struct that provides counts of various types of flowers:
 
@@ -568,8 +568,11 @@ struct Flowers {
 }
 ```
 
-The serialized size of a *Flowers* struct would always be 7 bytes 
-(sizeof(U8) + sizeof(U16) + sizeof(U32)).
+The serialized size of a `Flowers` struct would always be 7 bytes:
+
+```
+sizeof(U8) + sizeof(U16) + sizeof(U32) == 7
+```
 
 #### Enumerations
 
@@ -617,7 +620,7 @@ Bit fields are single-byte members of *Structs* or *Messages* that encode up to 
 bit using the following syntax:
 
 ```
-bitfield <bitfield-name> { "name top bit", "name top bit - 1",  ... "name bottom bit" }
+bitfield <bitfield-name> { <top-bit-name>, ... <bottom-bit-name> }
 ```
 
 Bit fields can have zero to eight member bits. The top bit (0x80) is always implicitly defined first in the list of bit
@@ -634,10 +637,10 @@ The bit-field above with flag1 = true, flag2 = false, and flag3 = true would hav
 
 #### Sequences
 
-*Sequences* are variable length lists of a particular type. There are two categories of sequences:
+`Sequences` are variable length lists of a particular type. There are two categories of sequences:
 
-* **SeqOf[Byte]** - Denotes a sequence of bytes, like a key, signature, etc.
-* **SeqOf[struct type]** - Denotes a sequence of a defined structure type.
+* **`SeqOf[Byte]`** - Denotes a sequence of bytes, like a key, signature, etc.
+* **`SeqOf[<struct type>]`** - Denotes a sequence of a defined structure type.
 
 ##### Variable Length Count
 
@@ -717,7 +720,7 @@ with the following notation:
 
 Any field without the trailing constraint syntax (...) is implicitly defined to have no constraints.
 
-For example, a sequence of bytes may have a *count* constraint that defines the required number of elements for the sequence.
+For example, a sequence of bytes may have a `count` constraint that defines the required number of elements for the sequence.
 
 ```
 struct SomeStruct {
@@ -725,9 +728,8 @@ struct SomeStruct {
 }
 ```
 
-Parsers should always enforce constraints internally and signal errors whenever a constraint has been violated.
-
-The table defines the allowed constraints and the field types to which they apply.
+Parsers should always enforce constraints internally and signal errors whenever a constraint has been violated. The table
+defines the allowed constraints and the field types to which they apply.
 
 | Field Type(s)        | Constraint ID | Value semantics             |   Mandatory     |
 | ---------------------|---------------|-----------------------------|-----------------|
@@ -760,7 +762,7 @@ enum Function {
 
 ##### Session Nonce Mode
 
-The *Session Nonce Mode* enumeration specifies how the nonce (aka message counter) is verified to protect
+The `SessionNonceMode` enumeration specifies how the nonce (aka message counter) is verified to protect
 packets from replay.
 
 ```
@@ -770,19 +772,19 @@ enum SessionNonceMode {
 }
 ```
 
-* **INCREMENT_LAST_RX** - The receiver of a session message will verify that each received nonce is strictly 
+* **`INCREMENT_LAST_RX`** - The receiver of a session message will verify that each received nonce is strictly 
 equal to the last valid nonce plus one. This is the default mode and should always be used in session oriented 
 environments like TCP that provide stream integrity and ordering guarantees.
 
-* **GREATER_THAN_LAST_RX** - The receiver of a session message will verify that each received is greater the last 
+* **`GREATER_THAN_LAST_RX`** - The receiver of a session message will verify that each received is greater the last 
 valid nonce. This mode is intended to be used in session-less environments like serial or UDP and allows for loss 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
 
 ##### Handshake Ephemeral
 
-The *HandshakeEphemeral* enumeration specifies what the contents of the *ephemeral_data* field of the handshake 
-request/response contain.
+The `HandshakeEphemeral` enumeration specifies what the contents of the `ephemeral_data` field of the handshake 
+request/reply contain.
 
 ```
 enum HandshakeEphemeral {
@@ -792,14 +794,14 @@ enum HandshakeEphemeral {
 }
 ```
 
-* **X25519** - A x25519 DH public key
-* **NONCE** - A 32-byte random nonce
-* **NONE** - Empty value
+* **`X25519`** - A x25519 DH public key
+* **`NONCE`** - A 32-byte random nonce
+* **`NONE`** - Empty value
 
 ##### Handshake Hash
 
-The *Handshake Hash* enumeration specifies which hash algorithm will be used during the handshake process to prevent
-tampering.
+The `HandshakeHash` enumeration specifies which hash algorithm will be used during the key agreement handshake
+to prevent tampering.
 
 ```
 enum HandshakeHash {
@@ -807,11 +809,11 @@ enum HandshakeHash {
 }
 ```
 
-* **SHA256** - Use SHA256
+* **`SHA256`** - Use SHA256
 
 ##### Handshake KDF
 
-The *Handshake KDF* enumeration specifies which KDF is used to derive session keys and intermediate keys.
+The `HandshakeKDF` enumeration specifies which KDF is used to derive session keys and intermediate keys.
 
 ```
 enum HandshakeKDF {
@@ -819,11 +821,11 @@ enum HandshakeKDF {
 }
 ```
 
-* **HKDF_SHA256** - Use HKDF where the HMAC is HMAC-SHA256
+* `HKDF_SHA256` - Use HKDF where the HMAC is HMAC-SHA256
 
 ##### Session Crypto Mode
 
-The *Session Crypto Mode* enumeration specifies the complete set of algorithms used to authenticate (and optionally encrypt) the session.
+The `SessionCryptoMode` enumeration specifies the complete set of algorithms used to authenticate (and optionally encrypt) the session.
 
 ```
 enum SessionCryptoMode {
@@ -831,11 +833,11 @@ enum SessionCryptoMode {
 }
 ```
 
-* **HMAC_SHA256_16** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
+* **`HMAC_SHA256_16`** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
  
 ##### Handshake Mode
 
-The *Handshake Mode* enumeration specifies which procedure both parties use to derive session keys. Each mode interprets certain
+The `HandshakeMode` enumeration specifies which procedure both parties use to derive session keys. Each mode interprets certain
 fields in the handshake messages in different ways.
 
 ```
@@ -847,16 +849,16 @@ enum HandshakeMode {
 }
 ```
 <!-- TODO: link the handshake section -->
-**Note: Refer to the handshake section for how each mode shall interpret handshake message fields.**
+**Note: ** Refer to the handshake section for how each mode shall interpret handshake message fields.
 
-* **SHARED_SECRET** - Both parties possess a shared-secret.
-* **PRESHARED_PUBLIC_KEYS** - Both parties have out-of-band knowledge of each other's public DH key.
-* **INDUSTRIAL_CERTIFICATES** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
-* **QUANTUM_KEY_DISTRIBUTION** - Single-use shared secrets delivered via quantum key distribution (QKD).
+* **`SHARED_SECRET`** - Both parties possess a shared-secret.
+* **`PRESHARED_PUBLIC_KEYS`** - Both parties have out-of-band knowledge of each other's public DH key.
+* **`INDUSTRIAL_CERTIFICATES`** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
+* **`QUANTUM_KEY_DISTRIBUTION`** - Single-use shared secrets delivered via quantum key distribution (QKD).
 
 ##### Handshake Error
 
-The *Handshake Error* enumeration denotes an error condition that occurred during the handshake process.
+The `HandshakeError` enumeration denotes an error condition that occurred during the handshake process.
 
 ```
 enum HandshakeError {
@@ -878,43 +880,43 @@ enum HandshakeError {
 }
 ```
 
-**Note: Implementations shall NEVER define custom error codes as this can allow implementation fingerprinting**
+**Note: **Implementations shall **NEVER** define custom error codes as this can allow implementation fingerprinting.
 
-* **BAD_MESSAGE_FORMAT** - A received handshake message was malformed in some manner, i.e. it was improperly encoded.
+* **`BAD_MESSAGE_FORMAT`** - A received handshake message was malformed in some manner, i.e. it was improperly encoded.
 
-* **UNSUPPORTED_VERSION** - The specified protocol version is not supported.
+* **`UNSUPPORTED_VERSION`** - The specified protocol version is not supported.
 
-* **UNSUPPORTED_HANDSHAKE_EPHEMERAL** - The requested handshake ephemeral is not supported or doesn't match the handshake mode.
+* **`UNSUPPORTED_HANDSHAKE_EPHEMERAL`** - The requested handshake ephemeral is not supported or doesn't match the handshake mode.
  
-* **UNSUPPORTED_HANDSHAKE_HASH** - The requested hash algorithm is not supported.
+* **`UNSUPPORTED_HANDSHAKE_HASH`** - The requested hash algorithm is not supported.
 
-* **UNSUPPORTED_HANDSHAKE_KDF** - The requested KDF algorithm is not supported.
+* **`UNSUPPORTED_HANDSHAKE_KDF`** - The requested KDF algorithm is not supported.
 
-* **UNSUPPORTED_SESSION_MODE** - The requested session mode is not supported.
+* **`UNSUPPORTED_SESSION_MODE`** - The requested session mode is not supported.
 
-* **UNSUPPORTED_NONCE_MODE** - The requested session nonce mode is not supported.
+* **`UNSUPPORTED_NONCE_MODE`** - The requested session nonce mode is not supported.
 
-* **UNSUPPORTED_HANDSHAKE_MODE** - The requested handshake mode is not supported.
+* **`UNSUPPORTED_HANDSHAKE_MODE`** - The requested handshake mode is not supported.
  
-* **BAD_CERTIFICATE_FORMAT** - One of the received certificates was improperly encoded.
+* **`BAD_CERTIFICATE_FORMAT`** - One of the received certificates was improperly encoded.
 
-* **BAD_CERTIFICATE_CHAIN** - The certificate chain contains an authentication or other issue,
+* **`BAD_CERTIFICATE_CHAIN`** - The certificate chain contains an authentication or other issue,
  
-* **UNSUPPORTED_CERTIFICATE_FEATURE** - One of the received certificates uses a feature not supported by this implementation.
+* **`UNSUPPORTED_CERTIFICATE_FEATURE`** - One of the received certificates uses a feature not supported by this implementation.
 
-* **AUTHENTICATION_ERROR** - The responder was unable to authenticate the initiator.
+* **`AUTHENTICATION_ERROR`** - The responder was unable to authenticate the initiator.
 
-* **NO_PRIOR_HANDSHAKE_BEGIN** - The initiator requested handshake auth, but no prior handshake begin was received.
+* **`NO_PRIOR_HANDSHAKE_BEGIN`** - The initiator requested handshake auth, but no prior handshake begin was received.
 
-* **KEY_NOT_FOUND** - In QKD mode, the requested key id was not found.
+* **`KEY_NOT_FOUND`** - In QKD mode, the requested key id was not found.
 
-* **UNKNOWN** - A error code for any unforeseen condition or implementation specific error. 
+* **`UNKNOWN`** - A error code for any unforeseen condition or implementation specific error. 
 
 #### Handshake Messages
 
 ##### Request Handshake Begin
 
-The initiator starts the process of establishing a new session by sending the *Request Handshake Begin* message. This
+The initiator starts the process of establishing a new session by sending the `RequestHandshakeBegin` message. This
 message contains a specification of all of the abstract algorithms to be used during the handshake and the session.
 
 ```
@@ -927,17 +929,17 @@ struct CryptoSpec {
 }
 ```
 
-* **handshake_ephemeral** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
-the expected length of *ephemeral_data*.
+* **`handshake_ephemeral`** - Specifies the nonce or DH algorithm to be used during the handshake, and implicitly determines 
+the expected length of `ephemeral_data`.
 
-* **handshake_hash** - Specifies which hash algorithm is used to prevent tampering of handshake data.
+* **`handshake_hash`** - Specifies which hash algorithm is used to prevent tampering of handshake data.
 
-* **handshake_kdf** - Specifies which KDF is used for handshake key derivation.
+* **`handshake_kdf`** - Specifies which KDF is used for handshake key derivation.
 
-* **session_nonce_mode** - Mode describing how session messages are protected against replay with differing
+* **`session_nonce_mode`** - Mode describing how session messages are protected against replay with differing
  security properties.
 
-* **session_crypto_mode** - Specifies the full set of algorithms used to authenticate (and optionally encrypt) the session
+* **`session_crypto_mode`** - Specifies the full set of algorithms used to authenticate (and optionally encrypt) the session
 
 The message also includes some constraints on the session to be established.
 
@@ -948,8 +950,8 @@ struct SessionConstraints {
 }
 ```
 
-* **max_nonce** - The maximum allowed value of either the transmit or receive nonce.
-* **max_session_duration** - The maximum allowed session duration in seconds after which messages are no longer considered valid.
+* **`max_nonce`** - The maximum allowed value of either the transmit or receive nonce.
+* **`max_session_duration`** - The maximum allowed session duration in seconds after which messages are no longer considered valid.
 
 ```
 message RequestHandshakeBegin {
@@ -963,25 +965,25 @@ message RequestHandshakeBegin {
 }
 ```
 
-* **version** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible 
+* **`version`** - Identifies the version of SSP21 in use. Only new versions that introduce non-backward compatible 
 changes to the specification which cannot be mitigated via configuration will increment this number. 
 
-* **crypto_spec** - Struct that specifies the various abstract algorithms to be used.
+* **`crypto_spec`** - Struct that specifies the various abstract algorithms to be used.
 
-* **constraints** - Struct that specifies constraints on the session.
+* **`constraints`** - Struct that specifies constraints on the session.
 
-* **handshake_mode** - Determines how session keys are derived by interpreting *ephemeral_data* and *mode_data*.
+* **`handshake_mode`** - Determines how session keys are derived by interpreting `ephemeral_data` and `mode_data`.
 
-* **ephemeral_data** - An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
-and possibly constrained by the *handshake_mode*.
+* **`ephemeral_data`** - An ephemeral nonce or public DH key corresponding to the `handshake_ephemeral` in the `CryptoSpec`
+and possibly constrained by the `handshake_mode`.
 
-* **mode_data** - Additional data interpreted according to the *handshake_mode*. Whether this field is empty or not
+* **`mode_data`** - Additional data interpreted according to the `handshake_mode`. Whether this field is empty or not
 depends on the mode.
 
 ##### Reply Handshake Begin
 
-The responder replies to *Request Handshake Begin* by sending *Reply Handshake Begin*, unless an error occurs in which 
-case it responds with *Reply Handshake Error*.
+The responder replies to `RequestHandshakeBegin` by sending `ReplyHandshakeBegin`, unless an error occurs in which 
+case it responds with `ReplyHandshakeError`.
 
 ```
 message ReplyHandshakeBegin {
@@ -991,15 +993,14 @@ message ReplyHandshakeBegin {
 }
 ```
 
-* **ephemeral_data** -  An ephemeral nonce or public DH key corresponding to the *handshake_ephemeral* in the *CryptoSpec*
-and possibly constrained by the *security_mode*. This field is never empty.
+* **`ephemeral_data`** -  An ephemeral nonce or public DH key interpreted according to the `handshake_mode` and corresponding
+  to the `handshake_ephemeral` in the `CryptoSpec` and interpreted according
 
-* **mode_data** - Additional data data interpreted according to the *security_mode*. Whether this field is empty or not
-depends on the mode.
+* **`mode_data`** - Additional data data interpreted according to the `handshake_mode`.
 
 ##### Reply Handshake Error
 
-The outstation shall reply to a *Request Handshake Begin* with a *Reply Handshake Error* message if an error occurs.
+The outstation shall reply to a `RequestHandshakeBegin` with a *ReplyHandshakeError* message if an error occurs.
 This message is for debugging purposes only during commissioning and cannot be authenticated.
 
 ```
@@ -1009,7 +1010,7 @@ message ReplyHandshakeError {
 }
 ```
 
-* **error** - An error code that enumerates possible error conditions that can occur during the handshake.
+* **`error`** - An error code that enumerates possible error conditions that can occur during the handshake.
 
 ##### Session Data
 
@@ -1029,9 +1030,9 @@ struct AuthMetadata {
 }
 ```
 
-* **nonce** - An incrementing nonce that provides protection from replay of session messages.
+* **`nonce`** - An incrementing nonce that provides protection from replay of session messages.
 
-* **valid_until_ms** - A relative millisecond timestamp since session initialization as defined in the section on key
+* **`valid_until_ms`** - A relative millisecond timestamp since session initialization as defined in the section on key
 negotiation.
  
 ```
@@ -1043,50 +1044,50 @@ message SessionData {
 }
 ```
 
-* **metadata** - The Metadata struct is covered by the authentication mechanism of the negotiated *Session Mode*.
+* **`metadata`** - The Metadata struct is covered by the authentication mechanism of the negotiated *Session Mode*.
 
-* **user_data** - A blob of (possibly encrypted) user data.
+* **`user_data`** - A blob of (possibly encrypted) user data.
 
-* **auth_tag** - A tag used to authenticate the message.
+* **`auth_tag`** - A tag used to authenticate the message.
 
 ## Key Agreement Handshake
 
 Key agreement in SSP21 is a single request/response message exchange whereby both parties derive a common set of session
-keys using a procedure determined by the *handshake mode* specified by the initiator. This initial message exchange does not
+keys using a procedure determined by the `HandshakeMode` specified by the initiator. This initial message exchange does not
 authenticate the parties to each other. The parties must then prove to each-other that they derived the same keys by 
-then transmitting an initial *SessionData* message in each direction. A successful handshake involves the exchange of
+then transmitting an initial `SessionData` message in each direction. A successful handshake involves the exchange of
 the four messages depicted in figure @fig:handshake.
 
-The same messages are exchanged in the same order, regardless of which *handshake mode* is in use. Only the
+The same messages are exchanged in the same order, regardless of which `HandshakeMode` is in use. Only the
 interpretation of certain fields and the procedure for deriving sessions keys differs between modes. The authentication
 step is always identical for every mode. The steps for a successful handshake are summarized below.
 
 * Mode specification and key derivation (1-RTT)
-    * The initiator sends a *Request Handshake Begin* message specifying the *HandshakeMode* and *CryptoSpec*.
-    * The responder replies with a *Reply Handshake Begin* message or a *Reply Handshake Error*
+    * The initiator sends a `RequestHandshakeBegin` message specifying the `HandshakeMode` and `CryptoSpec`.
+    * The responder replies with a `ReplyHandshakeBegin` or a `ReplyHandshakeError` message.
     * Both parties derive session keys according to the procedure specified by the initiator
 
 * Authentication and optional data transfer (1-RTT)
-    * The initiator sends a *Session Data* message with nonce equal to zero.
-    * The responder authenticates the message and replies with a *Session Data* message with nonce equal to zero.
+    * The initiator sends a `SessionData` message with nonce equal to zero.
+    * The responder authenticates the message and replies with a `SessionData` message with nonce equal to zero.
     
-These initial *Session Data* messages with nonce equal to zero are syntactically identical to other *Session Data*
+These initial `SessionData` messages with nonce equal to zero are syntactically identical to other `SessionData`
 messages, however, the following differences apply:
 
 * The nonce of zero identifies that they are a special case, and are processed according to special rules.
-* A responder may reply to an initiator's initial *Session Data* message with a *Reply Handshake Error*.
+* A responder may reply to an initiator's initial `SessionData` message with a `ReplyHandshakeError`.
 
 Because of their special status and processing rules, we define aliases for these messages:
 
-* A *Session Data* message with a nonce equal to zero sent by an initiator is called a *Session Auth Request* 
+* A `SessionData` message with a nonce equal to zero sent by an initiator is called a `SessionAuthRequest` 
   message.
    
-* A *Session Data* message with a nonce equal to zero sent by a responder is called a *Session Auth Reply* 
+* A `SessionData` message with a nonce equal to zero sent by a responder is called a `SessionAuthReply` 
   message.
   
 These aliases do not define new wire-level message types. That are purely used as a shorthand for the purpose of 
-specification. Implementations will want to direct parsed *Session Data* messages to the correct handler if the nonce is 
-zero or greater than zero. A *Session Data* message for a previously authenticated session shall always use a nonce 
+specification. Implementations will want to direct parsed `SessionData` messages to the correct handler if the nonce is 
+zero or greater than zero. A `SessionData` message for a previously authenticated session shall always use a nonce 
 greater than zero, whereas the session authentication messages shall always use a nonce equal to zero.
 
 Initiators and responders may optionally transfer user data in these messages. This mechanism effectively makes the
@@ -1096,7 +1097,7 @@ remain wire-level compatible.
 
 A previously valid session (keys, nonce values, start time, etc) shall not be invalidated until a session authentication
 message is received and authenticated using the new session keys. Implementations may wish to implement this behavior
-using two data structures, one for an *active* session and one for a *pending* session.
+using two data structures, one for an `active session` and one for a `pending session`.
 
 ![Successful session establishment](msc/handshake.png){#fig:handshake}
 
@@ -1161,9 +1162,9 @@ interface ResponderHandshake
 }
 ```
 
-*HandshakeError* is the enumeration with the same name. Returning this enumeration means that 
-the responder will abort the handshake proceedure and return the *ReplyHandshakeError* message reporting
-the *HandshakeError* that occured.
+`HandshakeError` is the enumeration with the same name. Returning this enumeration means that 
+the responder will abort the handshake proceedure and return the `ReplyHandshakeError` message reporting
+the `HandshakeError` that occured.
 
 ### Generic Handshake Procedure
 
@@ -1177,33 +1178,33 @@ that while the specifics of the mode sub-procedures vary, the following properti
 
 **Notation:**
 
-* Both parties maintain a *handshake hash* denoted by the variable *h* which is *HASH_LEN* in length.
+* Both parties maintain a `handshake hash` denoted by the variable **`h`** which is `HASH_LEN` in length.
 
-* The HASH() function always refer to the hash function requested by the master in the *Request Handshake Begin*
+* The `HASH()` function always refer to the hash function requested by the master in the `RequestHandshakeBegin
   message.
 
-* NOW() is a function that returns the current value of a relative monotonic clock as a 64-bit unsigned count of
+* `NOW()` is a function that returns the current value of a relative monotonic clock as a 64-bit unsigned count of
   milliseconds.
 
-* RANDOM(count) is a function that returns an array of cryptographically random bytes which is *count* in length.
+* `RANDOM(count)` is a function that returns an array of cryptographically random bytes which is `count` in length.
 
-* [] denotes an empty array or sequence
+* `[]` denotes an empty array or sequence
 
-* || denotes the concatenation operator
+* `||` denotes the concatenation operator
 
 Symmetric session keys in this this section use the following abbreviations:
 
-* tx_sk - transmit session key
+* `tx_sk` - transmit session key
 
-* rx_sk - receive session key
+* `rx_sk` - receive session key
 
 #### Initiator Handshake Procedure
  
-1. The initiator prepares a *RequestHandshakeBegin* message to send to the responder.
+1. The initiator prepares a `RequestHandshakeBegin` message to send to the responder.
     
 	`set request = IHI.initialize()`
 
-2. The initiator sets *h* to the hash of the fully-initialized serialized request:
+2. The initiator sets `h` to the hash of the fully-initialized serialized request:
 
     `set h = HASH(request)`
 
@@ -1211,10 +1212,10 @@ Symmetric session keys in this this section use the following abbreviations:
 
     `set time_tx = NOW()`
 
-4. The initiator starts a response timer that will be used to abort the handshake if a *ReplyHandshakeBegin*
+4. The initiator starts a response timer that will be used to abort the handshake if a `ReplyHandshakeBegin`
    message is not received before the timeout occurs.
      
-5. Upon receiving the *ReplyHandshakeBegin* message before the timeout:
+5. Upon receiving the `ReplyHandshakeBegin` message before the timeout:
 
     * The initiator cancels the response timer.
 
@@ -1236,28 +1237,28 @@ Symmetric session keys in this this section use the following abbreviations:
 
 		`set (tx_sk, rx_sk) = KDF(h, IKM)`
 
-        The initiator then initializes the *pending session* with the session keys, requested algorithms, and session_start_time.
+        The initiator then initializes the `pending session` with the session keys, requested algorithms, and `session_start_time`.
 
-6. The initiator uses the *pending session* to transmit a *Session Auth Request* message. The initiator may optionally
+6. The initiator uses the `pending session` to transmit a `SessionAuthRequest` message. The initiator may optionally
    transfer user data in this message. If no user data is available, then the user data shall be empty. All of the
    fields are calculated in the same manner as an active session, with the exception that the nonce is fixed to zero.
 
-7. The initiator starts a response timer that will be used to terminate the handshake if a *Session Auth Reply*
+7. The initiator starts a response timer that will be used to terminate the handshake if a `SessionAuthReply`
    message is not received before the timeout occurs.
 
-8. Upon receiving a *Session Auth Reply* message before the timeout, the initiator uses the *pending session* to validate and 
+8. Upon receiving a `SessionAuthReply` message before the timeout, the initiator uses the `pending session` to validate and 
    authenticate the message. This procedure is identical to an active session, with the exception that the nonce is required to be zero.
    
-9. If the reply authenticates, the initiator replaces any *active session* with the *pending session*. Any previously active session is invalidated.
+9. If the reply authenticates, the initiator replaces any `active session` with the `pending session`. Any previously active session is invalidated.
       
 #### Responder Handshake Procedure
 
 The responder handshake is relatively stateless compared to the initiator. It does not require the use of a timer, and a single flag can
-be used to track whether the *pending session* is initialized or not.
+be used to track whether the `pending session` is initialized or not.
 
 ##### Processing RequestHandshakeBegin
 
-Upon receiving a *RequestHandshakeBegin* message:
+Upon receiving a `RequestHandshakeBegin` message:
 
 1. The responder records the time the request was received:
 
@@ -1277,58 +1278,50 @@ Upon receiving a *RequestHandshakeBegin* message:
 
     `set h = HASH(h || response)`
 
-    The responder performs session key derivation using the KDF requested in the *RequestHandshakeBegin* message.
+    The responder performs session key derivation using the KDF requested in the `RequestHandshakeBegin` message.
 
     `set (rx_sk, tx_sk) = KDF(h, IKM)`
 
     **Note:** The receive and transmit keys are reversed for the initiator and responder.
 
-    The initiator initializes the pending session with the session keys, requested algorithms, and session_start_time.
+    The initiator initializes the pending session with the session keys, requested algorithms, and `session_start_time`.
 
-    The responder transmits the *ReplyHandshakeBegin* obtained from the RHI.
+    The responder transmits the `ReplyHandshakeBegin` obtained from the RHI.
 
 ##### Handling Session Auth Request
 
-1. The responder verifies that the *pending session* is initialized and valid.
+1. The responder verifies that the `pending session` is initialized and valid.
 
-2. The responder uses the *pending session* to validate the message. The validation procedure is identical to an active
+2. The responder uses the `pending session` to validate the message. The validation procedure is identical to an active
    session, with the exception that the nonce is required to be zero.
 
-3. The responder uses the *pending session* to transmit a *Session Auth Reply* message with nonce equal to zero. The
+3. The responder uses the `pending session` to transmit a `SessionAuthReply` message with nonce equal to zero. The
    responder may optionally transfer user data in this message. If no user data is available, then the user data
    shall be empty. All of the fields are calculated in the same manner as an active session, with the exception that
    the nonce is fixed to zero.
 
-4. The responder replaces any *active session* with the *pending session*. Any previously active session is
+4. The responder replaces any `active session` with the `pending session`. Any previously active session is
    invalidated.
 
 ### Security Properties
 
 If any of the following properties do not hold, then initiator and responder will not agree on the same pair of session keys.
 
-* If a MitM tampers with the contents of either the *Request Handshake Begin* message or the *Reply Handshake Begin*, 
-the two parties will have different *h* values which will produce different keys when feed into the KDF.
+* If a MitM tampers with the contents of either the `RequestHandshakeBegin` message or the `ReplyHandshakeBegin`, 
+the two parties will have different `h` values which will produce different keys when feed into the KDF.
 
-* If either party is unable to calculate the *input_key_data* 
-transmitted, they will be unable to perform the correct DH calculations and will not be able to calculate the same keys 
+* If either party is unable to calculate the `input_key_material`, they will be unable to calculate the same keys 
 using the KDF.
 
-* A MitM cannot tamper with the common *time_session_init* by delaying messages by more than whatever timeout setting
+* A MitM cannot tamper with the common `time_session_init` by delaying messages by more than whatever timeout setting
  the initiator uses while waiting for replies from the responder. This ensures that the common time-point, in two separate
 relative time bases, is at least accurate to within this margin when the session is first initialized.
- 
-**Note:** All handshake modes utilize an *ephemeral data* field that contains no less than 128-bits of unpredictable data.
-This field can be an ephemeral DH key or a random nonce. This means that *h* is never controlled by the initiator, and a 
-responder attempting to control the final value of *h* would have to make a successful pre-image attack on the handshake
-hash function.
 
 ### Message Exchanges
 
-The responder may signal an error after receiving a *Request Handshake Begin*:
+The responder may signal an error after receiving a `RequestHandshakeBegin`:
 
 ![Error in Request Handshake Begin](msc/handshake_error.png){#fig:handshake_error}
-
-**TODO:** Formalize errors that can occur in handshake with state transition diagrams. 
 
 ### Handshake Modes
 
@@ -1359,7 +1352,7 @@ public key is obtained by authenticating the certificate chain.
 
 In shared secret mode, each party possesses the same static 256-bit key.
 
-The *input_key_material* parameter to the KDF is a concatenation of the shared secret and nonces provided by both the initiator
+The `input_key_material` parameter to the KDF is a concatenation of the shared secret and nonces provided by both the initiator
 and the responder.
 
 ##### IHI Implementation
@@ -1397,40 +1390,40 @@ class SharedSecretInitiatorHandshake implements InitiatorHandshake
 
 ##### Input Key Material (IKM) Procedure (Initiator)
 
-1. Validate that the length of *ephemeral_data* is 32 bytes.
+1. Validate that the length of `ephemeral_data` is 32 bytes.
    
-2. Validate that the *mode_data* field is empty.
+2. Validate that the `mode_data` field is empty.
 
-3. Return *shared_secret* | *initiator nonce* | *responder nonce* as the IKM.
+3. Return `shared_secret || initiator nonce || responder nonce` as the IKM.
 
 ##### Input Key Material (IKM) Procedure (Responder)
 
-1. Validate the *crypto_spec::handshake_ephemeral* is *EphemeralData::NONCE*.
+1. Validate the `crypto_spec::handshake_ephemeral` is `EphemeralData::NONCE`.
 
-2. Validate that the length of *ephemeral_data* is 32 bytes.
+2. Validate that the length of `ephemeral_data` is 32 bytes.
 
-3. Validate that the *mode_data* field is empty.
+3. Validate that the `mode_data` field is empty.
 
-4. Return *shared_secret* | *initiator nonce* | *responder nonce* as the IKM.
+4. Return `shared_secret || initiator nonce | responder nonce` as the IKM.
 
 #### Quantum Key Distribution (QKD) mode
 
 In QKD mode, both parties are receiving a stream of 256-bit keys using the laws of physics to prevent eavesdropping. To
-establish an SSP21 session, the initiator sends a unique key identifier to the reponder in the *Request Handshake Begin*
+establish an SSP21 session, the initiator sends a unique key identifier to the reponder in the `RequestHandshakeBegin`
 message to tell it which key will be used as the IKM.
 
 ##### Handshake Data (HD) Procedure
 
 * Query a vendor specific "key-store" to obtain a key and a key identifier
-* Set the *mode_data* field equal to the key identifier.
-* Set the *ephemeral_data* field to empty.
+* Set the `mode_data` field equal to the key identifier.
+* Set the `ephemeral_data` field to empty.
 
 **Note: ** - The key identifier shall be a vendor-specific way to identify a which key to use for key agreement. It might be an incrementing
 64-bit number or a secure hash of the key itself (fingerprint).
 
 ##### Input Key Material (IKM) Procedure (Initiator)
 
-1. Validate that the *ephemeral_data* and *mode_data* fields are empty.
+1. Validate that the `ephemeral_data` and `mode_data` fields are empty.
 
 2. Return the previously selected key as the IKM.
 
@@ -1438,9 +1431,9 @@ message to tell it which key will be used as the IKM.
 
 1. Validate the *crypto_spec::handshake_ephemeral* is *EphemeralData::NONE*.
 
-2. Validate that the *ephemeral_data* field is empty.
+2. Validate that the `ephemeral_data` field is empty.
 
-3. Use the *mode_data* field to find the specified key, returning HandshakeError::KEY_NOT_FOUND if unable.
+3. Use the `mode_data` field to find the specified key, returning HandshakeError::KEY_NOT_FOUND if unable.
 
 4. Return the key as the IKM if found.
 
@@ -1451,12 +1444,12 @@ ephemeral data in this mode is an ephemeral public DH key.
 
 DH keys in this section use the following abbreviations:
 
-* ls_pk - local static public key
-* ls_vk - local static private key
-* le_vk - local ephemeral public key
-* le_vk - local ephemeral private key
-* rs_pk - remote static public key
-* re_pk - remote ephemeral public key
+* **`ls_pk`** - local static public key
+* **`ls_vk`** - local static private key
+* **`le_vk`** - local ephemeral public key
+* **`le_vk`** - local ephemeral private key
+* **`rs_pk`** - remote static public key
+* **`re_pk`** - remote ephemeral public key
 
 *Local* and *remote* refer to the party that holds the private key as a secret.
 
@@ -1465,16 +1458,16 @@ DH keys in this section use the following abbreviations:
 Derive a key pair using the DH algorithm:
 
 * set (le_vk, le_pk) = GenerateKeyPair().
-* set the *ephemeral_data* field equal to the public part of the key.
-* set the *mode_data* field to empty.
+* set the `ephemeral_data` field equal to the public part of the key.
+* set the `mode_data` field to empty.
 
 ##### Input Key Material (IKM) Procedure (Initiator)
 
-1. Verify that the length of the *ephemeral_data* field matches the length of the requested DH type.
+1. Verify that the length of the `ephemeral_data` field matches the length of the requested DH type.
 
 2. Verify that the *mode data* field is empty.
 
-3. Calculate the *input_key_material*:
+3. Calculate the `input_key_material`:
    
     * set dh1 = DH(le_vk, re_pk)
 
@@ -1488,11 +1481,11 @@ Derive a key pair using the DH algorithm:
 
 1. Verify that the *handshake ephemeral* is a DH key type.
 
-2. Verify that the length of the *ephemeral_data* field matches the length of the requested DH type.
+2. Verify that the length of the `ephemeral_data` field matches the length of the requested DH type.
 
 3. Verify that the *mode data* field is empty.
 
-4. Calculate the *input_key_material*:
+4. Calculate the `input_key_material`:
 
     * set dh1 = DH(le_vk, re_pk)
 
@@ -1508,7 +1501,7 @@ Derive a key pair using the DH algorithm:
 
 Certificate mode is similar to the pre-shared public key mode. Instead of having prior knowledge of the remote
 party's public static DH key, it is embedded in a certificate that is authenticated by using the public key of a trusted authority. 
-The *input_key_material* procedures are mostly identical with exception that the *mode_data* field must contain a 
+The `input_key_material` procedures are mostly identical with exception that the `mode_data` field must contain a 
 certificate, and the remote static public key (rs_pk) is obtained from that certificate.
 
 
@@ -1581,9 +1574,9 @@ Sessions will only become invalidated after one of the following conditions occu
 Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
 other condition other than the ones listed above invalidate an existing session.
 
-### Sending *Session Data*
+### Sending `SessionData`
 
-The following procedure is followed to transmit a *Session Data* message:
+The following procedure is followed to transmit a `SessionData` message:
   
 * Ensure that the transmit nonce is not equal to the maximum value.
   
@@ -1598,9 +1591,9 @@ The following procedure is followed to transmit a *Session Data* message:
 **Note:** See the TTL session for advice on how to set appropriate TTLs.
 
   
-### Validating *Session Data*
+### Validating `SessionData`
 
-The following procedure is followed to validate a received *Session Data* message:
+The following procedure is followed to validate a received `SessionData` message:
 
 * Verify the authenticity of the message using the *read* function with which the session was initialized. Upon
 successful authentication, the cleartext payload is returned.
