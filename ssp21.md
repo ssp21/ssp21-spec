@@ -1332,11 +1332,11 @@ secrecy (FS) if the long-term keys are later compromised.
 | Handshake Mode     |  ephemeral data |   mode data         | key material | FS    |
 |--------------------|-----------------|---------------------|--------------|-------|
 | shared secret (SS) |  random nonces  |   none              | SS + nonces  | no    |
-| QKD                |  none           |   key identifier    | qkd key      | yes*  |
+| QKD                |  none           |   key identifier    | qkd key      | yes   |
 | public keys        |  DH keys        |   nonce             | triple DH    | yes   |
 | certificates       |  DH keys        |   certificate chain | triple DH    | yes   |
 
-**`*`** QKD mode can provide forward secrecy in that there is no long term key to compromise. Keys used to establish
+**Note: **QKD mode provides forward secrecy in that there is no long term key to compromise. Keys used to establish
 sessions are only used once and then discarded.
 
 A `triple DH` operation performs three DH calculations using both the static and ephemeral DH keys to calculate a shared
@@ -1359,6 +1359,8 @@ and the responder.
 
 ##### IHI Implementation
 
+The following pseudo-code implements the `InitiatorHanshake` interface for the shared-secret mode:
+
 ``` c++
 class SharedSecretInitiatorHandshake implements InitiatorHandshake
 {   
@@ -1372,11 +1374,15 @@ class SharedSecretInitiatorHandshake implements InitiatorHandshake
 	}
 	
 	validate(reply: ReplyHandshakeBegin) -> IKM or ABORT {
-
+	    
+		/*
+		* this is just a guard that prevents the method
+		* from being before initialize() has been called
+		*/
 	    if(this.nonce.length == 0) {
 		    return ABORT("nonce not initialized")
 		}
-	    
+	    		
 		if(reply.ephemeral_data.lengh != 32) {
 		    return ABORT("bad nonce length in reply")
 		}
@@ -1390,23 +1396,46 @@ class SharedSecretInitiatorHandshake implements InitiatorHandshake
 }
 ```
 
-##### Input Key Material (IKM) Procedure (Initiator)
+##### RHI Implementation
 
-1. Validate that the length of `ephemeral_data` is 32 bytes.
-   
-2. Validate that the `mode_data` field is empty.
+The following pseudo-code implements the `ResponderHanshake` interface for the shared-secret mode:
 
-3. Return `shared_secret || initiator nonce || responder nonce` as the IKM.
+``` c++
+SharedSecretResponderHandshake implements ResponderHandshake
+{
+    // class member variables    
+	set shared_secret = <initialized by constructor>
 
-##### Input Key Material (IKM) Procedure (Responder)
+    /*
+	* Validate the request and return the pair 
+	* (ReplyHandshakeBegin, IKM) or an error
+	*/
+    abstract validate(request: RequestHandshakeBegin)
+	    -> (ReplyHandshakeBegin, IKM) or HandshakeError
+	{
+	   if(request.crypto_spec.handshake_ephemeral != HandshakeEphemeral::NONCE) {
+	       // doesn't match the handshake mode
+	       return HandshakeError::UNSUPPORTED_HANDSHAKE_EPHEMERAL;
+	   }
 
-1. Validate the `crypto_spec::handshake_ephemeral` is `EphemeralData::NONCE`.
+	   if(request.ephemeral_data.length != 32) {
+	       return HandshakeError::BAD_MESSAGE_FORMAT;
+	   }
 
-2. Validate that the length of `ephemeral_data` is 32 bytes.
+	   if(request.mode_data.length != 0) {
+	   	   return HandshakeError::BAD_MESSAGE_FORMAT;
+	   }
 
-3. Validate that the `mode_data` field is empty.
+	   set nonce = RANDOM(256)
 
-4. Return `shared_secret || initiator nonce | responder nonce` as the IKM.
+	   return (
+	       ReplyHandshakeBegin(ephemeral_data = nonce, mode_data = []),
+		   // the IKM
+		   this.shared_secret || request.ephemeral_data || nonce
+	   );
+	}
+}
+```
 
 #### Quantum Key Distribution (QKD) mode
 
