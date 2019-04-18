@@ -1329,15 +1329,17 @@ This section defines the various handshake modes that can be used to perform key
 the modes, how they interpret fields in the handshake messages, and whether session modes that encrypt have forward
 secrecy (FS) if the long-term keys are later compromised.
 
-| Handshake Mode            |  ephemeral data   |   mode data         | key material  | FS   |
-|---------------------------|-------------------|---------------------|---------------|------| 
-| shared secret             |  random nonce     |   none              | shared secret | no   |
-| quantum key distribution  |  none             |   key identifier    | qkd key       | yes  |
-| pre-shared public key     |  DH key           |   not used          | triple DH     | yes  |
-| ICF chain                 |  DH key           |   certificate chain | triple DH     | yes  |
+| Handshake Mode     |  ephemeral data |   mode data         | key material | FS    |
+|--------------------|-----------------|---------------------|--------------|-------|
+| shared secret (SS) |  random nonces  |   none              | SS + nonces  | no    |
+| QKD                |  none           |   key identifier    | qkd key      | yes*  |
+| public keys        |  DH keys        |   nonce             | triple DH    | yes   |
+| certificates       |  DH keys        |   certificate chain | triple DH    | yes   |
 
+**`*`** QKD mode can provide forward secrecy in that there is no long term key to compromise. Keys used to establish
+sessions are only used once and then discarded.
 
-A "triple DH" operation performs three DH calculations using both the static and ephemeral DH keys to calculate a shared
+A `triple DH` operation performs three DH calculations using both the static and ephemeral DH keys to calculate a shared
 secret for the two parties. This shared secret is different for every session since the ephemeral keys are different. 
 
 Some patterns are apparent in the table:
@@ -1345,8 +1347,8 @@ Some patterns are apparent in the table:
 * Shared-secret mode may only use a random nonce for ephemeral data and never provides forward secrecy.
 * The ephemeral data in public-key modes is an ephemeral DH public key. These modes always provide forward secrecy 
 when paired with an encrypting session mode.
-* Both public-key modes calculate the input key material in the same manner. In ICF  mode, the remote
-public key is obtained by authenticating the certificate chain.
+* Both public-key modes calculate the input key material in the same manner. In certificate mode, the remote
+public key is obtained by authenticating the certificate chain and extracting the public key from the peer certificate.
 
 #### Shared secret mode
 
