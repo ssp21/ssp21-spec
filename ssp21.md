@@ -1530,7 +1530,7 @@ QKDResponderHandshake implements ResponderHandshake
 
 	   if(!optional_key.exists) {
 	   	   return HandshakeError::KEY_NOT_FOUND;
-	   }	   
+	   }
 
 	   return (
 	       ReplyHandshakeBegin(ephemeral_data = [], mode_data = []), // empty reply
@@ -1544,42 +1544,97 @@ QKDResponderHandshake implements ResponderHandshake
 #### Pre-shared public key mode
 
 In pre-shared public key mode, each party has out-of-band prior knowledge of the other party's static public DH key. The
-ephemeral data in this mode is an ephemeral public DH key. 
+`ephemeral_data` field in this mode is an ephemeral public DH key. The `mode_data` field is always empty.
 
 DH keys in this section use the following abbreviations:
 
 * **`ls_pk`** - local static public key
 * **`ls_vk`** - local static private key
-* **`le_vk`** - local ephemeral public key
+* **`le_pk`** - local ephemeral public key
 * **`le_vk`** - local ephemeral private key
 * **`rs_pk`** - remote static public key
 * **`re_pk`** - remote ephemeral public key
 
-*Local* and *remote* refer to the party that holds the private key as a secret.
+##### IHI Implementation
 
-##### Handshake Data (HD) Procedure
+The following pseudo-code implements the `InitiatorHanshake` interface for the pre-shared public key mode:
 
-Derive a key pair using the DH algorithm:
+``` c++
+class PresharedPublicKeyInitiatorHandshake implements InitiatorHandshake
+{              
+    set ls_pk = <initialized by constructor>
+	set ls_vk = <initialized by constructor>
+	set rs_pk = <initialized by constructor>
 
-* set (le_vk, le_pk) = GenerateKeyPair().
-* set the `ephemeral_data` field equal to the public part of the key.
-* set the `mode_data` field to empty.
+	// local ephemeral private key initialized for every handshake	
+	set le_vk = []
+	
+    initialize() -> (ephemeral_data, mode_data) {
+	    // see section on DH algorithms
+        set (le_pk, this.le_vk) = generate_key_pair()	    
+	    return (le_pk, []) // mode is empty
+	}
+	
+	validate(reply: ReplyHandshakeBegin) -> IKM or ABORT {
+	    
+		if(reply.ephemeral_data.length != LEN_DH) {
+			return Abort("ephemeral_data length doesn't match DH algorithm")
+		}
 
-##### Input Key Material (IKM) Procedure (Initiator)
+		if(reply.mode_data.length != 0) {
+		    return Abort("mode_data is not empty")
+		}
 
-1. Verify that the length of the `ephemeral_data` field matches the length of the requested DH type.
+		set dh1 = DH(le_vk, re_pk)
+        set dh2 = DH(ls_vk, re_pk)
+        set dh3 = DH(le_vk, rs_pk)
 
-2. Verify that the *mode data* field is empty.
+        return (dh1 || dh2 || dh3)
+	}
+}
+```
 
-3. Calculate the `input_key_material`:
-   
-    * set dh1 = DH(le_vk, re_pk)
+##### RHI Implementation
 
-    * set dh2 = DH(ls_vk, re_pk)
+The following pseudo-code implements the `ResponderHanshake` interface for the QKD mode:
 
-    * set dh3 = DH(le_vk, rs_pk)
+``` c++
+QKDResponderHandshake implements ResponderHandshake
+{    
+    abstract validate(request: RequestHandshakeBegin)
+	    -> (ReplyHandshakeBegin, IKM) or HandshakeError
+	{
+	   // validate that the initiator is requesting the same DH algorithm
+	   if(request.spec.handshake_ephemeral != DH_TYPE) {
+	   	   
+		   return HandshakeError::unsupported_handshake_ephemeral;
+	   }
 
-    * return (dh1 || dh2 || dh3) as the IKM.
+	   // mode data must be empty
+	   if(request.mode_data.length != 0) {	       
+	       return HandshakeError::bad_message_format;
+	   }
+	   
+	   // validate that the length of the field is as expected
+	   if(request.ephemeral_data.length != LEN_DH) {	  
+			return HandshakeError::bad_message_format;
+	   }
+
+	   set dh1 = DH(le_vk, re_pk)
+	   set dh2 = DH(le_vk, rs_pk)
+       set dh3 = DH(ls_vk, re_pk)
+
+	   return (dh1 || dh2 || dh3)
+	}
+}
+```
+
+**Important:** This procedure omits validation for every possible type of DH keys. Implementations must
+validate DH keys are valid for any specific DH algorithm.
+
+**Note:** The `dh2` and `dh3` calculations are reversed for the initiator and responder, but
+result in the same values.
+
 
 ##### Input Key Material (IKM) Procedure (Responder)
 
@@ -1601,15 +1656,14 @@ Derive a key pair using the DH algorithm:
     
 **Note:** The dh2 and dh3 calculations are reversed for the initiator and responder.
 
-#### ICF Certificate Mode
+#### Industrial Certificate Mode
 
 Certificate mode is similar to the pre-shared public key mode. Instead of having prior knowledge of the remote
-party's public static DH key, it is embedded in a certificate that is authenticated by using the public key of a trusted authority. 
-The `input_key_material` procedures are mostly identical with exception that the `mode_data` field must contain a 
-certificate, and the remote static public key (rs_pk) is obtained from that certificate.
+party's public static DH key, it is embedded in a certificate that is authenticated using the public key of a trusted
+authority. The calculations of the IKM are identical between the two modes. Instead of being empty, the `mode_data`
+field contains a certificate chain.
 
-
-**TODO:** Decide whether to mostly duplicate the produce or find a way define common points with pre-shared public key
+**TODO:** Decide whether to mostly duplicate the prodcedure or find a way define common points with pre-shared public key
 mode.
 
 ## Sessions
@@ -1619,45 +1673,45 @@ mode.
 Upon completion of a successfully authenticated handshake, the communication session is initialized 
 (or possibly reinitialized) with the following arguments:
 
-* **rx_sk** - A session key used to authenticate/decrypt received messages.
+* `rx_sk` - A session key used to authenticate/decrypt received messages.
      
-* **tx_sk** - A session key used to sign/encrypt transmitted messages.
+* `tx_sk` - A session key used to sign/encrypt transmitted messages.
 
-* **time_session_init**  - The time the session was considered initialized in the local relative time base.
+* `time_session_init`  - The time the session was considered initialized in the local relative time base.
 
-* **read** - A function corresponding to the specified *session_mode* used to process a received 
-message's payload.
-    * returns: 
-        * Cleartext payload, or [] if an error occurs.
-    * errors:
-        * Signals an error if the message does not authenticate and/or decrypt properly.
-        * Signals an error if input or output buffers do not meet required sizes.
-    * arguments:
-        * **key** - The session key used to perform the cryptographic operations.
-        * **message** - A parsed *SessionData* message.
+* `read` - A function corresponding to the specified `SessionCryptoMode` used to process a received 
+message's payload:
 
-* **write** - A function corresponding to the specified *session_mode* used to prepare a transmitted 
-message's payload.
-    * returns:
-        * The *user_data* to be transmitted with the outgoing message
-        * the *auth_tag* to be transmitted with the outgoing message
-    * errors:
-        * Signals an error if input or output buffers do not meet required sizes.
-    * arguments:
-        * **key** - The session key used to perform the cryptographic operations.
-        * **ad** - Additional data covered by the authentication tag (serialized form of the *SessionData::AuthMetadata* structure).
-        * **user_data** - Cleartext user data bytes to be placed that might be encrypted.
+```
+
+read(key: Key, message: SessionData) -> (cleartext) or Error
+
+
+```
+
+* `write` - A function corresponding to the specified  `SessionCryptoMode` used to prepare a transmitted 
+message's payload:
+
+```
+
+write(key: Key, ad: Seq[Byte], plaintext: Seq[Byte])
+    -> (user_data: Seq[Byte], auth_tag: Seq[Byte])
+
+
+```
   
-* **verify_nonce** - A function used to verify the message nonce.
-    * returns: 
-        * A boolean value that is true if the new nonce is valid, and false otherwise.
-    * arguments:
-        * **last_nonce** - the last valid nonce, or zero for a newly initialized session.
-        * **new_nonce** - the nonce from the current message.
+* `verify_nonce` - A function used to verify the message nonce:
+
+```
+
+verify_nonce(last_nonce: U16, new_nonce: U16) -> bool
+
+
+```
   
 The session shall also always maintain a few additional variables initialized internally:
     
-* A 2-byte incrementing nonce (*n*) always initialized to zero, one for each session key.
+* A 2-byte incrementing nonce (`n`) always initialized to zero, one for each session key.
 
 * A configurable session termination timeout after which the session will no longer be considered valid. 
     
@@ -1670,10 +1724,10 @@ Sessions will only become invalidated after one of the following conditions occu
 * A configurable amount of time elapses. This session timeout shall default to 1 day and shall not be configurable
  to be greater than 30 days (the maximum session TTL of a message since initialization is ~49.7 days).
  
-* A complete, authenticated handshake occurs reinitializing any prior existing session.
+* A complete, authenticated handshake occurs replacing any previously valid session.
 
-* In session oriented environments such as TCP, closing the underlying communication session will invalidate the SSP21
- cryptographic session.
+* When using session-oriented transports such as TCP, closing the underlying communication layer will invalidate
+the SSP21 cryptographic session.
 
 Under no condition will malformed packets, unexpected messages, authentication failures, partial handshakes, or any 
 other condition other than the ones listed above invalidate an existing session.
@@ -1686,11 +1740,11 @@ The following procedure is followed to transmit a `SessionData` message:
   
 * Increment the transmit nonce by 1 and set this new value on the message.
 
-* Set *valid_until_ms = NOW() + TTL*. 
+* Set the `valid_until_ms` to `NOW()` plus the message `TTL`
  
-* Set the message payload using the *write* function with which the session was initialized.
+* Set the `user_data` and `auth_tag` fields using the `write` function with which the session was initialized.
 
-**Note:** The first transmitted session message from each party always has *n* = 1.
+**Note:** The first transmitted session message from each party always has `n` = 1.
 
 **Note:** See the TTL session for advice on how to set appropriate TTLs.
 
@@ -1699,18 +1753,18 @@ The following procedure is followed to transmit a `SessionData` message:
 
 The following procedure is followed to validate a received `SessionData` message:
 
-* Verify the authenticity of the message using the *read* function with which the session was initialized. Upon
+* Verify the authenticity of the message using the `read` function with which the session was initialized. Upon
 successful authentication, the cleartext payload is returned.
 
-* Check that *valid_until_ms <= NOW()*.
+* Verify that `valid_until_ms <= NOW()`.
 
-* Check the nonce using the *verify_nonce* function with which the session was initialized.
+* Check the nonce using the `verify_nonce` function with which the session was initialized.
 
 * Set the current nonce equal to the value of the received nonce.
 
 ### Time-to-live
 
-Each session message contains a time-to-live (TTL) parameter called *valid_until_ms*. This parameter is a count of
+Each session message contains a time-to-live (TTL) parameter called `valid_until_ms`. This parameter is a count of
 milliseconds since session initialization (as defined in the handshake section), after which, the receiving party
 shall not accept an authenticated packet. This TTL prevents attackers from holding back a number of valid session 
 messages and then replaying them in rapid succession.
@@ -1728,16 +1782,16 @@ should publish information about the maximum possible clock drift.
 
 A strategy for setting the TTL in each transmitted message must take into account the following factors:
   
-* *session key change interval* (**I**) - The longer the interval between session key changes, the more the relative clocks 
+* `session key change interval` (**`I`**) - The longer the interval between session key changes, the more the relative clocks 
 can drift apart.
 
-* *maximum relative drift rate* (**R**) - The maximum possible drift rate expressed as a number greater than 1. For 
+* `maximum relative drift rate` (**`R`**) - The maximum possible drift rate expressed as a number greater than 1. For 
 example, 1.0001 specifies that clocks can diverge by as much as 1/100th of 1% of the time elapsed.
 
-* *initiator handshake response timeout* (**T**) - The longer the response timeout in the handshake, the greater potential 
+* `initiator handshake response timeout` (**`T`**) - The longer the response timeout in the handshake, the greater potential 
 mismatch in the session initialization time on the initiator and responder.
 
-* *maximum network latency* (**L**) - The maximum amount of time it might take for a message to reach its destination under 
+* `maximum network latency` (**`L`**) - The maximum amount of time it might take for a message to reach its destination under 
 normal conditions.
 
 A simple scheme would be to add a fixed value to the current session time as specified below. 
@@ -1768,41 +1822,61 @@ disable support for the TTL.
 * In the receive direction, implementations may be configurable to ignore the received TTL entirely.
 * In the transmit direction, implementations may be configurable to set the TTL to the maximum value of 2^32 - 1.
 
-### Session Modes
+### Session Crypto Modes
 
-The *session_mode* specified by the initiator determines the concrete *read* and *write* functions with which the 
-session is initialized. In general, these functions fall into two general classes: truncated MAC based functions that
-only provide authentication, and Authenticated Encryption with Associated Data (AEAD) algorithms that encrypt the 
-payload and additionally authenticate both the payload and associated data in the message.
+The `SessionCryptoMode` specified by the initiator determines the concrete `read` and `write` functions with which the 
+session is initialized. These functions fall into two general categories: MAC-based functions that only provide authentication,
+and Authenticated Encryption with Associated Data (AEAD) algorithms that encrypt the payload and additionally authenticate
+both the payload and associated data in the message.
 
-**Note:** Empty session messages are explicitly disallowed. Even authenticated empty messages should be treated and 
-logged as an error, and never passed to user layer.
+AEAD implementations such as AES-GCM or ChaCha20-Poly1305 already provide functions that largely match the `read` and `write` methods
+described here. The only difference being that they also take the nonce as a paramter.
+
+**Note:** Empty session messages are explicitly disallowed, with the exception of the initial handshake authentication messages.
+Even authenticated empty messages with `n >= 1` should be treated and logged as an error, and never passed to user layer.
 
 #### MAC Modes
-
-<!-- There's some kind of weird formatting issue going on here with PDF -->
 
 MAC session modes are based on some kind of MAC function, like a truncated HMAC. The write function of these modes can
 be specified generically in terms of the MAC function.
    
 ```
-write (key, ad, cleartext) -> (user_data, auth_tag) {
-  set auth_tag = mac(key, ad || len(cleartext) || cleartext)
-  return (cleartext, auth_tag)
+write(key: Key, ad: Seq[Byte], plaintext: Seq[Byte])
+    -> (user_data: Seq[Byte], auth_tag: Seq[Byte]) 
+{
+	set auth_tag = MAC(key, ad || len(cleartext) || cleartext)
+    return (cleartext, auth_tag)
 }
 ```
 
 The MAC is calculated over the concatenation of the following parameters:
 
-* The serialized form of the AuthMetadata field (ad).
-* The length of the cleartext as an unsigned big endian 16-bit integer
+* The serialized form of the `AuthMetadata` field (`ad`).
+* The length of the cleartext as an unsigned big-endian 16-bit integer
 * The cleartext itself
 
-**Note:** Incorporating the length of the cleartext provides domain separation between *ad* and *cleartext*. This
-futures proofs the specification in the event that *ad* is ever becomes a variable length structure.
+**Note:** Incorporating the length of the cleartext provides domain separation between `ad` and `cleartext`. This
+future proofs the specification in the event that `ad` is ever becomes a variable length structure.
 
-The corresponding *read* function calculates the same MAC, verifies it using a constant-time comparison, and returns
-the user_data field of the message as the cleartext.
+The corresponding `read` function calculates the same MAC, compares it for equality using a constant-time comparison,
+and returns the `user_data` field of the message as the cleartext:
+
+```
+
+read(key: Key, message: SessionData) -> (cleartext) or Error
+{
+    set tag = MAC(key, message.user_data)
+	if(!equals_constant_time(tag,  message.auth_tag)) {
+	    return Error("authentication failure")
+	}
+
+	return messsage.user_data
+}
+
+
+```
+
+**Important: ** Using a constant-time comparison is critical to guard against time-based side channel attacks.
 
 ## Certificates
 
@@ -1826,6 +1900,8 @@ deprecation or break of any particular algorithm.
 beyond what was defined in the original specification. An example of such an extension would be role based access control (RBAC) permissions for a
 specific application protocol. The certificate format shall provide the ability to define extensions and define the required behavior when undefined
 extensions are encountered.
+
+Defining an additional certificate format does not preclude SSP21 from being extended in the future to use X.509.
 
 ### ICF Definition
 
@@ -1852,8 +1928,8 @@ enum PublicKeyType {
 }
 ```
 
-* **Ed25519** - The key is an Ed25519 DSA public key.
-* **X25519** - The key is an x25519 Diffie-Hellman key.
+* **`Ed25519`** - The key is an Ed25519 DSA public key.
+* **`X25519`** - The key is an x25519 Diffie-Hellman key.
 
 #### Certificate Envelope
 
@@ -1867,33 +1943,33 @@ message CertificateEnvelope {
 }
 ```
 
-* **issuer_id** - A 16-byte digest of the issuer's public key. This digest shall always be the leftmost 16 bytes
-of the SHA-2 hash of the public key.
+* **`issuer_id`** - A 16-byte digest of the issuer's public key. This digest shall always be the leftmost 16 bytes
+of the SHA-256 hash of the public key.
 
-* **signature** - The value of the signature.
+* **`signature`** - The value of the signature.
 
-* **certificate_body** - The certificate body covered by the specified digital signature algorithm. This data shall
+* **`certificate_body`** - The certificate body covered by the specified digital signature algorithm. This data shall
 not be parsed until the authenticity is established by verifying the signature.
 
 The following digital signature algorithms (DSA) are defined for usage with the ICF.
 
 ##### Security Discussion
 
-Attackers may freely manipulate the *issuer_id* field with the following impacts:
+Attackers may freely manipulate the `issuer_id` field with the following impacts:
 
 * The verifying party would be unable to find the corresponding public key in which case the verification would immediately fail.
 
 * The verifying party would apply the wrong public key to the DSA verification, in which case the verification would fail with similar
 probability as attempting to brute force the signature value.
 
-This *issuer_id* digest is not cryptographic in nature. It merely acts as convenient fixed-length digest for public keys of any length. It must
-be well distributed against random inputs (i.e. public key values), but need not be cryptographically secure. A break in the underlying SHA-2
+This `issuer_id` digest is not cryptographic in nature. It merely acts as convenient fixed-length digest for public keys of any length. It must
+be well distributed against random inputs (i.e. public key values), but need not be cryptographically secure. A break in the underlying SHA-256
 hash function does not require changing how the issuer_id is calculated.
 
 The truncated hash used in the issuer id is not cryptographic in nature, and merely needs to be collision resistant against the possible
 random public keys deployed in the system. It serves to provide a fixed size id for public keys of any size or length.
 
-Attackers may also manipulate the *algorithm* field. Such a manipulation would fail either due to the length of the signature being incorrect, or an
+Attackers may also manipulate the `algorithm` field. Such a manipulation would fail either due to the length of the signature being incorrect, or an
 signature value.
 
 #### Certificate Body
@@ -1912,17 +1988,17 @@ message CertificateBody {
 }
 ```
 
-* **serial_number** - An incrementing serial number assigned by the issuer
-* **valid_after**  - Number of milliseconds since Unix epoch, before which, the certificate shall be considered invalid.
-* **valid_before** - Number of milliseconds since Unix epoch, after which, the certificate shall be considered invalid.
-* **signing_level** - A signing level of zero indicates that the certificate is for an endpoint. Otherwise the certificate is for
-an authority which may produce any certificate type with *signing_level* less than its own.
-* **public_key_type** - The type of the public key that follows.
-* **public_key** - The public key value defined by the *public_key_type*
-* **extensions** - An optional sequence of extensions that define additional required behaviors like application protocol specific whitelists.
-* **authority** - The holder of the certificate may produce endpoint certificates or authority certificates
-with a *signing_level* less than its own. They may not directly participate as endpoints.
-* **endpoint** - The holder of the certificate may act as an endpoint within the system, but may not sign other certificates.
+* **`serial_number`** - An incrementing serial number assigned by the issuer
+* **`valid_after`**  - Number of milliseconds since Unix epoch, before which, the certificate shall be considered invalid.
+* **`valid_before`** - Number of milliseconds since Unix epoch, after which, the certificate shall be considered invalid.
+* **`signing_level`** - A signing level of zero indicates that the certificate is for an endpoint. Otherwise the certificate is for
+an authority which may produce any certificate type with `signing_level` less than its own.
+* **`public_key_type`** - The type of the public key that follows.
+* **`public_key`** - The public key value defined by the `public_key_type`
+* **`extensions`** - An optional sequence of extensions that define additional required behaviors like application protocol specific whitelists.
+* **`authority`** - The holder of the certificate may produce endpoint certificates or authority certificates
+with a `signing_level` less than its own. They may not directly participate as endpoints.
+* **`endpoint`** - The holder of the certificate may act as an endpoint within the system, but may not sign other certificates.
 
 #### Extensions
 
@@ -1953,14 +2029,14 @@ for masters and outstations so that the compromise of an outstation's private ke
 
 #### Trust Anchors
 
-The device/application must store the trust anchors in the system: the long-term public keys of one or more authorities embedded
-in self-signed certificates. How this trust store is implemented is not defined, but some examples include:
+The device or application running an SSP21 implementation must store the trust anchors in the system: the long-term public keys of one or more
+authorities embedded in self-signed certificates. How this trust store is implemented is not defined, but some examples include:
 
 * A single certificate loaded into memory during program initialization
-* A folder of such certificates with file names corresponding to their *issuer_id*, i.e. SHA-2 hash of the public key
+* A folder of such certificates with file names corresponding to their `issuer_id`, i.e. SHA-2 hash of the public key
 
 The certificates in the trust store are wholly trusted and used to establish the authenticity of other certificates. Certificates in
-the trust store are selected based on the *issuer_id* of the first certificate in any chain.
+the trust store are selected based on the `issuer_id` of the first certificate in any chain.
 
 #### Self-signed Certificates
 
@@ -1983,20 +2059,25 @@ the following signature in pseudo code. It will return an error condition if a f
 certificate.
 
 ```
-verify(anchor, chain) -> Either<enum::HandshakeError, terminal_certificate>
+
+verify(anchors : Seq[CertificateBody], chain: Seq[CertificateEnvelope]) 
+    -> CertificateBody or HandshakeError
+
+
 ```
 
-* **anchors** - One or more trusted root certificates.
-* **chain** - A chain of one or more certificates to be validated against one of the anchors.
-* **terminal_certificate** - The verified terminal certificate.
+* **`anchors`** - One or more trusted root certificates.
+* **`chain`** - A chain of one or more certificates to be validated against one of the anchors.
+
+If no error occurs, `verify` returns the last parsed certificate in the chain.
 
 The following steps are performed to verify the chain:
 
-1) Upon receiving a certificate chain (certificate count >= 1), the receiving party shall first examine the *issuer_id* in the first (possibly only)
-certificate in the chain and identify the requested anchor certificate. If the anchor certificate cannot be found, verification will be halted with an
-error condition.
+1) Upon receiving a certificate chain (certificate count >= 1), the receiving party shall first examine the `issuer_id`
+in the first (possibly only) certificate in the chain and identify the requested anchor certificate. If the anchor certificate
+cannot be found, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
-2) Verification shall then iterate over adjacent certificate pairs using a general purpose function, beginning with the selected
+2) Iterate over adjacent certificate pairs using a general purpose function, begining with the selected
 anchor certificate (A) and the first certificate (C1) in the chain.
 
 ```
@@ -2021,42 +2102,47 @@ Verification proceeds rightwards, one certificate at a time, until an error occu
 A    C1    C2    ... C(n-1)   Cn
 ```
 
-This sub-function has the the following signature in pseudo-code.
+This sub-function has the the following signature:
 
 ```
-verify_pair(parent, child) -> Either<enum::HandshakeError, child_body>
+
+verify(parent : CertificateBody, child: CertificateEnvelope) 
+    -> CertificateBody or HandshakeError
+
+
 ```
 
-* **parent** - The parsed and verified **body** of the parent certificate.
-* **child** - The parsed but unverified **envelope** of the child certificate.
-* **child_body** - The parsed and verified body of the child certificate.
+* **`parent`** - The parsed and verified `body` of the parent certificate.
+* **`child`** - The parsed but unverified `envelope` of the child certificate.
 
-The following sub-steps are performed for each invocation of *verify_pair*:
+The function returns the verified body of the child certificate or an error.
 
-A) Compare the *issuer_id* in the child envelope to the value calculated over the
-parent's public key. If they do not match, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+The following sub-steps are performed for each invocation of `verify_pair`:
 
-B) Examine the *public_key_type* in the parent body. If it is not a DSA public key (e.g. it is a DH key),
-return HandshakeError::BAD_CERTIFICATE_CHAIN.
+A) Compare the `issuer_id` in the child envelope to the value calculated over the
+parent's public key. If they do not match, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
+
+B) Examine the `public_key_type` in the parent body. If it is not a DSA public key (e.g. it is a DH key),
+return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
 C) Verify that the length of the signature in the child envelope matches the output length of the DSA algorithm
-specified the parent *public_key_type*. If it does not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+specified the parent `public_key_type`. If it does not, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
 D) Verify the DSA signature value in the child envelope using the public key in parent body and the raw bytes of
-*certificate_body* field of the child envelope. If verification fails, return HandshakeError::AUTHENTICATION_ERROR.
+`certificate_body` field of the child envelope. If verification fails, return `HandshakeError::AUTHENTICATION_ERROR`.
 
-E) Fully parse the child certificate body. If parsing fails, return HandshakeError::BAD_CERTIFICATE_FORMAT.
+E) Fully parse the child certificate body. If parsing fails, return `HandshakeError::BAD_CERTIFICATE_FORMAT`.
 
-F) Verify that parent.valid_after >= child.valid_after. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+F) Verify that parent.valid_after >= child.valid_after. If it is not, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
-G) Verify that parent.valid_before <= child.valid_before. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+G) Verify that parent.valid_before <= child.valid_before. If it is not, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
-H) Verify that parent.signing_level > child.signing_level. If it is not, return HandshakeError::BAD_CERTIFICATE_CHAIN.
+H) Verify that parent.signing_level > child.signing_level. If it is not, return `HandshakeError::BAD_CERTIFICATE_CHAIN`.
 
 I) Return the fully verified child body for the next iteration.
 
-3) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the *signing_level* if the terminal certificate is not zero.
+3) Return `HandshakeError::BAD_CERTIFICATE_CHAIN` if the `signing_level` if the terminal certificate is not zero.
 
-4) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the *public_key_type* of the terminal certificate is not a DH key.
+4) Return HandshakeError::BAD_CERTIFICATE_CHAIN if the `public_key_type` of the terminal certificate is not a DH key.
 
 5) Return the fully verified terminal certificate.
