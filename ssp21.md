@@ -184,9 +184,8 @@ the benefits and short-comings of each mode.
 
 In this mode, each pair of parties that wishes to communicate must have a shared-secret that both parties possess prior 
 to establishing a session. This secret may be installed manually, or distributed securely using emerging technologies 
-like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other end of the channel possesses
-the same key. This shared secret, along with a random nonce from each endpoint, is then used to establish a set of 
-shared session keys.
+like Quantum Key Distribution (QKD). Security is achieved in knowing that only the other party possesses the same key.
+This shared secret, along with a random nonce from each endpoint, is then used to establish a set of shared session keys.
 
 This mode of operation uses symmetric cryptography only, and consequently has a number of advantages:
 
@@ -1154,7 +1153,7 @@ The RHI consists of a single method:
 interface ResponderHandshake
 {
     /*
-	* Validate the request and return the pair 
+	* Partially validate the request and return the pair 
 	* (ReplyHandshakeBegin, IKM) or an error
 	*/
     abstract validate(request: RequestHandshakeBegin)
@@ -1165,6 +1164,14 @@ interface ResponderHandshake
 `HandshakeError` is the enumeration with the same name. Returning this enumeration means that 
 the responder will abort the handshake proceedure and return the `ReplyHandshakeError` message reporting
 the `HandshakeError` that occured.
+
+The ResponderHandshake interface always validates the following parts of `RequestHandshakeBegin`:
+
+1. The `mode_data` bytes must conform to the `handshake_mode`.
+2. The `ephemeral_data` bytes must conform to the `handshake_mode`.
+3. The `spec.handshake_ephemeral` enumeration must agree with the `handshake_mode`.
+
+Other validation is left to the generic handshake proceedure in the following sections.
 
 ### Generic Handshake Procedure
 
@@ -1383,7 +1390,7 @@ class SharedSecretInitiatorHandshake implements InitiatorHandshake
 		    return ABORT("nonce not initialized")
 		}
 	    		
-		if(reply.ephemeral_data.lengh != 32) {
+		if(reply.ephemeral_data.length != 32) {
 		    return ABORT("bad nonce length in reply")
 		}
 
@@ -1405,11 +1412,7 @@ SharedSecretResponderHandshake implements ResponderHandshake
 {
     // class member variables    
 	set shared_secret = <initialized by constructor>
-
-    /*
-	* Validate the request and return the pair 
-	* (ReplyHandshakeBegin, IKM) or an error
-	*/
+    
     abstract validate(request: RequestHandshakeBegin)
 	    -> (ReplyHandshakeBegin, IKM) or HandshakeError
 	{
@@ -1439,34 +1442,104 @@ SharedSecretResponderHandshake implements ResponderHandshake
 
 #### Quantum Key Distribution (QKD) mode
 
-In QKD mode, both parties are receiving a stream of 256-bit keys using the laws of physics to prevent eavesdropping. To
-establish an SSP21 session, the initiator sends a unique key identifier to the reponder in the `RequestHandshakeBegin`
-message to tell it which key will be used as the IKM.
+In QKD mode, both parties continuously receive a stream of 256-bit keys. A single one of these keys is used to  establish an SSP21 session.
+The initiator signals which key to use using the `mode_data` parameter in `RequestHandshakeBegin` as a key identifier. This key identifer
+is implementation specific, but must be capable of unambiguously identifying a key without revealing any information about the key. Possible
+valid key identifiers include:
 
-##### Handshake Data (HD) Procedure
+1. A fingerprint of the key, e.g. a secure hash of the key itself.
+2. A sufficiently large increasing counter, with care given to the behavior if the counter ever rolls over due to restart.
 
-* Query a vendor specific "key-store" to obtain a key and a key identifier
-* Set the `mode_data` field equal to the key identifier.
-* Set the `ephemeral_data` field to empty.
+The handshake interface definitions that follow make use of two abstract functions to obtain and find keys from some abstract store of keys
+delivered via QKD:
 
-**Note: ** - The key identifier shall be a vendor-specific way to identify a which key to use for key agreement. It might be an incrementing
-64-bit number or a secure hash of the key itself (fingerprint).
+```
 
-##### Input Key Material (IKM) Procedure (Initiator)
 
-1. Validate that the `ephemeral_data` and `mode_data` fields are empty.
+// Used by the initiator to retrieve the next key and the key's identifier
+get_next_key() -> (key, identifier)
 
-2. Return the previously selected key as the IKM.
+/**
+ * Used by the consumer to retrieve the next key and the key's identifier
+ * The Option in the return type denotes that the key may or may not be found
+ */
+find_key(identifier: Seq[Byte]) -> Option[key]
 
-##### Input Key Material (IKM) Procedure (Responder)
 
-1. Validate the *crypto_spec::handshake_ephemeral* is *EphemeralData::NONE*.
+```
 
-2. Validate that the `ephemeral_data` field is empty.
+**Important: ** Both of these functions **consume** the key from the key store, i.e. the key in question will never be available
+again after a call to either `get_next_key` or `find_key`.
 
-3. Use the `mode_data` field to find the specified key, returning HandshakeError::KEY_NOT_FOUND if unable.
+##### IHI Implementation
 
-4. Return the key as the IKM if found.
+The following pseudo-code implements the `InitiatorHanshake` interface for the QKD mode:
+
+``` c++
+class QKDInitiatorHandshake implements InitiatorHandshake
+{          
+    // the key is empty until the first call to initialize
+    set key = []
+
+    initialize() -> (ephemeral_data, mode_data) {
+	    set (this.key, identifier) = get_next_key()	    
+	    return ([], identifier) // the ephemeral_data is empty
+	}
+	
+	validate(reply: ReplyHandshakeBegin) -> IKM or ABORT {
+	    
+		/*
+		* this is just a guard that prevents the method
+		* from being called before initialize() has been called
+		*/
+	    if(this.key.length == 0) {
+		    return ABORT("key not initialized")
+		}
+	    		
+		if(reply.ephemeral_data.length == 0) {
+		    return ABORT("ephemeral data is not empty")
+		}
+
+		if(reply.mode_data.length == 0) {
+		    return ABORT("mode_data is not empty")
+		}		
+
+		// the IKM is just the one-time key
+		return this.key
+	}
+}
+```
+
+##### RHI Implementation
+
+The following pseudo-code implements the `ResponderHanshake` interface for the QKD mode:
+
+``` c++
+QKDResponderHandshake implements ResponderHandshake
+{    
+    abstract validate(request: RequestHandshakeBegin)
+	    -> (ReplyHandshakeBegin, IKM) or HandshakeError
+	{
+	   if(request.crypto_spec.handshake_ephemeral != HandshakeEphemeral::NONE) {
+	       // must be NONE in QKD mode
+	       return HandshakeError::UNSUPPORTED_HANDSHAKE_EPHEMERAL;
+	   }
+
+	   // use the mode data to lookup the key
+	   set optional_key = find_key(request.mode_data)
+
+	   if(!optional_key.exists) {
+	   	   return HandshakeError::KEY_NOT_FOUND;
+	   }	   
+
+	   return (
+	       ReplyHandshakeBegin(ephemeral_data = [], mode_data = []), // empty reply
+		   // the IKM
+		   optional_key.get_value
+	   );
+	}
+}
+```
 
 #### Pre-shared public key mode
 
