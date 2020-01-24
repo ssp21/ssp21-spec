@@ -644,23 +644,28 @@ The bit-field above with flag1 = true, flag2 = false, and flag3 = true would hav
 ##### Variable Length Count
 
 When serialized, all sequence types are prefixed with a variable length count of objects up to 
-2^32 - 1 (unsigned 32-bit integer). The number of bytes required to encode various values is summarized in the table below.
+2^32 - 1 (unsigned 32-bit integer). This encoding is similar to the ASN.1 DER encoding of length,
+but places a constraint on the maximum value. The table below summarizes boundary values and their encodings.
 
-| num bytes | # value bits | max value  | encoding of max value             |
-|-----------|--------------|------------|-----------------------------------|
-|    1      |       7      | 127        |  [ 0xFF, 0x7F ]                   |
-|    2      |       14     | 16383      |  [ 0xFF, 0x7F ]                   |
-|    3      |       21     | 2097151    |  [ 0xFF, 0xFF, 0x7F ]             |
-|    4      |       28     | 268435455  |  [ 0xFF, 0xFF, 0xFF, 0x7F ]       |
-|    5      |       32     | 4294967295 |  [ 0xFF, 0xFF, 0xFF, 0xFF, 0x0F ] |
+| num bytes  | value                    | encoding                              |
+|------------|--------------------------|---------------------------------------|
+|    1       |  0 (min)                 | [0x00]                                |
+|    1       |  127 (max)               | [0x7F]                                |
+|    2       |  128 (min)               | [0x81, 0x80]                          |
+|    2       |  255 (max)               | [0x81, 0xFF]                          |
+|    3       |  256 (min)               | [0x82, 0x01, 0x00]                    |
+|    3       |  65535 (max)             | [0x82, 0xFF, 0xFF]                    |
+|    4       |  65536 (min)             | [0x83, 0x01, 0x00, 0x00]              |
+|    4       |  16777215 (max)          | [0x83, 0xFF, 0xFF, 0xFF]              |
+|    5       |  16777216 (min)          | [0x84, 0x01, 0x00, 0x00, 0x00]        |
+|    5       |  4294967295 (max)        | [0x84, 0xFF, 0xFF, 0xFF, 0xFF]        |
 
-The following rules apply to decoding:
+The following rules apply to encoding and decoding:
 
-1) The value is read from the least significant bit to the most significant bit.
-2) The top bit (0x80) of the current byte indicates if another byte follows.
-3) The bottom 7 bits are incorporated by shifting the values into the number modulo 7
-4) There is only one valid encoding for any number and that encoding must use the fewest bytes possible.
-5) The value of the 5th byte may not exceed 0x0F.
+1)  The first byte may represent a number in the interval [0,127] OR if the top bit is set, the lower 7 bits encode
+the count of bytes that follow.
+2) If the top bit of the first byte is set, the lower 7 bits may only be one of a value in the range 1 to 4.
+3) Values shall always be encoded in the fewest bytes possible, and parsers shall always reject such invalid encodings.
 
 ##### Examples
 
