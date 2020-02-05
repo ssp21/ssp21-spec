@@ -1,7 +1,19 @@
 ---
 title:      'SSP21'
-date:       '05/19/17'
 ---
+
+# Version Information
+
+SSP21 specifies both a *major* and *minor* version number on the wire so that implementations can unambiguously determine 
+compatibility. Changes to the *major* version indicate that the protocol is no longer wire-compatible with older versions.
+Changes to the minor version indicate the the protocol was extended in some manner, e.g. additional cryptographic
+primitives were added to extensible enumerations. Implementations with the same major version and different minor
+versions will inter-operate so long as only optional modes defined in the earlier minor version are used.
+
+Changes to this document that do not increment either the major or minor version do not affect wire-level compatibility
+in any way. They are grammatical or meant to clarify the standard. 
+
+The version specified in this document has major version 0 and minor version 1, i.e. **0.1**.
 
 # Introduction
 
@@ -461,6 +473,17 @@ construct, and the corresponding HMAC function will produce a tag with the same 
 
 `HMAC(key, message) -> AuthTag` - Calculate an authentication tag from an arbitrary length symmetric key and message bytes.
 
+### Authenticated Encryption with Associated Data (AEAD)
+
+This specification describes how to apply AEAD constructs to both authenticate and encrypt session data. AEAD constructs
+are used in a so called "detached" more when the authentication tag is placed in separate field from the encrypted data.
+This specification only describes the usage of AEAD constructs that use CTR mode for the encryption operation, and
+therefore do not require any additional padding.  These algorithms include AES-GCM and ChaCha20-Poly1305.
+
+AEAD functions typically accept a nonce larger than the 16-bit nonce used in SSP21. When mapping an AEAD to the SSP21
+nonce, the 16-bit nonce shall be placed in the lowest (first) 2 bytes of the nonce buffer in big endian format, 
+and higher bytes shall be set to zero.  
+
 ### Key Derivation Function (KDF)
 
 SSP21 has extensible support for an abstract KDF used during the handshake process.
@@ -771,16 +794,16 @@ packets from replay.
 
 ```
 enum SessionNonceMode {
-    INCREMENT_LAST_RX : 0
-    GREATER_THAN_LAST_RX : 1
+    STRICT_INCREMENT : 0
+    GREATER_THAN_LAST : 1
 }
 ```
 
-* **`INCREMENT_LAST_RX`** - The receiver of a session message will verify that each received nonce is strictly 
+* **`STRICT_INCREMENT`** - The receiver of a session message will verify that each received nonce is strictly 
 equal to the last valid nonce plus one. This is the default mode and should always be used in session oriented 
 environments like TCP that provide stream integrity and ordering guarantees.
 
-* **`GREATER_THAN_LAST_RX`** - The receiver of a session message will verify that each received is greater the last 
+* **`GREATER_THAN_LAST`** - The receiver of a session message will verify that each received is greater the last 
 valid nonce. This mode is intended to be used in session-less environments like serial or UDP and allows for loss 
 of authenticated packets, but also relaxes security allowing a MitM to selectively drop messages from a session.
 The protocol being protected by SSP21 is then responsible for retrying transmission in session-less environments.
@@ -834,10 +857,15 @@ The `SessionCryptoMode` enumeration specifies the complete set of algorithms use
 ```
 enum SessionCryptoMode {
     HMAC_SHA256_16 : 0
+    AES_256_GCM    : 1
 }
 ```
 
 * **`HMAC_SHA256_16`** - Cleartext user data with the authentication tag set to HMAC-SHA256 truncated to the leftmost 16 bytes.
+* **`AES_256_GCM`** - AES-256 in GCM mode.
+
+**Note: ** AEAD modes have their nonce's length extended as required by the particular algorithm, with the 16-bit SSP21 nonce
+in the lowest order 2 bytes in big-endian format. Higher order bytes are set to zero.  
  
 ##### Handshake Mode
 
@@ -847,18 +875,18 @@ fields in the handshake messages in different ways.
 ```
 enum HandshakeMode {
     SHARED_SECRET : 0
-    PRESHARED_PUBLIC_KEYS : 1
-    INDUSTRIAL_CERTIFICATES : 2
-    QUANTUM_KEY_DISTRIBUTION : 3
+    PUBLIC_KEYS : 1
+    QUANTUM_KEY_DISTRIBUTION : 2
+    INDUSTRIAL_CERTIFICATES : 3    
 }
 ```
 <!-- TODO: link the handshake section -->
 **Note: ** Refer to the handshake section for how each mode shall interpret handshake message fields.
 
 * **`SHARED_SECRET`** - Both parties possess a shared-secret.
-* **`PRESHARED_PUBLIC_KEYS`** - Both parties have out-of-band knowledge of each other's public DH key.
-* **`INDUSTRIAL_CERTIFICATES`** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
+* **`PUBLIC_KEYS`** - Both parties have out-of-band knowledge of each other's public DH key.
 * **`QUANTUM_KEY_DISTRIBUTION`** - Single-use shared secrets delivered via quantum key distribution (QKD).
+* **`INDUSTRIAL_CERTIFICATES`** - Both parties use an authority certificate to authenticate each other's public DH key from a certificate chain.
 
 ##### Handshake Error
 
@@ -876,7 +904,7 @@ enum HandshakeError {
 	UNSUPPORTED_HANDSHAKE_MODE        : 7
     BAD_CERTIFICATE_FORMAT            : 8
 	BAD_CERTIFICATE_CHAIN             : 9
-    UNSUPPORTED_CERTIFICATE_FEATURE   : 10    
+    UNSUPPORTED_CERTIFICATE_FEATURE   : 10
     AUTHENTICATION_ERROR              : 11
     NO_PRIOR_HANDSHAKE_BEGIN          : 12
 	KEY_NOT_FOUND                     : 13
@@ -917,6 +945,18 @@ enum HandshakeError {
 * **`UNKNOWN`** - A error code for any unforeseen condition or implementation specific error. 
 
 #### Handshake Messages
+
+##### Version
+
+All handshake messages contain a version field that allows implementations to determine compatibility and to aid in 
+debugging remotely when compatibility issues arise.
+
+```
+struct Version {
+   major : U16
+   minor : U16
+}
+```
 
 ##### Request Handshake Begin
 
@@ -960,7 +1000,7 @@ struct SessionConstraints {
 ```
 message RequestHandshakeBegin {
    function                 : enum::Function::REQUEST_HANDSHAKE_BEGIN
-   version                  : U16
+   version                  : struct::Version
    crypto_spec              : struct::CryptoSpec
    constraints              : struct::Constraints
    handshake_mode           : enum::HandshakeMode
@@ -991,9 +1031,10 @@ case it responds with `ReplyHandshakeError`.
 
 ```
 message ReplyHandshakeBegin {
-   function : enum::Function::REPLY_HANDSHAKE_BEGIN
-   ephemeral_data: SeqOf[U8]
-   mode_data: SeqOf[U8]
+   function       : enum::Function::REPLY_HANDSHAKE_BEGIN
+   version        : struct::Version
+   ephemeral_data : SeqOf[U8]
+   mode_data      : SeqOf[U8]
 }
 ```
 
@@ -1010,7 +1051,8 @@ This message is for debugging purposes only during commissioning and cannot be a
 ```
 message ReplyHandshakeError {
    function : enum::Function::REPLY_HANDSHAKE_ERROR
-   error : enum::HandshakeError
+   version  : struct::Version
+   error    : enum::HandshakeError
 }
 ```
 
@@ -1279,8 +1321,12 @@ Upon receiving a `RequestHandshakeBegin` message:
 2. The responder sets *h* equal to the hash of the entire received request:
 
     `set h = HASH(request)`
+    
+3. The responder examines the `Version` field of the received request and if the major version does not
+   match the responder's major version it replies with `HandshakeError` set to `UnsupportedVersion` and
+   does no further processing.    
 
-3. The responder uses the RHI to validate the request and prepare a response:
+4. The responder uses the RHI to validate the request and prepare a response:
 
     `set (IKM, ReplyHandshakeBegin) = RHI.validate(request)`
 
@@ -1835,7 +1881,7 @@ and Authenticated Encryption with Associated Data (AEAD) algorithms that encrypt
 both the payload and associated data in the message.
 
 AEAD implementations such as AES-GCM or ChaCha20-Poly1305 already provide functions that largely match the `read` and `write` methods
-described here. The only difference being that they also take the nonce as a paramter.
+described here. The only difference being that they also take the nonce as a parameter.
 
 **Note:** Empty session messages are explicitly disallowed, with the exception of the initial handshake authentication messages.
 Even authenticated empty messages with `n >= 1` should be treated and logged as an error, and never passed to user layer.
