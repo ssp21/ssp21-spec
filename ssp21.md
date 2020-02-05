@@ -4,8 +4,8 @@ title:      'SSP21'
 
 # Version Information
 
-SSP21 specifies both a *major* and *minor* version number on the wire so that implementations can unambiguously determine 
-compatibility. Changes to the *major* version indicate that the protocol is no longer wire-compatible with older versions.
+SSP21 specifies both a `major` and `minor` version number on the wire so that implementations can unambiguously determine 
+compatibility. Changes to the major version indicate that the protocol is no longer wire-compatible with older versions.
 Changes to the minor version indicate the the protocol was extended in some manner, e.g. additional cryptographic
 primitives were added to extensible enumerations. Implementations with the same major version and different minor
 versions will inter-operate so long as only optional modes defined in the earlier minor version are used.
@@ -13,7 +13,7 @@ versions will inter-operate so long as only optional modes defined in the earlie
 Changes to this document that do not increment either the major or minor version do not affect wire-level compatibility
 in any way. They are grammatical or meant to clarify the standard. 
 
-The version specified in this document has major version 0 and minor version 1, i.e. **0.1**.
+The version specified in this document has major version 0 and minor version 1, i.e. **`0.1`**.
 
 # Introduction
 
